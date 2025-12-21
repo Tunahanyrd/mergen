@@ -21,11 +21,14 @@ Modern, fast, and feature-rich download manager with browser integration.
 ## 📦 Installation
 
 ### Requirements
+
 - Python 3.8+
 - PySide6
 - requests
+- httpx
 
 ### From Source
+
 ```bash
 git clone https://github.com/Tunahanyrd/mergen.git
 cd mergen
@@ -36,6 +39,7 @@ pip install -r requirements.txt
 ## 🌐 Browser Integration (Manual Installation)
 
 ### Why Manual Installation?
+
 We distribute the extension directly to avoid store fees ($5) and approval delays. Installation takes ~2 minutes!
 
 ### Step 1: Install Native Host
@@ -52,6 +56,7 @@ This installs the native messaging host to `~/bin/` and creates manifests for al
 #### Chrome / Chromium / Brave / Edge
 
 **Option A: Load Unpacked (Persistent)**
+
 1. Download or locate: `browser-extension/` folder
 2. Open: `chrome://extensions/`
 3. Enable **"Developer mode"** (toggle in top-right)
@@ -60,6 +65,7 @@ This installs the native messaging host to `~/bin/` and creates manifests for al
 6. ✅ Extension installed!
 
 **Option B: Drag & Drop**
+
 1. Download: `mergen-browser-extension.zip`
 2. Open: `chrome://extensions/`
 3. Drag & drop the .zip file onto the page
@@ -68,18 +74,21 @@ This installs the native messaging host to `~/bin/` and creates manifests for al
 #### Firefox
 
 **Temporary Installation (Until AMO Approval):**
+
 1. Open: `about:debugging#/runtime/this-firefox`
 2. Click **"Load Temporary Add-on..."**
 3. Select: `mergen-firefox-amo.zip` or `browser-extension/manifest.json`
 4. ⚠️ **Note:** Removed on browser restart
 
 **Permanent Installation:**
+
 - Extension submitted to Mozilla Add-ons (AMO)
 - Approval pending (~1-2 weeks)
 - Once approved: Install from addons.mozilla.org
 - Will be permanent and auto-update
 
 **Alternative (Developer):**
+
 - Use Firefox Developer Edition
 - `about:config` → `xpinstall.signatures.required` → `false`
 - Extension becomes permanent
@@ -104,14 +113,17 @@ No more copy-paste! Downloads are captured **before** Chrome's save dialog appea
 ### Troubleshooting
 
 **"Native host not found"**
+
 - Run: `cd native-host && ./install.sh`
 - Check: `ls ~/bin/mergen-native-host.py`
 
 **"Access forbidden"**
+
 - Extension ID mismatch
 - Re-register in Mergen Settings → Browser Integration
 
 **Extension not capturing downloads**
+
 - Reload extension in `chrome://extensions/`
 - Check log: `tail -f ~/.mergen-native-host.log`
 
@@ -120,10 +132,12 @@ No more copy-paste! Downloads are captured **before** Chrome's save dialog appea
 ## 🚀 Quick Start
 
 **Method 1: With Browser Extension (Recommended)**
+
 - Just click any download link in your browser
 - Mergen captures it automatically!
 
 **Method 2: Manual URL**
+
 ```bash
 ./main.py
 # Click "Add URL" and paste download link
@@ -134,6 +148,7 @@ No more copy-paste! Downloads are captured **before** Chrome's save dialog appea
 Settings: `~/.config/mergen/config.json`
 
 **Key Settings:**
+
 - Download directory
 - Max connections (1-32)
 - Auto-categorization
@@ -145,11 +160,13 @@ Settings: `~/.config/mergen/config.json`
 ## 🌍 Supported Platforms
 
 ### Operating Systems
+
 - ✅ Linux (All distributions)
 - ✅ macOS 10.14+
 - ⚠️ Windows (Coming soon)
 
 ### Browsers (with extension)
+
 - ✅ Google Chrome / Chromium
 - ✅ Brave Browser
 - ✅ Microsoft Edge
@@ -158,6 +175,7 @@ Settings: `~/.config/mergen/config.json`
 - ✅ Any Chromium-based browser
 
 ### Desktop Environments
+
 - ✅ GNOME
 - ✅ KDE Plasma
 - ✅ XFCE
@@ -166,6 +184,7 @@ Settings: `~/.config/mergen/config.json`
 ## 📚 Package Managers
 
 **Coming Soon:**
+
 - Arch Linux (AUR)
 - Debian/Ubuntu (APT)
 - Fedora (DNF/RPM)
@@ -173,7 +192,8 @@ Settings: `~/.config/mergen/config.json`
 
 ## 🤝 Contributing
 
-Contributions welcome! 
+Contributions welcome!
+
 1. Fork the repo
 2. Create feature branch
 3. Make changes

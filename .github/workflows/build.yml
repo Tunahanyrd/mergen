@@ -28,8 +28,12 @@ jobs:
       
       - name: Build executable
         run: |
-          pyinstaller --onefile --windowed --name mergen --icon data/mergen.png main.py
-      
+          pyinstaller --onefile --windowed --name mergen --icon data/mergen.png \
+            --hidden-import=httpx \
+            --hidden-import=requests \
+            --hidden-import=PySide6 \
+            main.py
+            
       - name: Setup Inno Setup
         run: |
           choco install innosetup -y
@@ -64,7 +68,11 @@ jobs:
       
       - name: Build binary
         run: |
-          pyinstaller --onefile --name mergen main.py
+          pyinstaller --onefile --name mergen \
+            --hidden-import=httpx \
+            --hidden-import=requests \
+            --hidden-import=PySide6 \
+            main.py
       
       - name: Move Binary to Installer Context
         run: |
@@ -132,7 +140,11 @@ jobs:
       
       - name: Build app bundle
         run: |
-          pyinstaller --onedir --windowed --name Mergen main.py
+          pyinstaller --onedir --windowed --name Mergen \
+            --hidden-import=httpx \
+            --hidden-import=requests \
+            --hidden-import=PySide6 \
+            main.py
       
       - name: Build DMG
         run: |
