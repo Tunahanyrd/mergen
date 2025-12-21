@@ -33,6 +33,7 @@ from src.core.i18n import I18n
 from src.core.models import DownloadItem
 from src.gui.download_dialog import DownloadDialog
 from src.gui.properties_dialog import PropertiesDialog
+from src.gui.queue_manager_dialog import QueueManagerDialog
 from src.gui.settings_dialog import SettingsDialog
 from src.gui.styles import MERGEN_THEME, MERGEN_THEME_LIGHT
 
@@ -224,7 +225,7 @@ class MainWindow(QMainWindow):
             (I18n.get("delete"), self.get_std_icon("delete"), self.delete_download),
             (None, None, None),
             (I18n.get("options"), self.get_std_icon("settings"), self.open_settings),
-            (I18n.get("queues"), self.get_std_icon("sched"), self.open_scheduler),
+            ("Queue Manager", self.get_std_icon("sched"), self.open_queue_manager_dialog),
         ]
 
         for item in actions:
@@ -434,9 +435,37 @@ class MainWindow(QMainWindow):
         QMessageBox.information(self, I18n.get("info"), I18n.get("edit_in_settings"))
         self.open_settings()
 
-    # Removed open_scheduler / open_queue_manager logic
-    def open_scheduler(self):
-        pass
+    # Queue Manager methods
+    def open_queue_manager_dialog(self):
+        """Opens the Queue Manager dialog."""
+        dialog = QueueManagerDialog(self.queue_manager, self.downloads, self)
+        dialog.exec()
+        self.refresh_table()
+
+    def move_to_queue(self, queue_name):
+        """Moves selected download to specified queue."""
+        rows = self.table.selectionModel().selectedRows()
+        if not rows:
+            return
+
+        row = rows[0].row()
+        if row >= len(self.downloads):
+            return
+
+        download_item = self.downloads[row]
+        download_item.queue = queue_name
+        download_item.queue_position = len([d for d in self.downloads if d.queue == queue_name])
+
+        self.config.save_history(self.downloads)
+        self.refresh_table()
+
+    def start_download_item(self, download_item):
+        """Starts a download item (callback for queue manager)."""
+        download_item.status = "Downloading..."
+        self.refresh_table()
+        # TODO: Create DownloadDialog and start actual download
+
+    # Removed open_scheduler
 
     def update_item_status(self, item_data, status_msg):
         # Called by worker signal to update status in real-time
@@ -789,6 +818,15 @@ class MainWindow(QMainWindow):
         prop_act = QAction(self.get_std_icon("settings"), "Properties", self)
         prop_act.triggered.connect(lambda: self.open_properties_dialog(item))
         menu.addAction(prop_act)
+
+        menu.addSeparator()
+
+        # Move to Queue submenu
+        queue_menu = menu.addMenu("Move to Queue")
+        for queue_name in self.queue_manager.get_queues():
+            q_act = QAction(queue_name, self)
+            q_act.triggered.connect(lambda checked, q=queue_name: self.move_to_queue(q))
+            queue_menu.addAction(q_act)
 
         menu.addSeparator()
 
