@@ -1,0 +1,3 @@
+tqdm
+httpx
+pyside6

@@ -1,0 +1,70 @@
+{
+    "theme": "dark",
+    "show_complete_dialog": true,
+    "max_connections": 8,
+    "default_download_dir": "/home/tunahan/\u0130ndirilenler",
+    "geometry": "01d9d0cb000300000000000000000000000003e7000002570000000000000000000003e700000257000000000000000006000000000000000000000003e700000257",
+    "categories": {
+        "Compressed": [
+            [
+                "zip",
+                "rar",
+                "7z",
+                "tar",
+                "gz"
+            ],
+            "zip",
+            ""
+        ],
+        "Documents": [
+            [
+                "doc",
+                "docx",
+                "pdf",
+                "txt",
+                "rtf"
+            ],
+            "doc",
+            ""
+        ],
+        "Music": [
+            [
+                "mp3",
+                "wav",
+                "flac",
+                "aac"
+            ],
+            "music",
+            ""
+        ],
+        "Programs": [
+            [
+                "exe",
+                "msi",
+                "bat",
+                "sh"
+            ],
+            "app",
+            ""
+        ],
+        "Video": [
+            [
+                "mp4",
+                "mkv",
+                "avi",
+                "mov"
+            ],
+            "video",
+            ""
+        ]
+    },
+    "proxy_enabled": false,
+    "proxy_host": "",
+    "proxy_port": 8080,
+    "proxy_user": "",
+    "proxy_pass": "",
+    "queues": [
+        "Main Queue"
+    ],
+    "launch_startup": false
+}
