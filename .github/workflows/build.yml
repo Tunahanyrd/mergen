@@ -58,11 +58,15 @@ jobs:
       if: runner.os == 'Windows'
       run: |
         python -m nuitka --standalone --onefile --enable-plugin=pyside6 --assume-yes-for-downloads --include-data-dir=data=data --output-dir=build --output-filename=mergen.exe main.py
+        if (!(Test-Path build/mergen.exe)) { exit 1 }
+        Get-ChildItem build/mergen.exe | Select-Object Length,Name
         
     - name: Build with Nuitka (macOS)
       if: runner.os == 'macOS'
       run: |
         python -m nuitka --standalone --onefile --enable-plugin=pyside6 --assume-yes-for-downloads --include-data-dir=data=data --output-dir=build --output-filename=mergen.bin main.py
+        file build/mergen.bin || exit 1
+        ls -lah build/mergen.bin
         
     - name: Upload Linux Artifact
       if: runner.os == 'Linux'
