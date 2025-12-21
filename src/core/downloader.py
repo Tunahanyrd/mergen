@@ -1,4 +1,4 @@
-#!/home/tunahan/anaconda3/envs/ml_env/bin/python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on December 20, 2025 19:43:23

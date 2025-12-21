@@ -113,3 +113,124 @@ QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
     height: 0px;
 }}
 """
+
+# Refined Light Theme
+MERGEN_THEME_LIGHT = """
+/* Global Reset */
+QWidget {
+    font-family: 'Segoe UI', sans-serif;
+    color: #1a1a1a;
+}
+
+/* Main Window */
+QMainWindow {
+    background-color: #f5f5f7;
+}
+
+/* Sidebar */
+QTreeWidget {
+    background-color: #ffffff;
+    border: 1px solid #d1d1d1;
+    border-radius: 8px;
+    font-size: 13px;
+    outline: none;
+}
+QTreeWidget::item {
+    height: 32px;
+    padding-left: 4px;
+}
+QTreeWidget::item:selected {
+    background-color: #e3f2fd;
+    color: #005a9e;
+    border-left: 3px solid #005a9e;
+}
+QTreeWidget::item:hover {
+    background-color: #f0f0f0;
+}
+
+/* Table */
+QTableWidget {
+    background-color: #ffffff;
+    border: 1px solid #d1d1d1;
+    border-radius: 8px;
+    gridline-color: transparent;
+    selection-background-color: #e3f2fd;
+    selection-color: #1a1a1a;
+    outline: none;
+}
+QHeaderView::section {
+    background-color: #f0f0f0;
+    border: none;
+    border-bottom: 1px solid #d1d1d1;
+    color: #555;
+    padding: 6px;
+    font-weight: bold;
+}
+QTableWidget::item {
+    padding: 4px;
+    border-bottom: 1px solid #eeeeee;
+}
+
+/* Buttons */
+QPushButton {
+    background-color: #ffffff;
+    border: 1px solid #c0c0c0;
+    border-radius: 6px;
+    padding: 6px 12px;
+    color: #1a1a1a;
+}
+QPushButton:hover {
+    background-color: #f8f9fa;
+    border-color: #007acc;
+}
+QPushButton:pressed {
+    background-color: #e9ecef;
+}
+
+/* ToolBar & Inputs */
+QToolBar {
+    background: transparent;
+    border: none;
+    spacing: 10px;
+}
+QToolButton {
+    color: #1a1a1a;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 4px;
+}
+QToolButton:hover {
+    background-color: #e0e0e0;
+    border: 1px solid #d0d0d0;
+}
+QLineEdit {
+    background-color: #ffffff;
+    border: 1px solid #c0c0c0;
+    border-radius: 4px;
+    padding: 4px;
+    color: #1a1a1a;
+}
+QLineEdit:focus {
+    border: 1px solid #007acc;
+}
+
+/* Scrollbars */
+QScrollBar:vertical {
+    border: none;
+    background: #f0f0f0;
+    width: 10px;
+    margin: 0;
+}
+QScrollBar::handle:vertical {
+    background: #c1c1c1;
+    min-height: 20px;
+    border-radius: 5px;
+}
+QScrollBar::handle:vertical:hover {
+    background: #a8a8a8;
+}
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0px;
+}
+"""

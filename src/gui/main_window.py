@@ -34,24 +34,7 @@ from src.core.models import DownloadItem
 from src.gui.download_dialog import DownloadDialog
 from src.gui.properties_dialog import PropertiesDialog
 from src.gui.settings_dialog import SettingsDialog
-from src.gui.styles import MERGEN_THEME
-
-# Light Theme Definition (Basic)
-MERGEN_THEME_LIGHT = """
-QWidget { font-family: 'Segoe UI', sans-serif; color: #333; }
-QMainWindow { background-color: #f5f5f7; }
-QTreeWidget { background-color: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 13px; }
-QTreeWidget::item:selected { background-color: #e3f2fd; color: #007acc; border-left: 3px solid #007acc; }
-QTableWidget { 
-    background-color: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; 
-    selection-background-color: #e3f2fd; selection-color: #333; 
-}
-QHeaderView::section { background-color: #f0f0f0; border: none; color: #555; padding: 6px; font-weight: bold; }
-QPushButton { background-color: #ffffff; border: 1px solid #d0d0d0; border-radius: 6px; padding: 6px 12px; }
-QPushButton:hover { background-color: #f0f0f0; border-color: #007acc; }
-QToolBar { background: transparent; border: none; spacing: 10px; }
-QToolButton { color: #333; }
-"""
+from src.gui.styles import MERGEN_THEME, MERGEN_THEME_LIGHT
 
 
 class MainWindow(QMainWindow):
@@ -543,7 +526,7 @@ class MainWindow(QMainWindow):
 
             # Populate Columns
             # Col 0: File Name
-            self.table.setItem(row, 0, QTableWidgetItem(d.filename))
+            self.table.setItem(row, 0, QTableWidgetItem(os.path.basename(d.filename)))
             # Col 1: Size (Show Known Size)
             size_str = d.size
             if d.total_bytes > 0:
