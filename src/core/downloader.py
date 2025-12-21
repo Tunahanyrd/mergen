@@ -56,6 +56,16 @@ class Downloader:
         # 1. Determine temporary filename from URL (will be updated if server provides real name)
         name = self.get_filename_from_url(url)
         self.filename = os.path.join(self.save_dir, name)
+
+        # Check if filename collides with existing directory
+        if os.path.isdir(self.filename):
+            # Append numeric suffix to avoid collision
+            base = self.filename
+            counter = 1
+            while os.path.isdir(self.filename):
+                self.filename = f"{base}_{counter}"
+                counter += 1
+
         self.temp_filename = f"{self.filename}.part"
 
         # Use MD5 hash of URL for the state file to ensure persistence stability
