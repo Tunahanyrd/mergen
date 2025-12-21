@@ -31,6 +31,7 @@ from PySide6.QtWidgets import (
 from src.core.config import ConfigManager
 from src.core.i18n import I18n
 from src.core.models import DownloadItem
+from src.core.queue_manager import QueueManager
 from src.gui.download_dialog import DownloadDialog
 from src.gui.properties_dialog import PropertiesDialog
 from src.gui.queue_manager_dialog import QueueManagerDialog
@@ -80,6 +81,8 @@ class MainWindow(QMainWindow):
 
         self.downloads = self.config.get_history()
         self.active_dialogs = []
+        self.row_map = {}
+        self.queue_manager = QueueManager(self.config)
 
         self.setup_ui()
         self.apply_theme()
@@ -87,9 +90,25 @@ class MainWindow(QMainWindow):
         self.setup_tray()
 
     def closeEvent(self, event):
-        self.config.set("geometry", self.saveGeometry().toHex().data().decode())
-        self.config.save_history(self.downloads)
-        super().closeEvent(event)
+        """Handle window close - minimize to tray if enabled."""
+        close_to_tray = self.config.get("close_to_tray", False)
+
+        if close_to_tray and hasattr(self, "tray_icon") and self.tray_icon.isVisible():
+            # Minimize to tray instead of closing
+            event.ignore()
+            self.hide()
+            if self.tray_icon:
+                self.tray_icon.showMessage(
+                    "Mergen",
+                    "Application minimized to tray. Double-click tray icon to restore.",
+                    QSystemTrayIcon.Information,
+                    2000,
+                )
+        else:
+            # Actually close
+            self.config.set("geometry", self.saveGeometry().toHex().data().decode())
+            self.config.save_history(self.downloads)
+            super().closeEvent(event)
 
     def apply_theme(self):
         theme = self.config.get("theme", "dark").lower()
