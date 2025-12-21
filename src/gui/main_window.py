@@ -603,16 +603,17 @@ class MainWindow(QMainWindow):
             fname = Path(text.split("?")[0]).name or "file.dat"
             save_dir = self.config.get("default_download_dir")
 
-            # Cat detection...
+            # Cat detection (only if file has extension)
             cats = self.config.get("categories", {})
             ext = Path(fname).suffix.lstrip(".").lower()
-            for name, val in cats.items():
-                if len(val) >= 2:
-                    cexts = val[0]
-                    cpath = val[2] if len(val) > 2 else ""
-                    if ext in cexts and cpath:
-                        save_dir = cpath
-                        break
+            if ext:  # Only check categories if extension exists
+                for name, val in cats.items():
+                    if len(val) >= 2:
+                        cexts = val[0]
+                        cpath = val[2] if len(val) > 2 else ""
+                        if ext in cexts and cpath:
+                            save_dir = cpath
+                            break
 
             new_item = DownloadItem(url=text, filename=os.path.join(save_dir, fname), save_path=save_dir)
             new_item.status = I18n.get("downloading")

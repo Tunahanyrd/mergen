@@ -90,7 +90,12 @@ class Downloader:
     def get_filename_from_url(self, url):
         """Fallback method to extract filename from URL path."""
         name = Path(url.split("?")[0]).name
-        return name if name else "downloaded_file"
+        if not name:
+            name = "downloaded_file"
+        # If no extension, append .download to prevent category detection issues
+        if not Path(name).suffix:
+            name = f"{name}.download"
+        return name
 
     def update_filenames(self, real_name):
         """Updates internal filenames when the server returns a Content-Disposition header."""

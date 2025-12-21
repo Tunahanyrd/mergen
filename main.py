@@ -12,6 +12,7 @@ import sys
 os.environ["QT_LOGGING_RULES"] = "*.debug=false;qt.svg.warning=false;qt.qpa.services=false"
 import signal
 
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
 from src.gui.main_window import MainWindow
@@ -20,8 +21,13 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     app = QApplication(sys.argv)
 
-    # Optional: Set global style/palette here to look more 'premium' or dark mode
-    # For now, using default system style
+    # Set application-wide icon (all windows inherit this)
+    icon_path = "data/mergen.png"
+    if hasattr(sys, "_MEIPASS"):
+        # Nuitka/PyInstaller compiled mode
+        icon_path = os.path.join(sys._MEIPASS, "data", "mergen.png")
+    if os.path.exists(icon_path):
+        app.setWindowIcon(QIcon(icon_path))
 
     window = MainWindow()
     window.show()
