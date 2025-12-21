@@ -464,6 +464,10 @@ class MainWindow(QMainWindow):
         # Trigger Queue
         self.on_download_finished_trigger_queue(download_item)
 
+        # Notify queue manager for automatic progression
+        if download_item.queue:
+            self.queue_manager.on_download_complete(download_item, self.downloads, self.start_download_item)
+
     # ... (Rest of methods: refresh_table, actions etc, keeping consistent) ...
 
     def refresh_table(self, filter_data=None):

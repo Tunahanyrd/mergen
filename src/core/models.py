@@ -17,6 +17,7 @@ class DownloadItem:
     description: str = ""
     referer: str = ""
     queue: str = ""
+    queue_position: int = 0  # Position within queue for ordering
 
     # Auth (Optional)
     username: str = ""
@@ -57,6 +58,7 @@ class DownloadItem:
         item.description = data.get("description", "")
         item.referer = data.get("referer", "")
         item.queue = data.get("queue", "")
+        item.queue_position = data.get("queue_position", 0)
         item.username = data.get("username", "")
         item.password = data.get("password", "")
 
