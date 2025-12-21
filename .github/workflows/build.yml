@@ -91,6 +91,18 @@ jobs:
           chmod +x build-appimage.sh
           ./build-appimage.sh
       
+      - name: Build Arch Linux Package (PKGBUILD)
+        run: |
+          cp -r browser-extension installer/linux/
+          cp -r native-host installer/linux/
+          
+          docker run --rm -v $(pwd)/installer/linux:/src archlinux:base-devel /bin/bash -c "
+            useradd -m builder && \
+            chown -R builder:builder /src && \
+            cd /src && \
+            su builder -c 'makepkg -s --noconfirm'
+          "
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -100,6 +112,7 @@ jobs:
             installer/linux/*.deb
             installer/linux/*.rpm
             installer/linux/*.AppImage
+            installer/linux/*.pkg.tar.zst
 
   build-macos:
     runs-on: macos-latest
@@ -169,6 +182,7 @@ jobs:
             artifacts/mergen-linux-packages/*.deb
             artifacts/mergen-linux-packages/*.rpm
             artifacts/mergen-linux-packages/*.AppImage
+            artifacts/mergen-linux-packages/*.pkg.tar.zst
             artifacts/mergen-macos-dmg/Mergen-*.dmg
             artifacts/browser-extension-artifact/mergen-browser-extension.zip
           draft: false

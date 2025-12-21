@@ -1,0 +1,28 @@
+# Maintainer: Tunahanyrd <tunahanyrd@gmail.com>
+pkgname=mergen
+pkgver=0.7.0
+pkgrel=1
+pkgdesc="Multi-threaded download manager with browser integration"
+arch=('x86_64')
+url="https://github.com/Tunahanyrd/mergen"
+license=('GPL3')
+depends=('glibc' 'gcc-libs' 'zlib' 'hicolor-icon-theme')
+
+source=("mergen"
+        "mergen.desktop"
+        "mergen.png")
+
+sha256sums=('SKIP' 'SKIP' 'SKIP')
+
+package() {
+
+    install -Dm755 "mergen" "$pkgdir/usr/bin/mergen"
+
+    install -Dm644 "mergen.desktop" "$pkgdir/usr/share/applications/mergen.desktop"
+
+    install -Dm644 "mergen.png" "$pkgdir/usr/share/icons/hicolor/128x128/apps/mergen.png"
+
+    mkdir -p "$pkgdir/usr/share/mergen"
+    cp -r "browser-extension" "$pkgdir/usr/share/mergen/"
+    cp -r "native-host" "$pkgdir/usr/share/mergen/"
+}
