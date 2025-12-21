@@ -407,7 +407,8 @@ class SettingsDialog(QDialog):
             QMessageBox.information(
                 self,
                 I18n.get("info"),
-                "Please restart the application for language changes to take effect.\nLütfen dil değişikliklerinin etkili olması için uygulamayı yeniden başlatın.",
+                "Please restart the application for language changes to take effect.\n"
+                "Lütfen dil değişikliklerinin etkili olması için uygulamayı yeniden başlatın.",
             )
 
         self.config.set("close_to_tray", self.close_to_tray_chk.isChecked())
