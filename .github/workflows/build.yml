@@ -104,12 +104,12 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install pyinstaller
+          pip install pyinstaller Pillow
           brew install create-dmg
       
       - name: Build app bundle
         run: |
-          pyinstaller --onefile --windowed --name Mergen --icon data/mergen.png main.py
+          pyinstaller --onedir --windowed --name Mergen main.py
       
       - name: Build DMG
         run: |
