@@ -1,119 +1,200 @@
-# Mergen - Modern Download Manager
+# 🔽 MERGEN - Multi-threaded Download Manager
 
-<div align="center">
+[![GitHub release](https://img.shields.io/github/v/release/Tunahanyrd/mergen)](https://github.com/Tunahanyrd/mergen/releases)
+[![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS-lightgrey)](https://github.com/Tunahanyrd/mergen)
 
-![Mergen Logo](data/mergen.png)
-
-A powerful, multi-threaded download manager with a sleek dark UI, built with PySide6.
-
-</div>
+Modern, fast, and feature-rich download manager with browser integration.
 
 ## ✨ Features
 
-- 🚀 **Multi-threaded Downloads**: Utilizes multiple connections for faster downloads
-- ⏸️ **Resume Support**: Pause and resume downloads seamlessly
-- 📊 **Real-time Progress**: Live speed, ETA, and progress tracking
-- 🎨 **Modern UI**: Dark glassmorphism theme with customizable light mode
-- 📁 **Smart Categories**: Automatic file organization by type
-- 🔄 **Queue Management**: Organize downloads into custom queues
-- 🌍 **Internationalization**: Multi-language support (TR/EN)
-- 🔌 **Proxy Support**: HTTP/HTTPS proxy configuration
-- 💾 **Persistent State**: Downloads resume even after restart
+- ⚡ **Multi-threaded Downloads** - Up to 32 parallel connections
+- 🌐 **Browser Integration** - Capture downloads from Chrome, Firefox, Brave, Edge
+- ⏸️ **Resume Support** - Resume interrupted downloads
+- 📊 **Queue Management** - Organize downloads in queues
+- 🎨 **Modern UI** - Dark theme with glassmorphism design
+- 🌍 **i18n Support** - English and Turkish
+- 📂 **Auto-categorization** - Smart file type detection
+- 🔔 **System Tray** - Minimize to tray
+- 📥 **Pre-download Dialog** - Configure before downloading
 
-## 📥 Installation
+## 📦 Installation
 
-### Pre-built Binaries (Recommended)
-
-Download the latest release for your platform:
-
-**Linux:**
-```bash
-wget https://github.com/Tunahanyrd/mergen/releases/latest/download/mergen
-chmod +x mergen
-./mergen
-```
-
-**macOS (Apple Silicon):**
-```bash
-wget https://github.com/Tunahanyrd/mergen/releases/latest/download/mergen.bin
-chmod +x mergen.bin
-./mergen.bin
-```
-
-**Windows:**
-Download `mergen.exe` from the [releases page](https://github.com/Tunahanyrd/mergen/releases/latest) and run it.
+### Requirements
+- Python 3.8+
+- PySide6
+- requests
 
 ### From Source
-
-**Requirements:**
-- Python 3.11+
-- PySide6
-- httpx
-
-**Installation:**
 ```bash
 git clone https://github.com/Tunahanyrd/mergen.git
 cd mergen
 pip install -r requirements.txt
-python main.py
+./main.py
 ```
 
-## 🏗️ Building from Source
+## 🌐 Browser Integration (Manual Installation)
 
-### Using Nuitka (Recommended)
+### Why Manual Installation?
+We distribute the extension directly to avoid store fees ($5) and approval delays. Installation takes ~2 minutes!
 
-**Linux/macOS:**
+### Step 1: Install Native Host
+
 ```bash
-python -m nuitka --standalone --onefile --enable-plugin=pyside6 \
-  --assume-yes-for-downloads --include-data-dir=data=data \
-  --output-dir=build --output-filename=mergen main.py
+cd native-host
+./install.sh
 ```
 
-**Windows:**
+This installs the native messaging host to `~/bin/` and creates manifests for all browsers.
+
+### Step 2: Install Browser Extension
+
+#### Chrome / Chromium / Brave / Edge
+
+**Option A: Load Unpacked (Persistent)**
+1. Download or locate: `browser-extension/` folder
+2. Open: `chrome://extensions/`
+3. Enable **"Developer mode"** (toggle in top-right)
+4. Click **"Load unpacked"**
+5. Select the `browser-extension/` folder
+6. ✅ Extension installed!
+
+**Option B: Drag & Drop**
+1. Download: `mergen-browser-extension.zip`
+2. Open: `chrome://extensions/`
+3. Drag & drop the .zip file onto the page
+4. ✅ Extension installed!
+
+#### Firefox
+
+**Temporary Installation (Until AMO Approval):**
+1. Open: `about:debugging#/runtime/this-firefox`
+2. Click **"Load Temporary Add-on..."**
+3. Select: `mergen-firefox-amo.zip` or `browser-extension/manifest.json`
+4. ⚠️ **Note:** Removed on browser restart
+
+**Permanent Installation:**
+- Extension submitted to Mozilla Add-ons (AMO)
+- Approval pending (~1-2 weeks)
+- Once approved: Install from addons.mozilla.org
+- Will be permanent and auto-update
+
+**Alternative (Developer):**
+- Use Firefox Developer Edition
+- `about:config` → `xpinstall.signatures.required` → `false`
+- Extension becomes permanent
+
+### Step 3: Register Extension in Mergen
+
+1. **Click the extension icon** in your browser toolbar
+2. **Copy the Extension ID** shown in the popup
+3. Open **Mergen** → **Settings** → **Browser Integration**
+4. **Paste the Extension ID** and click **"Register"**
+5. **Reload the extension** in your browser
+6. ✅ **Done!** Try right-clicking any link → "Download with Mergen"
+
+### How It Works
+
+```
+Browser Download → Extension Captures → Native Host → Mergen → Download Starts
+```
+
+No more copy-paste! Downloads are captured **before** Chrome's save dialog appears.
+
+### Troubleshooting
+
+**"Native host not found"**
+- Run: `cd native-host && ./install.sh`
+- Check: `ls ~/bin/mergen-native-host.py`
+
+**"Access forbidden"**
+- Extension ID mismatch
+- Re-register in Mergen Settings → Browser Integration
+
+**Extension not capturing downloads**
+- Reload extension in `chrome://extensions/`
+- Check log: `tail -f ~/.mergen-native-host.log`
+
+**Detailed Guide:** [browser-extension/KURULUM.md](browser-extension/KURULUM.md)
+
+## 🚀 Quick Start
+
+**Method 1: With Browser Extension (Recommended)**
+- Just click any download link in your browser
+- Mergen captures it automatically!
+
+**Method 2: Manual URL**
 ```bash
-python -m nuitka --standalone --onefile --enable-plugin=pyside6 ^
-  --assume-yes-for-downloads --include-data-dir=data=data ^
-  --output-dir=build --output-filename=mergen.exe main.py
+./main.py
+# Click "Add URL" and paste download link
 ```
-
-Or simply use the build script:
-```bash
-python build_nuitka.py
-```
-
-## 🎯 Usage
-
-1. **Add Downloads**: Click "Add URL" or press `Ctrl+N`, paste the download link
-2. **Manage Downloads**: Use toolbar buttons to pause, resume, or delete
-3. **Categories**: Files are automatically sorted by extension
-4. **Queues**: Create custom download queues for batch operations
-5. **Settings**: Configure download directory, proxy, theme, and more
-
-### Keyboard Shortcuts
-
-- `Ctrl+N` - Add new download
-- `Ctrl+R` - Resume selected download
-- `Ctrl+P` - Pause selected download
-- `Delete` - Delete selected download
-- `Ctrl+Q` - Quit application
 
 ## 🛠️ Configuration
 
-Configuration files are stored in:
-- **Linux**: `~/.config/mergen/`
-- **macOS**: `~/Library/Application Support/mergen/`
-- **Windows**: `%APPDATA%\mergen\`
+Settings: `~/.config/mergen/config.json`
+
+**Key Settings:**
+- Download directory
+- Max connections (1-32)
+- Auto-categorization
+- Browser integration
+- Language (en/tr)
+- Proxy settings
+- Auto-startup on boot
+
+## 🌍 Supported Platforms
+
+### Operating Systems
+- ✅ Linux (All distributions)
+- ✅ macOS 10.14+
+- ⚠️ Windows (Coming soon)
+
+### Browsers (with extension)
+- ✅ Google Chrome / Chromium
+- ✅ Brave Browser
+- ✅ Microsoft Edge
+- ✅ Zen Browser
+- ✅ Firefox
+- ✅ Any Chromium-based browser
+
+### Desktop Environments
+- ✅ GNOME
+- ✅ KDE Plasma
+- ✅ XFCE
+- ✅ Any DE with system tray support
+
+## 📚 Package Managers
+
+**Coming Soon:**
+- Arch Linux (AUR)
+- Debian/Ubuntu (APT)
+- Fedora (DNF/RPM)
+- macOS (Homebrew)
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions welcome! 
+1. Fork the repo
+2. Create feature branch
+3. Make changes
+4. Submit pull request
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+GPL-3.0 License - see [LICENSE](LICENSE)
 
 ## 🙏 Acknowledgments
 
-- Built with [PySide6](https://doc.qt.io/qtforpython/)
-- HTTP library: [httpx](https://www.python-httpx.org/)
-- Compiled with [Nuitka](https://nuitka.net/)
+- PySide6 for GUI framework
+- Chrome/Firefox for Native Messaging API
+- All contributors and testers
+
+## 📞 Support
+
+- 🐛 [Report Issues](https://github.com/Tunahanyrd/mergen/issues)
+- 💬 [Discussions](https://github.com/Tunahanyrd/mergen/discussions)
+- ⭐ Star if you find it useful!
+
+---
+
+**Made with ❤️ by [Tunahanyrd](https://github.com/Tunahanyrd)**

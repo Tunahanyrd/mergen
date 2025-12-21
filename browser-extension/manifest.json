@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "Mergen Download Manager",
+  "version": "0.7.0",
+  "description": "Capture downloads and send to Mergen Download Manager. Multi-threaded downloads with browser integration.",
+  "author": "Tunahanyrd",
+  "homepage_url": "https://github.com/Tunahanyrd/mergen",
+  "permissions": [
+    "downloads",
+    "nativeMessaging",
+    "contextMenus"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "Mergen Download Manager"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "mergen@tunahanyrd.com",
+      "strict_min_version": "109.0"
+    }
+  }
+}

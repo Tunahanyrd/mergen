@@ -93,7 +93,10 @@ class SettingsDialog(QDialog):
         # 5. Proxy
         tabs.addTab(self.create_proxy_tab(), I18n.get("proxy"))
 
-        # 6. About
+        # 6. Browser Integration
+        tabs.addTab(self.create_browser_tab(), "🌐 Browser Integration")
+
+        # 7. About
         tabs.addTab(self.create_about_tab(), I18n.get("about"))
 
         # Buttons
@@ -413,7 +416,15 @@ class SettingsDialog(QDialog):
 
         self.config.set("close_to_tray", self.close_to_tray_chk.isChecked())
 
-        self.config.set("launch_startup", self.launch_startup.isChecked())
+        # Handle auto-startup
+        autostart_enabled = self.launch_startup.isChecked()
+        self.config.set("launch_startup", autostart_enabled)
+
+        if autostart_enabled:
+            self.enable_autostart()
+        else:
+            self.disable_autostart()
+
         # Theme removed - always dark
         self.config.set("show_complete_dialog", self.show_complete.isChecked())
 
@@ -448,3 +459,289 @@ class SettingsDialog(QDialog):
         }
         i18n_key = name_map.get(cat_name)
         return I18n.get(i18n_key) if i18n_key else cat_name
+
+    def create_browser_tab(self):
+        """Create Browser Integration tab."""
+
+        widget = QWidget()
+        layout = QVBoxLayout()
+
+        # Header
+        header = QLabel("🌐 Browser Integration")
+        header.setStyleSheet("font-size: 16px; font-weight: bold; margin-bottom: 10px;")
+        layout.addWidget(header)
+
+        # Status indicator
+        status_widget = QWidget()
+        status_layout = QHBoxLayout()
+        self.browser_status_icon = QLabel("⚫")
+        self.browser_status_text = QLabel("Checking...")
+        status_layout.addWidget(self.browser_status_icon)
+        status_layout.addWidget(self.browser_status_text)
+        status_layout.addStretch()
+        status_widget.setLayout(status_layout)
+        layout.addWidget(status_widget)
+
+        layout.addSpacing(10)
+
+        # Installation guide
+        guide_group = QGroupBox("📋 Installation")
+        guide_layout = QVBoxLayout()
+
+        # Download link
+        download_label = QLabel(
+            "<b>1. Download Extension:</b><br>"
+            '<a href="https://github.com/Tunahanyrd/mergen/releases/latest/download/mergen-browser-extension.zip">'
+            "📦 Download mergen-browser-extension.zip</a>"
+        )
+        download_label.setOpenExternalLinks(True)
+        download_label.setWordWrap(True)
+        guide_layout.addWidget(download_label)
+
+        # Chrome instructions
+        chrome_label = QLabel(
+            "<b>2. Install in Chrome/Chromium:</b><br>"
+            "• Open <code>chrome://extensions/</code><br>"
+            '• Enable "Developer mode" (top-right)<br>'
+            "• Drag & drop the .zip file<br>"
+            "• Click extension icon to get Extension ID"
+        )
+        chrome_label.setWordWrap(True)
+        guide_layout.addWidget(chrome_label)
+
+        # Firefox instructions
+        firefox_label = QLabel(
+            "<b>Or Firefox:</b><br>"
+            "• Open <code>about:debugging#/runtime/this-firefox</code><br>"
+            '• Click "Load Temporary Add-on"<br>'
+            "• Select the .zip file"
+        )
+        firefox_label.setWordWrap(True)
+        guide_layout.addWidget(firefox_label)
+
+        guide_group.setLayout(guide_layout)
+        layout.addWidget(guide_group)
+
+        # Registration section
+        reg_group = QGroupBox("🔑 Register Extension")
+        reg_layout = QVBoxLayout()
+
+        # Extension ID input
+        id_layout = QHBoxLayout()
+        id_layout.addWidget(QLabel("Extension ID:"))
+        self.ext_id_input = QLineEdit()
+        self.ext_id_input.setPlaceholderText("Paste Extension ID here...")
+        id_layout.addWidget(self.ext_id_input)
+        reg_layout.addLayout(id_layout)
+
+        # Register button
+        register_btn = QPushButton("✅ Register")
+        register_btn.clicked.connect(self.register_extension)
+        reg_layout.addWidget(register_btn)
+
+        # Help text
+        help_text = QLabel("<i>ℹ️ Copy Extension ID from extension popup and paste here.</i>")
+        help_text.setWordWrap(True)
+        reg_layout.addWidget(help_text)
+
+        reg_group.setLayout(reg_layout)
+        layout.addWidget(reg_group)
+
+        layout.addStretch()
+        widget.setLayout(layout)
+
+        # Check status
+        self.check_browser_integration_status()
+
+        return widget
+
+    def check_browser_integration_status(self):
+        """Check if browser integration is registered."""
+        try:
+            import json
+            from pathlib import Path
+
+            # Check Chrome manifest
+            chrome_manifest = Path.home() / ".config/google-chrome/NativeMessagingHosts/com.tunahanyrd.mergen.json"
+            firefox_manifest = Path.home() / ".mozilla/native-messaging-hosts/com.tunahanyrd.mergen.json"
+
+            if chrome_manifest.exists():
+                with open(chrome_manifest) as f:
+                    data = json.load(f)
+                    origins = data.get("allowed_origins", [])
+                    if origins and "PLACEHOLDER" not in origins[0]:
+                        self.browser_status_icon.setText("🟢")
+                        self.browser_status_text.setText("Connected!")
+                        return
+
+            if firefox_manifest.exists():
+                self.browser_status_icon.setText("🟢")
+                self.browser_status_text.setText("Connected (Firefox)")
+                return
+
+            # Not registered
+            self.browser_status_icon.setText("🔴")
+            self.browser_status_text.setText("Not Registered")
+
+        except Exception:
+            self.browser_status_icon.setText("⚠️")
+            self.browser_status_text.setText("Error")
+
+    def register_extension(self):
+        """Register browser extension with given Extension ID."""
+        import json
+        from pathlib import Path
+
+        from PySide6.QtWidgets import QMessageBox
+
+        ext_id = self.ext_id_input.text().strip()
+
+        if not ext_id:
+            QMessageBox.warning(self, I18n.get("warning"), I18n.get("enter_ext_id"))
+            return
+
+        try:
+            # Update Chrome manifest
+            chrome_dir = Path.home() / ".config/google-chrome/NativeMessagingHosts"
+            chrome_dir.mkdir(parents=True, exist_ok=True)
+
+            chrome_manifest = chrome_dir / "com.tunahanyrd.mergen.json"
+            manifest_data = {
+                "name": "com.tunahanyrd.mergen",
+                "description": "Mergen Download Manager Native Messaging Host",
+                "path": str(Path.home() / "bin/mergen-native-host.py"),
+                "type": "stdio",
+                "allowed_origins": [f"chrome-extension://{ext_id}/"],
+            }
+
+            with open(chrome_manifest, "w") as f:
+                json.dump(manifest_data, f, indent=2)
+
+            # Update Firefox manifest
+            firefox_dir = Path.home() / ".mozilla/native-messaging-hosts"
+            firefox_dir.mkdir(parents=True, exist_ok=True)
+
+            firefox_manifest = firefox_dir / "com.tunahanyrd.mergen.json"
+            firefox_data = manifest_data.copy()
+            firefox_data["allowed_origins"] = [f"moz-extension://{ext_id}/"]
+
+            with open(firefox_manifest, "w") as f:
+                json.dump(firefox_data, f, indent=2)
+
+            QMessageBox.information(
+                self,
+                I18n.get("success"),
+                f"✅ {I18n.get('ext_registered_success')}\\n\\n{I18n.get('reload_extension')}",
+            )
+
+            # Update status
+            self.check_browser_integration_status()
+
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to register:\\n{str(e)}")
+
+    def enable_autostart(self):
+        """Enable auto-startup on system boot (Linux/macOS/Windows)."""
+        import os
+        import sys
+        from pathlib import Path
+
+        try:
+            if sys.platform == "linux":
+                # Linux: XDG autostart
+                autostart_dir = Path.home() / ".config/autostart"
+                autostart_dir.mkdir(parents=True, exist_ok=True)
+
+                desktop_file = autostart_dir / "mergen.desktop"
+
+                # Get current script path
+                current_exec = os.path.abspath(sys.argv[0])
+
+                desktop_content = f"""[Desktop Entry]
+Type=Application
+Name=Mergen
+Exec={current_exec}
+Icon=mergen
+Comment=Mergen Download Manager
+X-GNOME-Autostart-enabled=true
+"""
+                desktop_file.write_text(desktop_content)
+
+            elif sys.platform == "darwin":
+                # macOS: LaunchAgent
+                launch_agents_dir = Path.home() / "Library/LaunchAgents"
+                launch_agents_dir.mkdir(parents=True, exist_ok=True)
+
+                plist_file = launch_agents_dir / "com.tunahanyrd.mergen.plist"
+
+                current_exec = os.path.abspath(sys.argv[0])
+
+                plist_content = f"""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.tunahanyrd.mergen</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>{current_exec}</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+</dict>
+</plist>
+"""
+                plist_file.write_text(plist_content)
+
+            elif sys.platform == "win32":
+                # Windows: Registry
+                import winreg
+
+                current_exec = os.path.abspath(sys.argv[0])
+
+                # Open/Create registry key
+                key = winreg.OpenKey(
+                    winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Run", 0, winreg.KEY_SET_VALUE
+                )
+
+                # Set Mergen to start on boot
+                winreg.SetValueEx(key, "Mergen", 0, winreg.REG_SZ, current_exec)
+                winreg.CloseKey(key)
+
+        except Exception as e:
+            print(f"Failed to enable autostart: {e}")
+
+    def disable_autostart(self):
+        """Disable auto-startup on system boot (Linux/macOS/Windows)."""
+        import sys
+        from pathlib import Path
+
+        try:
+            if sys.platform == "linux":
+                autostart_file = Path.home() / ".config/autostart/mergen.desktop"
+                if autostart_file.exists():
+                    autostart_file.unlink()
+
+            elif sys.platform == "darwin":
+                plist_file = Path.home() / "Library/LaunchAgents/com.tunahanyrd.mergen.plist"
+                if plist_file.exists():
+                    plist_file.unlink()
+
+            elif sys.platform == "win32":
+                # Windows: Remove from Registry
+                import winreg
+
+                try:
+                    key = winreg.OpenKey(
+                        winreg.HKEY_CURRENT_USER,
+                        r"Software\Microsoft\Windows\CurrentVersion\Run",
+                        0,
+                        winreg.KEY_SET_VALUE,
+                    )
+                    winreg.DeleteValue(key, "Mergen")
+                    winreg.CloseKey(key)
+                except FileNotFoundError:
+                    pass  # Key doesn't exist, already disabled
+
+        except Exception as e:
+            print(f"Failed to disable autostart: {e}")

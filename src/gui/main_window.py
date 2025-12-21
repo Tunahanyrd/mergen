@@ -6,7 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from PySide6.QtCore import QSize, Qt, QTime, QTimer, QUrl
+from PySide6.QtCore import QSize, Qt, QTime, QTimer, QUrl, Signal
 from PySide6.QtGui import QAction, QCursor, QDesktopServices, QIcon
 from PySide6.QtWidgets import (
     QApplication,
@@ -41,6 +41,8 @@ from src.gui.styles import MERGEN_THEME, MERGEN_THEME_LIGHT
 
 
 class MainWindow(QMainWindow):
+    browser_download_signal = Signal(str, str)
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle(I18n.get("app_title"))
@@ -84,8 +86,9 @@ class MainWindow(QMainWindow):
         self.active_dialogs = []
         self.row_map = {}
         self.queue_manager = QueueManager(self.config)
-
+        self.browser_download_signal.connect(self.handle_browser_download)
         self.setup_ui()
+
         self.apply_theme()
         self.refresh_table()
         self.setup_tray()
@@ -722,6 +725,71 @@ class MainWindow(QMainWindow):
             dlg.worker.progress_signal.connect(lambda d, t, s, seg: self.update_live_row(new_item, d, t, s))
 
             # 3. Status -> Update Table Status Column
+            dlg.worker.status_signal.connect(lambda m: self.update_item_status(new_item, m))
+
+            self.active_dialogs.append(dlg)
+            dlg.finished.connect(lambda: self.cleanup_dialog(dlg))
+            dlg.show()
+
+    def handle_browser_download(self, url, filename):
+        """
+        Handle download from browser (called via signal from HTTP server).
+        This runs in UI thread thanks to Qt signal/slot mechanism.
+        """
+        # Show desktop notification
+        if hasattr(self, "tray_icon") and self.tray_icon:
+            display_name = filename if filename else url[:50]
+            self.tray_icon.showMessage(I18n.get("app_title"), f"📥 {display_name}", QSystemTrayIcon.Information, 2000)
+
+        # Add URL using existing dialog system
+        # This will work because we're now in UI thread
+        if url and url.strip():
+            # Simulate user adding URL
+
+            # Don't show dialog, just process the URL directly
+            # by calling the add_url logic without the input dialog
+            text = url.strip()
+
+            # Use pre-download dialog if enabled, otherwise auto-add
+            if self.config.get("show_pre_download_dialog", True):
+                from src.gui.pre_download_dialog import PreDownloadDialog
+
+                pre_dlg = PreDownloadDialog(text, self.config, self.queue_manager, parent=self)
+                if pre_dlg.exec() == QDialog.Accepted:
+                    values = pre_dlg.get_values()
+                    save_dir = values["save_path"]
+                    queue_name = values["queue"]
+                    if values["dont_ask"]:
+                        self.config.set("show_pre_download_dialog", False)
+                else:
+                    return  # User cancelled
+            else:
+                # Auto-add without dialog
+                save_dir = self.config.get("default_download_dir")
+                queue_name = self.config.get("default_queue", "Main download queue")
+
+            # Add download
+            import os
+            from pathlib import Path
+
+            fname = filename if filename else Path(text.split("?")[0]).name or "file.dat"
+            new_item = DownloadItem(
+                url=text, filename=os.path.join(save_dir, fname), save_path=save_dir, queue=queue_name
+            )
+            new_item.status = I18n.get("downloading")
+            new_item.size = I18n.get("initializing")
+            self.downloads.append(new_item)
+            self.config.save_history(self.downloads)
+
+            # Refresh table to show new download
+            self.refresh_table()
+
+            # Start download dialog
+            dlg = DownloadDialog(text, self, save_dir=save_dir)
+
+            # Connect signals for live updates
+            dlg.download_complete.connect(lambda s, f: self.update_download_status(new_item, s, f))
+            dlg.worker.progress_signal.connect(lambda d, t, s, seg: self.update_live_row(new_item, d, t, s))
             dlg.worker.status_signal.connect(lambda m: self.update_item_status(new_item, m))
 
             self.active_dialogs.append(dlg)

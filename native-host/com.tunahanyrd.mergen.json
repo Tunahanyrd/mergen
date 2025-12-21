@@ -1,0 +1,9 @@
+{
+  "name": "com.tunahanyrd.mergen",
+  "description": "Mergen Download Manager Native Messaging Host",
+  "path": "/usr/local/bin/mergen-native-host.py",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://ebmfnbdifoofpdaglkdboheipjmpligb/"
+  ]
+}

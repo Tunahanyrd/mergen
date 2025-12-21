@@ -1,6 +1,2 @@
-tqdm
-httpx
-pyside6
-nuitka
-zstandard
-ordered-set
+PySide6>=6.5.0
+requests>=2.31.0

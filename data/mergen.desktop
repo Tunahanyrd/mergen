@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Mergen
+GenericName=Download Manager
+Comment=Multi-threaded Download Manager with Browser Integration
+Comment[tr]=Tarayıcı Entegrasyonlu Çok İş Parçacıklı İndirme Yöneticisi
+Exec=mergen
+Icon=mergen
+Terminal=false
+Categories=Network;FileTransfer;Qt;
+Keywords=download;manager;browser;
+StartupWMClass=mergen
+StartupNotify=true

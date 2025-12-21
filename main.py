@@ -44,6 +44,12 @@ if __name__ == "__main__":
 
     # Now create main window with correct language
     window = MainWindow()
+
+    # Start browser integration server
+    from src.core.browser_integration import start_http_server
+
+    start_http_server(window, port=8765)
+
     window.show()
 
     sys.exit(app.exec())
