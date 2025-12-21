@@ -2,6 +2,8 @@ import json
 import os
 from pathlib import Path
 
+from PySide6.QtCore import QStandardPaths
+
 CONFIG_FILE = "config.json"
 HISTORY_FILE = "history.json"
 
@@ -19,10 +21,27 @@ class ConfigManager:
         if self._initialized:
             return
 
-        self.config_dir = Path(os.getcwd())  # Or use user home .config ideally, but sticking to CWD for portability
+        # Use Standard Config Location (e.g., ~/.config/mergen or %APPDATA%/mergen)
+        # Assuming app name is set in main.py, but QStandardPaths uses app name if set,
+        # else usually generic. We should ensure main sets Org/App Name.
+        self.config_dir = Path(QStandardPaths.writableLocation(QStandardPaths.AppConfigLocation))
+
+        # Ensure dir exists
+        if not self.config_dir.exists():
+            try:
+                self.config_dir.mkdir(parents=True, exist_ok=True)
+            except Exception:
+                pass  # Fallback?
+
         self.config = {}
+
+        # Localized Download Path
+        dl_path = QStandardPaths.writableLocation(QStandardPaths.DownloadLocation)
+        if not dl_path:
+            dl_path = str(Path.home() / "Downloads")
+
         self.defaults = {
-            "default_download_dir": str(Path.home() / "Downloads"),
+            "default_download_dir": dl_path,
             "max_connections": 8,
             "theme": "dark",
             "show_complete_dialog": True,
@@ -33,15 +52,15 @@ class ConfigManager:
             "proxy_pass": "",
             "geometry": "",
             "categories": {
-                "Compressed": (["zip", "rar", "7z", "tar", "gz"], "zip", str(Path.home() / "Downloads/Compressed")),
+                "Compressed": (["zip", "rar", "7z", "tar", "gz"], "zip", str(Path(dl_path) / "Compressed")),
                 "Documents": (
                     ["doc", "docx", "pdf", "txt", "xls", "ppt"],
                     "doc",
-                    str(Path.home() / "Downloads/Documents"),
+                    str(Path(dl_path) / "Documents"),
                 ),
-                "Music": (["mp3", "wav", "flac", "aac"], "music", str(Path.home() / "Downloads/Music")),
-                "Programs": (["exe", "msi", "deb", "rpm", "AppImage"], "app", str(Path.home() / "Downloads/Programs")),
-                "Video": (["mp4", "mkv", "avi", "mov", "webm"], "video", str(Path.home() / "Downloads/Video")),
+                "Music": (["mp3", "wav", "flac", "aac"], "music", str(Path(dl_path) / "Music")),
+                "Programs": (["exe", "msi", "deb", "rpm", "AppImage"], "app", str(Path(dl_path) / "Programs")),
+                "Video": (["mp4", "mkv", "avi", "mov", "webm"], "video", str(Path(dl_path) / "Video")),
             },
             "queues": ["Main Queue"],
         }

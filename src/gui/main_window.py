@@ -3,6 +3,7 @@ import hashlib
 import os
 import re
 import subprocess
+import sys
 from pathlib import Path
 
 from PySide6.QtCore import QSize, Qt, QTime, QTimer, QUrl
@@ -60,7 +61,24 @@ class MainWindow(QMainWindow):
         self.resize(1000, 600)
 
         # Icon Setup
-        icon_path = os.path.join(os.getcwd(), "data", "mergen.png")
+        # Handle Nuitka/PyInstaller _MEIPASS
+        if hasattr(sys, "_MEIPASS"):
+            base_dir = sys._MEIPASS
+        else:
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            # If we are in src/gui, we need to go up to root
+            # layout is root/data and root/src/gui
+            # So from src/gui, we go up two levels?
+            # Actually, standardizing on os.getcwd() usually works for dev,
+            # but let's try to be robust.
+            base_dir = os.getcwd()
+
+        icon_path = os.path.join(base_dir, "data", "mergen.png")
+        if not os.path.exists(icon_path):
+            # Fallback: maybe we are in src/gui and data is in ../../data
+            # But usually running from 'main.py' at root sets CWD to root.
+            pass
+
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
             self.app_icon = QIcon(icon_path)
