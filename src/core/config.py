@@ -53,11 +53,7 @@ class ConfigManager:
             "geometry": "",
             "categories": {
                 "Compressed": (["zip", "rar", "7z", "tar", "gz"], "zip", str(Path(dl_path) / "Compressed")),
-                "Documents": (
-                    ["doc", "docx", "pdf", "txt", "xls", "ppt"],
-                    "doc",
-                    str(Path(dl_path) / "Documents"),
-                ),
+                "Documents": (["doc", "docx", "pdf", "txt", "xls", "ppt"], "doc", str(Path(dl_path) / "Documents")),
                 "Music": (["mp3", "wav", "flac", "aac"], "music", str(Path(dl_path) / "Music")),
                 "Programs": (["exe", "msi", "deb", "rpm", "AppImage"], "app", str(Path(dl_path) / "Programs")),
                 "Video": (["mp4", "mkv", "avi", "mov", "webm"], "video", str(Path(dl_path) / "Video")),

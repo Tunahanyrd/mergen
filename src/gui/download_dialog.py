@@ -225,8 +225,9 @@ class DownloadDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle(I18n.get("downloading"))
         self.resize(720, 520)
-        self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setWindowFlags(self.windowFlags() | Qt.FramelessWindowHint)
+        # Removed frameless flags - now fully resizable with standard controls
+        # self.setAttribute(Qt.WA_TranslucentBackground)
+        # self.setWindowFlags(self.windowFlags() | Qt.FramelessWindowHint)
 
         self.url = url
         self.save_dir = save_dir
@@ -252,42 +253,11 @@ class DownloadDialog(QDialog):
         self.setup_ui()
         self.worker.start()
 
-    def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            self._drag_pos = event.globalPos() - self.frameGeometry().topLeft()
-            event.accept()
-
-    def mouseMoveEvent(self, event):
-        if event.buttons() == Qt.LeftButton:
-            self.move(event.globalPos() - self._drag_pos)
-            event.accept()
-
     def setup_ui(self):
-        self.container = QFrame(self)
-        self.container.setStyleSheet(
-            """
-            QFrame {
-                background-color: #11111b;
-                border: 1px solid #45475a;
-                border-radius: 24px;
-            }
-            QLabel { color: #cdd6f4; border: none; }
-        """
-        )
-
-        shadow = QGraphicsDropShadowEffect(self)
-        shadow.setBlurRadius(30)
-        shadow.setColor(QColor(0, 0, 0, 180))
-        shadow.setOffset(0, 10)
-        self.container.setGraphicsEffect(shadow)
-
+        # Simplified for standard window (no longer frameless)
         main_layout = QVBoxLayout(self)
-        main_layout.addWidget(self.container)
-        main_layout.setContentsMargins(10, 10, 10, 10)
-
-        layout = QVBoxLayout(self.container)
-        layout.setContentsMargins(35, 35, 35, 35)
-        layout.setSpacing(25)
+        main_layout.setContentsMargins(20, 20, 20, 20)
+        main_layout.setSpacing(25)
 
         header = QHBoxLayout()
         icon_lbl = QLabel()
@@ -314,7 +284,7 @@ class DownloadDialog(QDialog):
         header.addSpacing(15)
         header.addLayout(title_box)
         header.addStretch()
-        layout.addLayout(header)
+        main_layout.addLayout(header)
 
         stats_layout = QGridLayout()
         stats_layout.setSpacing(15)
@@ -329,16 +299,16 @@ class DownloadDialog(QDialog):
         stats_layout.addWidget(self.card_downloaded, 1, 0)
         stats_layout.addWidget(self.card_total, 1, 1)
 
-        layout.addLayout(stats_layout)
+        main_layout.addLayout(stats_layout)
 
         # Dynamic thread count from Config
         max_conn = self.max_connections
 
-        layout.addWidget(QLabel(I18n.get("thread_heatmap")))
+        main_layout.addWidget(QLabel(I18n.get("thread_heatmap")))
         self.heatmap = HeatmapBar(segments=max_conn)
-        layout.addWidget(self.heatmap)
+        main_layout.addWidget(self.heatmap)
 
-        layout.addStretch()
+        main_layout.addStretch()
 
         footer = QHBoxLayout()
         footer.addStretch()
@@ -355,7 +325,7 @@ class DownloadDialog(QDialog):
         footer.addWidget(self.btn_hide)
         footer.addWidget(self.btn_pause)
         footer.addWidget(self.btn_cancel)
-        layout.addLayout(footer)
+        main_layout.addLayout(footer)
 
     def cancel_download(self):
         if self.worker.is_running:

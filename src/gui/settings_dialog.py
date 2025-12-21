@@ -125,19 +125,15 @@ class SettingsDialog(QDialog):
         g1.setLayout(f1)
         layout.addWidget(g1)
 
-        g2 = QGroupBox(I18n.get("view"))
-        f2 = QHBoxLayout()
-        self.theme_combo = QComboBox()
-        self.theme_combo.addItems(["Dark", "Light"])
-        self.theme_combo.setCurrentText(self.config.get("theme", "Dark").capitalize())
-        f2.addWidget(QLabel(I18n.get("theme")))
-        f2.addWidget(self.theme_combo)
-        f2.addStretch()
-        g2.setLayout(f2)
-        layout.addWidget(g2)
+        # Theme removed - only dark mode now
 
         g3 = QGroupBox(I18n.get("dialogs"))
         f3 = QVBoxLayout()
+
+        self.close_to_tray_chk = QCheckBox(I18n.get("minimize_to_tray"))
+        self.close_to_tray_chk.setChecked(self.config.get("close_to_tray", False))
+        f3.addWidget(self.close_to_tray_chk)
+
         self.show_complete = QCheckBox(I18n.get("show_complete_dialog"))
         self.show_complete.setChecked(self.config.get("show_complete_dialog", True))
         f3.addWidget(self.show_complete)
@@ -376,10 +372,10 @@ class SettingsDialog(QDialog):
             h.addWidget(l2)
             il.addLayout(h)
 
-        add_row("Developed by:", "Tunahanyrd")
-        add_row("GitHub:", "https://github.com/Tunahanyrd/mergen", True)
-        add_row("Support:", "tunahanyrd@gmail.com")
-        add_row("License:", "MIT License")
+        add_row(I18n.get("developed_by"), "Tunahanyrd")
+        add_row(I18n.get("github"), "https://github.com/Tunahanyrd/mergen", True)
+        add_row(I18n.get("support"), "tunahanyrd@gmail.com")
+        add_row(I18n.get("license"), "MIT License")
         il.addStretch()
         l_copy = QLabel("© 2024 Tunahanyrd. All rights reserved.")
         l_copy.setAlignment(Qt.AlignCenter)
@@ -393,18 +389,31 @@ class SettingsDialog(QDialog):
         return tab
 
     def browse_def_path(self):
-        d = QFileDialog.getExistingDirectory(self, "Select Directory", self.def_path_edit.text())
+        d = QFileDialog.getExistingDirectory(self, I18n.get("select_directory"), self.def_path_edit.text())
         if d:
             self.def_path_edit.setText(d)
 
     def save_settings(self):
         # Save values to config
+        old_lang = self.config.get("language", "en")
         lang_code = "tr" if self.lang_combo.currentIndex() == 1 else "en"
         self.config.set("language", lang_code)
         I18n.set_language(lang_code)
 
+        # Check if language changed
+        if old_lang != lang_code:
+            from PySide6.QtWidgets import QMessageBox
+
+            QMessageBox.information(
+                self,
+                I18n.get("info"),
+                "Please restart the application for language changes to take effect.\nLütfen dil değişikliklerinin etkili olması için uygulamayı yeniden başlatın.",
+            )
+
+        self.config.set("close_to_tray", self.close_to_tray_chk.isChecked())
+
         self.config.set("launch_startup", self.launch_startup.isChecked())
-        self.config.set("theme", self.theme_combo.currentText().lower())
+        # Theme removed - always dark
         self.config.set("show_complete_dialog", self.show_complete.isChecked())
 
         # Save modified categories
@@ -421,3 +430,20 @@ class SettingsDialog(QDialog):
         self.config.set("proxy_pass", self.proxy_pass.text())
 
         self.accept()
+
+    def translate_category_name(self, cat_name):
+        """Translate category name if it's a default category."""
+        name_map = {
+            "Compressed": "compressed",
+            "Documents": "documents",
+            "Music": "music",
+            "Programs": "programs",
+            "Video": "video",
+            "Arşivler": "compressed",
+            "Belgeler": "documents",
+            "Müzikler": "music",
+            "Programlar": "programs",
+            "Videolar": "video",
+        }
+        i18n_key = name_map.get(cat_name)
+        return I18n.get(i18n_key) if i18n_key else cat_name

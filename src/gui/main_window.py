@@ -10,6 +10,7 @@ from PySide6.QtCore import QSize, Qt, QTime, QTimer, QUrl
 from PySide6.QtGui import QAction, QCursor, QDesktopServices, QIcon
 from PySide6.QtWidgets import (
     QApplication,
+    QDialog,
     QHBoxLayout,
     QHeaderView,
     QInputDialog,
@@ -165,12 +166,12 @@ class MainWindow(QMainWindow):
         self.table.setHorizontalHeaderLabels(
             [
                 I18n.get("file_name"),
-                "Size",
+                I18n.get("size"),
                 I18n.get("status"),
                 I18n.get("time_left"),
                 I18n.get("transfer_rate"),
                 I18n.get("last_try"),
-                "Description",
+                I18n.get("description"),
             ]
         )
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
@@ -196,7 +197,7 @@ class MainWindow(QMainWindow):
         footer_layout = QHBoxLayout()
         footer_layout.setContentsMargins(10, 5, 20, 5)
         footer_layout.addStretch()
-        self.total_speed_lbl = QLabel("Total Speed: 0.0 MB/s")
+        self.total_speed_lbl = QLabel(I18n.get("total_speed") + ": 0.0 MB/s")
         footer_layout.addWidget(self.total_speed_lbl)
 
         main_layout.addLayout(footer_layout)
@@ -213,17 +214,19 @@ class MainWindow(QMainWindow):
         file_menu = menu_bar.addMenu(I18n.get("file"))
 
         add_url_act = QAction(I18n.get("add_url"), self)
+        add_url_act.setShortcut("Ctrl+N")
         add_url_act.triggered.connect(self.add_url)
         file_menu.addAction(add_url_act)
 
         exit_act = QAction(I18n.get("exit"), self)
+        exit_act.setShortcut("Ctrl+Q")
         exit_act.triggered.connect(self.close)
         file_menu.addAction(exit_act)
 
         help_menu = menu_bar.addMenu(I18n.get("help"))
 
         about_act = QAction(I18n.get("about"), self)
-        about_act.triggered.connect(lambda: self.open_settings(tab_index=5))
+        about_act.triggered.connect(self.show_about_dialog)
         help_menu.addAction(about_act)
 
     def toggle_toolbar(self, checked):
@@ -244,7 +247,7 @@ class MainWindow(QMainWindow):
             (I18n.get("delete"), self.get_std_icon("delete"), self.delete_download),
             (None, None, None),
             (I18n.get("options"), self.get_std_icon("settings"), self.open_settings),
-            ("Queue Manager", self.get_std_icon("sched"), self.open_queue_manager_dialog),
+            (I18n.get("scheduler"), self.get_std_icon("sched"), self.open_queue_manager_dialog),
         ]
 
         for item in actions:
@@ -258,7 +261,7 @@ class MainWindow(QMainWindow):
             toolbar.addAction(act)
 
         toolbar.addSeparator()
-        del_all_act = QAction(self.get_std_icon("trash"), "Delete All", self)
+        del_all_act = QAction(self.get_std_icon("trash"), I18n.get("delete_all"), self)
         del_all_act.triggered.connect(self.delete_all_action)
         toolbar.addAction(del_all_act)
 
@@ -322,13 +325,24 @@ class MainWindow(QMainWindow):
             else:
                 continue
 
+            # Translate category names based on key
             display_name = cat_key
             lower_cat = cat_key.lower()
-            if "video" in lower_cat:
+
+            # Check for each default category type
+            if (
+                "compress" in lower_cat
+                or "zip" in lower_cat
+                or "rar" in lower_cat
+                or "archive" in lower_cat
+                or "arş" in lower_cat
+            ):
+                display_name = I18n.get("compressed")
+            elif "video" in lower_cat:
                 display_name = I18n.get("videos")
-            elif "music" in lower_cat:
+            elif "music" in lower_cat or "müz" in lower_cat:
                 display_name = I18n.get("music")
-            elif "doc" in lower_cat:
+            elif "doc" in lower_cat or "belge" in lower_cat:
                 display_name = I18n.get("documents")
             elif "program" in lower_cat:
                 display_name = I18n.get("programs")
@@ -336,9 +350,9 @@ class MainWindow(QMainWindow):
             # Key change: Data is now tuple ("cat", cat_key)
             add_item(root, display_name, icon, ("cat", cat_key))
 
-        add_item(root, "Others", "file", ("others", None))
+        add_item(root, I18n.get("others"), "file", ("others", None))
 
-        add_item(self.sidebar, "Unfinished", "pause", ("unfinished", None))
+        add_item(self.sidebar, I18n.get("unfinished"), "pause", ("unfinished", None))
         add_item(self.sidebar, I18n.get("finished"), "success", ("finished", None))
 
     # Queue Logic Integration
@@ -436,14 +450,14 @@ class MainWindow(QMainWindow):
         self.table.item(row, 4).setText(sp_str)
 
     def add_category_action(self):
-        text, ok = QInputDialog.getText(self, "Add Category", "Category Name:")
+        text, ok = QInputDialog.getText(self, I18n.get("add_category"), I18n.get("category_name"))
         if ok and text:
             cats = self.config.get("categories", {})
             if text in cats:
-                QMessageBox.warning(self, "Error", "Category exists.")
+                QMessageBox.warning(self, I18n.get("error"), I18n.get("category_exists"))
                 return
 
-            exts_txt, ok2 = QInputDialog.getMultiLineText(self, "Extensions", "Enter extensions (space sep):")
+            exts_txt, ok2 = QInputDialog.getMultiLineText(self, I18n.get("extensions"), I18n.get("enter_extensions"))
             if ok2:
                 exts = exts_txt.split()
                 cats[text] = (exts, "folder")  # Default icon
@@ -504,7 +518,7 @@ class MainWindow(QMainWindow):
         download_item.status = I18n.get("complete") if success else I18n.get("failed")
         if success:
             download_item.filename = filename
-            download_item.size = "Done"
+            download_item.size = I18n.get("done")
 
         self.config.save_history(self.downloads)
         self.refresh_table()
@@ -645,29 +659,54 @@ class MainWindow(QMainWindow):
 
     def add_url(self):
         # Same as before...
-        text, ok = QInputDialog.getText(self, I18n.get("add_url"), "Address:")
+        text, ok = QInputDialog.getText(self, I18n.get("add_url"), I18n.get("address"))
         if ok and text:
             # ...
             text = text.strip()
             if not re.match(r"^https?://", text):
                 return
 
+            # Check if pre-download dialog should be shown
+            show_pre_dialog = self.config.get("show_pre_download_dialog", True)
+
+            if show_pre_dialog:
+                # Show pre-download dialog
+                from src.gui.pre_download_dialog import PreDownloadDialog
+
+                pre_dlg = PreDownloadDialog(text, self.config, self.queue_manager, self)
+                if pre_dlg.exec() != QDialog.Accepted:
+                    return  # User cancelled
+
+                # Get values from dialog
+                values = pre_dlg.get_values()
+                save_dir = values["save_path"]
+                queue_name = values["queue"]
+
+                # Update config if user selected "don't ask again"
+                if values["dont_ask"]:
+                    self.config.set("show_pre_download_dialog", False)
+            else:
+                # Use default values
+                fname = Path(text.split("?")[0]).name or "file.dat"
+                save_dir = self.config.get("default_download_dir")
+                queue_name = self.config.get("default_queue", "Main download queue")
+
+                # Cat detection (only if file has extension)
+                cats = self.config.get("categories", {})
+                ext = Path(fname).suffix.lstrip(".").lower()
+                if ext:  # Only check categories if extension exists
+                    for name, val in cats.items():
+                        if len(val) >= 2:
+                            cexts = val[0]
+                            cpath = val[2] if len(val) > 2 else ""
+                            if ext in cexts and cpath:
+                                save_dir = cpath
+                                break
+
             fname = Path(text.split("?")[0]).name or "file.dat"
-            save_dir = self.config.get("default_download_dir")
-
-            # Cat detection (only if file has extension)
-            cats = self.config.get("categories", {})
-            ext = Path(fname).suffix.lstrip(".").lower()
-            if ext:  # Only check categories if extension exists
-                for name, val in cats.items():
-                    if len(val) >= 2:
-                        cexts = val[0]
-                        cpath = val[2] if len(val) > 2 else ""
-                        if ext in cexts and cpath:
-                            save_dir = cpath
-                            break
-
-            new_item = DownloadItem(url=text, filename=os.path.join(save_dir, fname), save_path=save_dir)
+            new_item = DownloadItem(
+                url=text, filename=os.path.join(save_dir, fname), save_path=save_dir, queue=queue_name
+            )
             new_item.status = I18n.get("downloading")
             new_item.size = I18n.get("initializing")
             self.downloads.append(new_item)
@@ -688,8 +727,6 @@ class MainWindow(QMainWindow):
             self.active_dialogs.append(dlg)
             dlg.finished.connect(lambda: self.cleanup_dialog(dlg))
             dlg.show()
-            dlg.finished.connect(lambda: self.cleanup_dialog(dlg))
-            dlg.show()
 
     def cleanup_dialog(self, dlg):
         if dlg in self.active_dialogs:
@@ -705,8 +742,13 @@ class MainWindow(QMainWindow):
         # Quick actions
         queues = self.config.get("queues", ["Main Queue"])
 
-        choices = ["Start Queue...", "Stop Queue", "Create New Queue", "Delete Queue"]
-        item, ok = QInputDialog.getItem(self, "Queue Manager", "Select Action:", choices, 0, False)
+        choices = [
+            I18n.get("start_queue"),
+            I18n.get("stop_queue"),
+            I18n.get("create_new_queue"),
+            I18n.get("delete_queue"),
+        ]
+        item, ok = QInputDialog.getItem(self, I18n.get("scheduler"), I18n.get("select_action"), choices, 0, False)
         if not ok or not item:
             return
 
@@ -759,7 +801,7 @@ class MainWindow(QMainWindow):
             # So we should match against keys in self.config.get("categories").
 
             # Items we definitely CANNOT delete: All, Unfinished, Finished, Others (hardcoded in setup)
-            protected = [I18n.get("all_downloads"), "Unfinished", I18n.get("finished"), "Others"]
+            protected = [I18n.get("all_downloads"), I18n.get("unfinished"), I18n.get("finished"), I18n.get("others")]
 
             if text not in protected:
                 menu.addSeparator()
@@ -1047,6 +1089,24 @@ class MainWindow(QMainWindow):
         self.tray_icon.setContextMenu(tray_menu)
         self.tray_icon.show()
         self.tray_icon.activated.connect(self.on_tray_activated)
+
+    def show_about_dialog(self):
+        """Show About dialog with app information."""
+        from PySide6.QtWidgets import QMessageBox
+
+        about_text = """
+        <h2>MERGEN</h2>
+        <p><b>Version:</b> 1.0.0</p>
+        <p><b>Multi-threaded Download Manager</b></p>
+        <br>
+        <p>Built with PySide6 & Python</p>
+        """
+
+        msg = QMessageBox(self)
+        msg.setWindowTitle(I18n.get("about"))
+        msg.setText(about_text)
+        msg.setIcon(QMessageBox.Information)
+        msg.exec()
 
     def on_tray_activated(self, reason):
         if reason == QSystemTrayIcon.DoubleClick:

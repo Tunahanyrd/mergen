@@ -6,6 +6,13 @@ from datetime import datetime
 
 from PySide6.QtCore import QObject, QTimer, Signal
 
+# Default queue name constant
+from src.core.i18n import I18n
+
+
+def DEFAULT_QUEUE_NAME():
+    return I18n.get("main_queue")
+
 
 class QueueManager(QObject):
     """
@@ -38,7 +45,7 @@ class QueueManager(QObject):
         queues = self.config.get("queues", {})
         if not queues:
             queues = {
-                "Main download queue": {
+                DEFAULT_QUEUE_NAME: {
                     "icon": "download",
                     "max_concurrent": 3,
                     "schedule_enabled": False,
@@ -47,11 +54,15 @@ class QueueManager(QObject):
                 }
             }
             self.config.set("queues", queues)
-            self.config.set("default_queue", "Main download queue")
+            self.config.set("default_queue", DEFAULT_QUEUE_NAME)
 
     def get_queues(self):
         """Returns list of all queue names."""
-        return list(self.config.get("queues", {}).keys())
+
+        queues = self.config.get("queues", {})
+        if isinstance(queues, list):
+            return queues
+        return list(queues.keys())
 
     def create_queue(self, name, icon="folder", max_concurrent=3):
         """Creates a new queue with default settings."""
@@ -59,6 +70,19 @@ class QueueManager(QObject):
             return False
 
         queues = self.config.get("queues", {})
+        # Convert legacy list to dict
+        if isinstance(queues, list):
+            queues = {
+                q: {
+                    "icon": "folder",
+                    "max_concurrent": 3,
+                    "schedule_enabled": False,
+                    "schedule_start": None,
+                    "schedule_stop": None,
+                }
+                for q in queues
+            }
+
         queues[name] = {
             "icon": icon,
             "max_concurrent": max_concurrent,
@@ -72,6 +96,10 @@ class QueueManager(QObject):
 
     def delete_queue(self, name):
         """Deletes a queue and reassigns its downloads to default queue."""
+        # Protect default queue from deletion
+        if name == DEFAULT_QUEUE_NAME:
+            return False
+
         if name not in self.get_queues():
             return False
 
@@ -81,6 +109,19 @@ class QueueManager(QObject):
 
         # Remove from config
         queues = self.config.get("queues", {})
+        # Convert legacy list to dict first
+        if isinstance(queues, list):
+            queues = {
+                q: {
+                    "icon": "folder",
+                    "max_concurrent": 3,
+                    "schedule_enabled": False,
+                    "schedule_start": None,
+                    "schedule_stop": None,
+                }
+                for q in queues
+            }
+
         del queues[name]
         self.config.set("queues", queues)
 
@@ -90,6 +131,15 @@ class QueueManager(QObject):
     def get_queue_settings(self, name):
         """Returns settings dict for a queue."""
         queues = self.config.get("queues", {})
+        # Handle legacy list format
+        if isinstance(queues, list):
+            return {
+                "icon": "folder",
+                "max_concurrent": 3,
+                "schedule_enabled": False,
+                "schedule_start": None,
+                "schedule_stop": None,
+            }
         return queues.get(name, {})
 
     def update_queue_settings(self, name, settings):

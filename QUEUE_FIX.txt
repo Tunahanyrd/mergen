@@ -1,0 +1,8 @@
+    def get_queues(self):
+        """Returns list of all queue names."""
+        queues = self.config.get("queues", {})
+        # Handle legacy list format (for backward compatibility)
+        if isinstance(queues, list):
+            return queues
+        # New dict format
+        return list(queues.keys())

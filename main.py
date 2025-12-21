@@ -29,6 +29,20 @@ if __name__ == "__main__":
     if os.path.exists(icon_path):
         app.setWindowIcon(QIcon(icon_path))
 
+    # Apply theme
+    from src.gui.styles import MERGEN_THEME
+
+    app.setStyleSheet(MERGEN_THEME)
+
+    # Initialize language BEFORE creating UI
+    from src.core.config import ConfigManager
+    from src.core.i18n import I18n
+
+    config = ConfigManager()
+    lang = config.get("language", "tr")  # Default to Turkish
+    I18n.set_language(lang)
+
+    # Now create main window with correct language
     window = MainWindow()
     window.show()
 
