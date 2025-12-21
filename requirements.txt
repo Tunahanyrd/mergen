@@ -1,3 +1,6 @@
 tqdm
 httpx
 pyside6
+nuitka
+zstandard
+ordered-set

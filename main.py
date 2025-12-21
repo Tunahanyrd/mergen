@@ -1,4 +1,3 @@
-#!/home/tunahan/miniconda3/envs/ml_env/bin/python
 # -*- coding: utf-8 -*-
 """
 Created on December 20, 2025 19:43:23
