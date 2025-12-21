@@ -50,17 +50,19 @@ jobs:
     - name: Build with Nuitka (Linux)
       if: runner.os == 'Linux'
       run: |
-        python -m nuitka --standalone --onefile --enable-plugin=pyside6 --assume-yes-for-downloads --static-libpython=no --output-dir=build --output-filename=mergen main.py
+        python -m nuitka --standalone --onefile --enable-plugin=pyside6 --assume-yes-for-downloads --static-libpython=no --include-data-dir=data=data --output-dir=build --output-filename=mergen main.py
+        file build/mergen
+        ls -lah build/mergen
         
     - name: Build with Nuitka (Windows)
       if: runner.os == 'Windows'
       run: |
-        python -m nuitka --standalone --onefile --enable-plugin=pyside6 --assume-yes-for-downloads --output-dir=build --output-filename=mergen.exe main.py
+        python -m nuitka --standalone --onefile --enable-plugin=pyside6 --assume-yes-for-downloads --include-data-dir=data=data --output-dir=build --output-filename=mergen.exe main.py
         
     - name: Build with Nuitka (macOS)
       if: runner.os == 'macOS'
       run: |
-        python -m nuitka --standalone --onefile --enable-plugin=pyside6 --assume-yes-for-downloads --output-dir=build --output-filename=mergen.bin main.py
+        python -m nuitka --standalone --onefile --enable-plugin=pyside6 --assume-yes-for-downloads --include-data-dir=data=data --output-dir=build --output-filename=mergen.bin main.py
         
     - name: Upload Linux Artifact
       if: runner.os == 'Linux'
