@@ -1,9 +1,10 @@
-import os
 import json
+import os
 from pathlib import Path
 
 CONFIG_FILE = "config.json"
 HISTORY_FILE = "history.json"
+
 
 class ConfigManager:
     _instance = None
@@ -17,8 +18,8 @@ class ConfigManager:
     def __init__(self):
         if self._initialized:
             return
-            
-        self.config_dir = Path(os.getcwd()) # Or use user home .config ideally, but sticking to CWD for portability
+
+        self.config_dir = Path(os.getcwd())  # Or use user home .config ideally, but sticking to CWD for portability
         self.config = {}
         self.defaults = {
             "default_download_dir": str(Path.home() / "Downloads"),
@@ -33,14 +34,18 @@ class ConfigManager:
             "geometry": "",
             "categories": {
                 "Compressed": (["zip", "rar", "7z", "tar", "gz"], "zip", str(Path.home() / "Downloads/Compressed")),
-                "Documents": (["doc", "docx", "pdf", "txt", "xls", "ppt"], "doc", str(Path.home() / "Downloads/Documents")),
+                "Documents": (
+                    ["doc", "docx", "pdf", "txt", "xls", "ppt"],
+                    "doc",
+                    str(Path.home() / "Downloads/Documents"),
+                ),
                 "Music": (["mp3", "wav", "flac", "aac"], "music", str(Path.home() / "Downloads/Music")),
                 "Programs": (["exe", "msi", "deb", "rpm", "AppImage"], "app", str(Path.home() / "Downloads/Programs")),
-                "Video": (["mp4", "mkv", "avi", "mov", "webm"], "video", str(Path.home() / "Downloads/Video"))
+                "Video": (["mp4", "mkv", "avi", "mov", "webm"], "video", str(Path.home() / "Downloads/Video")),
             },
-            "queues": ["Main Queue"]
+            "queues": ["Main Queue"],
         }
-        
+
         self.load_config()
         self._initialized = True
 
@@ -50,7 +55,7 @@ class ConfigManager:
             try:
                 with open(config_path, "r") as f:
                     self.config = json.load(f)
-            except:
+            except Exception:
                 self.config = {}
         else:
             self.config = {}
@@ -59,7 +64,25 @@ class ConfigManager:
         for k, v in self.defaults.items():
             if k not in self.config:
                 self.config[k] = v
-                
+
+        # System Language Auto-Detection (First Run)
+        if "language" not in self.config:
+            import locale
+
+            # Try to get system locale
+            try:
+                sys_lang = locale.getdefaultlocale()[0]
+                if not sys_lang:
+                    # Fallback for some linux envs
+                    sys_lang = os.getenv("LANG", "en")
+
+                if sys_lang and sys_lang.lower().startswith("tr"):
+                    self.config["language"] = "tr"
+                else:
+                    self.config["language"] = "en"
+            except Exception:
+                self.config["language"] = "en"
+
         # Ensure categories are merged if partial
         if "categories" in self.config:
             # Check for missing default categories
@@ -84,24 +107,25 @@ class ConfigManager:
 
     def get_history(self):
         from src.core.models import DownloadItem
+
         history_path = self.config_dir / HISTORY_FILE
         if not os.path.exists(history_path):
             return []
         try:
-            with open(history_path, 'r') as f:
+            with open(history_path, "r") as f:
                 data = json.load(f)
                 # Convert list of dicts to list of objects
                 return [DownloadItem.from_dict(d) for d in data]
         except Exception as e:
-             print(f"Error loading history: {e}")
-             return []
+            print(f"Error loading history: {e}")
+            return []
 
     def save_history(self, downloads):
         history_path = self.config_dir / HISTORY_FILE
         try:
             # Convert list of objects to list of dicts
             data = [d.to_dict() for d in downloads]
-            with open(history_path, 'w') as f:
+            with open(history_path, "w") as f:
                 json.dump(data, f, indent=4)
         except Exception as e:
             print(f"Error saving history: {e}")

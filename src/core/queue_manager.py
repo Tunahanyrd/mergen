@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
-import threading
-import time
-from collections import deque
+
 
 class QueueManager:
     """
     Manages named queues of downloads.
     """
+
     _instance = None
 
     def __new__(cls):
@@ -16,16 +15,15 @@ class QueueManager:
         return cls._instance
 
     def __init__(self):
-        if self._initialized: return
+        if self._initialized:
+            return
         self._initialized = True
-        
+
         # Queues: { "Main Queue": [download_item_1, download_item_2], "Queue 2": [] }
         # Note: 'download_item' is the dict object shared with MainWindow list
-        self.queues = {
-            "Main Queue": []
-        }
-        self.active_queues = set() # Set of queue names currently processing
-        self.listeners = [] # Callbacks for when queue updates
+        self.queues = {"Main Queue": []}
+        self.active_queues = set()  # Set of queue names currently processing
+        self.listeners = []  # Callbacks for when queue updates
 
     def get_queues(self):
         return self.queues.keys()
@@ -40,12 +38,13 @@ class QueueManager:
 
     def start_queue(self, queue_name, starter_func):
         """
-        Starts processing the queue. 
+        Starts processing the queue.
         starter_func: func(item) that initiates download
         """
-        if queue_name not in self.queues: return
+        if queue_name not in self.queues:
+            return
         self.active_queues.add(queue_name)
-        
+
         # Start first pending item
         self.process_next(queue_name, starter_func)
 
@@ -54,25 +53,26 @@ class QueueManager:
             self.active_queues.remove(queue_name)
 
     def process_next(self, queue_name, starter_func):
-        if queue_name not in self.active_queues: return
-        
+        if queue_name not in self.active_queues:
+            return
+
         q = self.queues[queue_name]
         # Find first non-complete, non-downloading item?
         # Ideally, we look for 'Queued' items.
-        
+
         for item in q:
-            if item.get("status") in ["Queued", "Stopped", "Failed"]: # Ready to start
+            if getattr(item, "status", None) in ["Queued", "Stopped", "Failed", "Pending"]:  # Ready to start
                 starter_func(item)
                 # We start one, and wait for it to finish.
                 # MainWindow needs to call 'on_download_finished' to trigger next.
                 return
-        
+
         # If we are here, queue might be empty of pending jobs
-        # self.stop_queue(queue_name) 
+        # self.stop_queue(queue_name)
 
     def on_download_finished(self, item, starter_func):
         # Called by MainWindow when a download finishes
-        q_name = item.get("queue")
+        q_name = getattr(item, "queue", None)
         if q_name and q_name in self.active_queues:
             self.process_next(q_name, starter_func)
 
@@ -81,5 +81,7 @@ class QueueManager:
 
     def notify_listeners(self):
         for f in self.listeners:
-            try: f()
-            except: pass
+            try:
+                f()
+            except Exception:
+                pass

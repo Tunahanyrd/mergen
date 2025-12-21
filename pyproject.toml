@@ -1,0 +1,19 @@
+[project]
+name = "mergen"
+version = "1.0.0"
+description = "A modern, high-performance download manager."
+authors = [{name = "Tunahan Yurd", email = "tunahanyrd@gmail.com"}]
+requires-python = ">=3.9"
+
+[tool.ruff]
+line-length = 120
+lint.select = ["E", "F", "I"]
+
+[tool.black]
+line-length = 120
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q"
+testpaths = ["tests"]
+pythonpath = ["."]

@@ -1,130 +1,158 @@
-from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, QLabel, 
-                               QLineEdit, QPushButton, QTabWidget, QWidget, 
-                               QFormLayout, QTextEdit, QFileDialog, QMessageBox)
-from PySide6.QtCore import Qt, QUrl
-from PySide6.QtGui import QDesktopServices
 import os
+import subprocess
+
+from PySide6.QtCore import QFileInfo, QUrl
+from PySide6.QtGui import QDesktopServices
+from PySide6.QtWidgets import (
+    QApplication,
+    QDialog,
+    QFormLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QStyle,
+    QTabWidget,
+    QVBoxLayout,
+    QWidget,
+)
+
+from src.gui.widgets.custom_widgets import ModernButton
+
 
 class PropertiesDialog(QDialog):
-    def __init__(self, parent, download_item):
+    def __init__(self, download_item, parent=None):
         super().__init__(parent)
         self.item = download_item
-        self.setWindowTitle("File Properties")
-        self.resize(500, 450)
+        self.setWindowTitle("Properties")
+        self.resize(500, 500)
+
+        # Apply Glassmorphism/Dark style to dialog
+        self.setStyleSheet(
+            """
+            QDialog { background-color: #2b2b2b; color: #fff; }
+            QLabel { color: #ddd; font-size: 13px; }
+            QLineEdit { 
+                background: #333; color: #fff; border: 1px solid #555; 
+                border-radius: 4px; padding: 4px; selection-background-color: #007acc;
+            }
+            QGroupBox { 
+                border: 1px solid #444; margin-top: 20px; font-weight: bold; color: #aaa;
+            }
+            QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 5px; }
+        """
+        )
+
         self.setup_ui()
-        self.load_data()
 
     def setup_ui(self):
         layout = QVBoxLayout(self)
-        
-        # File Info Header
-        header_layout = QHBoxLayout()
-        # Icon can be added here if passed or resolved
-        self.info_label = QLabel(f"<b>{os.path.basename(self.item.filename)}</b>")
-        self.info_label.setStyleSheet("font-size: 14px;")
-        header_layout.addWidget(self.info_label)
-        layout.addLayout(header_layout)
+
+        # Header (Icon + Filename)
+        header = QHBoxLayout()
+        icon_lbl = QLabel()
+        icon = QApplication.style().standardIcon(QStyle.SP_FileIcon)
+        icon_lbl.setPixmap(icon.pixmap(64, 64))
+
+        title_box = QVBoxLayout()
+        fname = os.path.basename(self.item.filename)
+        lbl_name = QLabel(fname)
+        lbl_name.setStyleSheet("font-size: 18px; font-weight: bold; color: #fff;")
+        lbl_name.setWordWrap(True)
+
+        lbl_type = QLabel("File Type: " + (os.path.splitext(fname)[1].upper() or "File"))
+        lbl_type.setStyleSheet("color: #888;")
+
+        title_box.addWidget(lbl_name)
+        title_box.addWidget(lbl_type)
+
+        header.addWidget(icon_lbl)
+        header.addLayout(title_box)
+        layout.addLayout(header)
 
         # Tabs
-        self.tabs = QTabWidget()
-        layout.addWidget(self.tabs)
-        
-        # General Tab
-        self.tab_general = QWidget()
-        self.setup_general_tab()
-        self.tabs.addTab(self.tab_general, "General")
-        
-        # Buttons
-        btn_layout = QHBoxLayout()
-        self.btn_open = QPushButton("Open")
-        self.btn_open.clicked.connect(self.open_file)
-        
-        self.btn_ok = QPushButton("OK")
-        self.btn_ok.clicked.connect(self.save_and_close)
-        
-        self.btn_cancel = QPushButton("Cancel")
-        self.btn_cancel.clicked.connect(self.reject)
-        
-        btn_layout.addWidget(self.btn_open)
-        btn_layout.addStretch()
-        btn_layout.addWidget(self.btn_ok)
-        btn_layout.addWidget(self.btn_cancel)
-        layout.addLayout(btn_layout)
+        tabs = QTabWidget()
+        tabs.setStyleSheet(
+            """
+            QTabWidget::pane { border: 1px solid #444; background: #2b2b2b; }
+            QTabBar::tab { background: #333; color: #bbb; padding: 8px 12px; }
+            QTabBar::tab:selected { background: #444; color: #fff; border-bottom: 2px solid #007acc; }
+        """
+        )
 
-    def setup_general_tab(self):
-        layout = QFormLayout(self.tab_general)
-        
-        self.lbl_type = QLabel("Unknown")
-        layout.addRow("Type:", self.lbl_type)
-        
-        self.lbl_status = QLabel(self.item.status)
-        layout.addRow("Status:", self.lbl_status)
-        
-        self.lbl_size = QLabel(self.item.size)
-        layout.addRow("Size:", self.lbl_size)
-        
-        # Save To (Editable path if needed, usually just directory)
-        path_layout = QHBoxLayout()
-        self.txt_save_path = QLineEdit()
-        self.txt_save_path.setReadOnly(True) 
-        path_layout.addWidget(self.txt_save_path)
-        self.btn_browse = QPushButton("Browse...") # Allow moving? Maybe just viewing for now.
-        self.btn_browse.clicked.connect(self.browse_path)
-        path_layout.addWidget(self.btn_browse)
-        layout.addRow("Save To:", path_layout)
-        
-        self.txt_url = QLineEdit()
-        self.txt_url.setReadOnly(True)
-        layout.addRow("Address:", self.txt_url)
-        
-        self.txt_referer = QLineEdit()
-        layout.addRow("Referer:", self.txt_referer)
-        
-        self.txt_desc = QTextEdit()
-        self.txt_desc.setMaximumHeight(60)
-        layout.addRow("Description:", self.txt_desc)
-        
-        # Login
-        self.txt_user = QLineEdit()
-        layout.addRow("Login:", self.txt_user)
-        self.txt_pass = QLineEdit()
-        self.txt_pass.setEchoMode(QLineEdit.Password)
-        layout.addRow("Password:", self.txt_pass)
-        
-    def load_data(self):
-        # Populate fields
-        self.lbl_type.setText(os.path.splitext(self.item.filename)[1].upper().replace(".", "") + " File")
-        self.txt_save_path.setText(os.path.dirname(self.item.filename))
-        self.txt_url.setText(self.item.url)
-        self.txt_referer.setText(self.item.referer)
-        self.txt_desc.setText(self.item.description)
-        self.txt_user.setText(self.item.username)
-        self.txt_pass.setText(self.item.password)
-        
-        if self.item.status == "Complete":
-            self.btn_open.setEnabled(True)
-        else:
-            self.btn_open.setEnabled(False)
+        tabs.addTab(self.create_general_tab(), "General")
+        tabs.addTab(self.create_details_tab(), "Details")
+        layout.addWidget(tabs)
 
-    def browse_path(self):
-        # Open folder selection? or File save dialog?
-        # Typically IDM allows moving the file or changing download dir
-        new_dir = QFileDialog.getExistingDirectory(self, "Select Directory", self.txt_save_path.text())
-        if new_dir:
-            self.txt_save_path.setText(new_dir)
+        # Footer Buttons
+        btns = QHBoxLayout()
+        btn_open = ModernButton("Open File")
+        btn_open.clicked.connect(self.open_file)
+
+        btn_folder = ModernButton("Open Folder")
+        btn_folder.clicked.connect(self.open_folder)
+
+        btn_close = ModernButton("Close")
+        btn_close.clicked.connect(self.accept)
+        btn_close.setStyleSheet("background-color: #444; border: 1px solid #555;")
+
+        btns.addWidget(btn_open)
+        btns.addWidget(btn_folder)
+        btns.addStretch()
+        btns.addWidget(btn_close)
+
+        layout.addLayout(btns)
+
+    def create_general_tab(self):
+        w = QWidget()
+        layout = QFormLayout(w)
+        layout.setSpacing(15)
+        layout.setContentsMargins(15, 15, 15, 15)
+
+        def copyable_line(text):
+            le = QLineEdit(str(text))
+            le.setReadOnly(True)
+            return le
+
+        layout.addRow("Location:", copyable_line(os.path.dirname(self.item.filename)))
+        layout.addRow("URL:", copyable_line(self.item.url))
+        layout.addRow("Size:", copyable_line(self.item.size))
+        layout.addRow("Status:", QLabel(self.item.status))  # Keep dynamic? No, static snapshot ok.
+        layout.addRow("Added:", QLabel(self.item.date_added))
+
+        return w
+
+    def create_details_tab(self):
+        w = QWidget()
+        layout = QVBoxLayout(w)
+
+        g_adv = QGroupBox("Advanced")
+        f_adv = QFormLayout(g_adv)
+
+        exist = os.path.exists(self.item.filename)
+
+        f_adv.addRow("File Exists:", QLabel("Yes" if exist else "No"))
+        if exist:
+            fi = QFileInfo(self.item.filename)
+            f_adv.addRow("Created:", QLabel(fi.birthTime().toString()))
+            f_adv.addRow("Modified:", QLabel(fi.lastModified().toString()))
+            f_adv.addRow("Permissions:", QLabel(f"{oct(os.stat(self.item.filename).st_mode)[-3:]}"))
+
+        layout.addWidget(g_adv)
+        layout.addStretch()
+        return w
 
     def open_file(self):
         if os.path.exists(self.item.filename):
-            QDesktopServices.openUrl(QUrl.fromLocalFile(self.item.filename))
-        else:
-            QMessageBox.warning(self, "Error", "File not found.")
+            try:
+                subprocess.Popen(["xdg-open", self.item.filename])
+            except Exception:
+                QDesktopServices.openUrl(QUrl.fromLocalFile(self.item.filename))
 
-    def save_and_close(self):
-        # Save editable fields back to item
-        
-        self.item.referer = self.txt_referer.text()
-        self.item.description = self.txt_desc.toPlainText()
-        self.item.username = self.txt_user.text()
-        self.item.password = self.txt_pass.text()
-        
-        self.accept()
+    def open_folder(self):
+        path = os.path.dirname(self.item.filename)
+        if os.path.exists(path):
+            try:
+                subprocess.Popen(["xdg-open", path])
+            except Exception:
+                QDesktopServices.openUrl(QUrl.fromLocalFile(path))

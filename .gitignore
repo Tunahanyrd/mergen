@@ -1,0 +1,6 @@
+# Python
+config.json
+history.json
+.ruff_cache
+__pycache__
+.pytest_cache

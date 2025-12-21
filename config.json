@@ -1,10 +1,26 @@
 {
+    "default_download_dir": "/home/tunahan/Downloads",
+    "max_connections": 32,
     "theme": "dark",
     "show_complete_dialog": true,
-    "max_connections": 8,
-    "default_download_dir": "/home/tunahan/\u0130ndirilenler",
-    "geometry": "01d9d0cb000300000000000000000000000003e7000002570000000000000000000003e700000257000000000000000006000000000000000000000003e700000257",
+    "proxy_enabled": false,
+    "proxy_host": "",
+    "proxy_port": 8080,
+    "proxy_user": "",
+    "proxy_pass": "",
+    "geometry": "01d9d0cb000300000000000000000000000005ff0000031b0000000000000000000005ff0000031b000000000200000006000000000000000000000005ff0000031b",
     "categories": {
+        "Video": [
+            [
+                "mp4",
+                "mkv",
+                "avi",
+                "mov",
+                "webm"
+            ],
+            "video",
+            "/home/tunahan/Downloads/Video"
+        ],
         "Compressed": [
             [
                 "zip",
@@ -14,7 +30,7 @@
                 "gz"
             ],
             "zip",
-            ""
+            "/home/tunahan/Downloads/Compressed"
         ],
         "Documents": [
             [
@@ -22,10 +38,11 @@
                 "docx",
                 "pdf",
                 "txt",
-                "rtf"
+                "xls",
+                "ppt"
             ],
             "doc",
-            ""
+            "/home/tunahan/Downloads/Documents"
         ],
         "Music": [
             [
@@ -35,36 +52,23 @@
                 "aac"
             ],
             "music",
-            ""
+            "/home/tunahan/Downloads/Music"
         ],
         "Programs": [
             [
                 "exe",
                 "msi",
-                "bat",
-                "sh"
+                "deb",
+                "rpm",
+                "AppImage"
             ],
             "app",
-            ""
-        ],
-        "Video": [
-            [
-                "mp4",
-                "mkv",
-                "avi",
-                "mov"
-            ],
-            "video",
-            ""
+            "/home/tunahan/Downloads/Programs"
         ]
     },
-    "proxy_enabled": false,
-    "proxy_host": "",
-    "proxy_port": 8080,
-    "proxy_user": "",
-    "proxy_pass": "",
     "queues": [
         "Main Queue"
     ],
-    "launch_startup": false
+    "launch_startup": true,
+    "language": "tr"
 }

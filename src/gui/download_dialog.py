@@ -1,47 +1,152 @@
 # -*- coding: utf-8 -*-
-from PySide6.QtWidgets import (QDialog, QVBoxLayout, QLabel, QProgressBar, 
-                               QHBoxLayout, QPushButton, QTabWidget, QWidget, 
-                               QGridLayout, QFrame, QTableWidget, QTableWidgetItem, 
-                               QHeaderView, QCheckBox, QApplication, QStyle, QLineEdit)
-from PySide6.QtCore import Qt, Signal, QThread, QTime, QTimer, QRectF, QUrl
-from PySide6.QtGui import QColor, QPainter, QBrush, QIcon, QDesktopServices
-from src.core.downloader import Downloader
+import os
+import subprocess
 import time
-import sys, os, subprocess
 
-class ConnectionGrid(QWidget):
-    """Visualizes 8 connection threads like IDM."""
-    def __init__(self):
-        super().__init__()
-        self.setFixedHeight(30)
-        self.segments = [0.0] * 8 # 0.0 to 1.0 progress per segment
+from PySide6.QtCore import Qt, QThread, QTime, QUrl, Signal
+from PySide6.QtGui import QColor, QDesktopServices
+from PySide6.QtWidgets import (
+    QApplication,
+    QDialog,
+    QFrame,
+    QGraphicsDropShadowEffect,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QStyle,
+    QVBoxLayout,
+)
 
-    def update_segments(self, progress_list):
-        self.segments = progress_list
-        self.update()
+from src.core.config import ConfigManager
+from src.core.downloader import Downloader
+from src.core.i18n import I18n
+from src.gui.widgets.custom_widgets import HeatmapBar, InfoCard, MiniGraph, ModernButton
 
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
-        
-        w = self.width() / 8
-        h = self.height()
-        
-        for i, prog in enumerate(self.segments):
-            x = i * w
-            rect = QRectF(x + 2, 2, w - 4, h - 4)
-            painter.fillRect(rect, QColor("#333333"))
-            fill_rect = QRectF(x + 2, 2, (w - 4) * prog, h - 4)
-            painter.fillRect(fill_rect, QColor("#007acc"))
-            painter.setPen(QColor("#555555"))
-            painter.drawRect(rect)
+
+class MainInfoCard(InfoCard):
+    def __init__(self, title, initial_value, parent=None, with_graph=False):
+        super().__init__(title, initial_value, parent)
+        if with_graph:
+            self.graph = MiniGraph(parent=self)
+            self.layout().addWidget(self.graph)
+
+    def update_graph(self, value):
+        if hasattr(self, "graph"):
+            self.graph.add_value(value)
+
+
+class CompleteDialog(QDialog):
+    def __init__(self, filename, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle(I18n.get("finished"))
+        self.resize(500, 300)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setWindowFlags(self.windowFlags() | Qt.FramelessWindowHint)
+        self.filename = filename
+
+        self.setup_ui()
+
+    def setup_ui(self):
+        container = QFrame(self)
+        container.setStyleSheet(
+            """
+            QFrame {
+                background-color: #1e1e2e;
+                border: 2px solid #00f2ff;
+                border-radius: 20px;
+            }
+            QLabel { color: #cdd6f4; border: none; }
+        """
+        )
+
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(30)
+        shadow.setColor(QColor(0, 242, 255, 60))  # Cyan glow
+        shadow.setOffset(0, 0)
+        container.setGraphicsEffect(shadow)
+
+        layout = QVBoxLayout(self)
+        layout.addWidget(container)
+
+        cl = QVBoxLayout(container)
+        cl.setContentsMargins(30, 30, 30, 30)
+        cl.setSpacing(20)
+
+        # Icon
+        icon_lbl = QLabel()
+        icon = QApplication.style().standardIcon(QStyle.SP_DialogApplyButton)
+        icon_lbl.setPixmap(icon.pixmap(64, 64))
+        icon_lbl.setAlignment(Qt.AlignCenter)
+        cl.addWidget(icon_lbl)
+
+        # Title
+        title = QLabel(I18n.get("complete") + "!")
+        title.setAlignment(Qt.AlignCenter)
+        title.setStyleSheet("font-size: 24px; font-weight: bold; color: #00f2ff;")
+        cl.addWidget(title)
+
+        # Filename
+        fname = os.path.basename(self.filename)
+        flbl = QLabel(fname)
+        flbl.setAlignment(Qt.AlignCenter)
+        flbl.setWordWrap(True)
+        flbl.setStyleSheet("font-size: 14px; color: #a6adc8;")
+        cl.addWidget(flbl)
+
+        cl.addStretch()
+
+        # Buttons
+        btns = QHBoxLayout()
+
+        btn_open = ModernButton(I18n.get("open"), primary=True)
+        btn_open.clicked.connect(self.open_file)
+
+        btn_folder = ModernButton(I18n.get("show_in_folder"))
+        btn_folder.clicked.connect(self.open_folder)
+
+        btn_close = ModernButton(I18n.get("close"))
+        btn_close.clicked.connect(self.accept)
+
+        btns.addWidget(btn_open)
+        btns.addWidget(btn_folder)
+        btns.addWidget(btn_close)
+
+        cl.addLayout(btns)
+
+    def open_file(self):
+        if os.path.exists(self.filename):
+            try:
+                subprocess.Popen(["kopenwith", self.filename])
+            except Exception:
+                QDesktopServices.openUrl(QUrl.fromLocalFile(self.filename))
+        self.accept()
+
+    def open_folder(self):
+        path = os.path.dirname(self.filename)
+        if os.path.exists(path):
+            try:
+                subprocess.Popen(["xdg-open", path])
+            except Exception:
+                QDesktopServices.openUrl(QUrl.fromLocalFile(path))
+        self.accept()
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self._drag_pos = event.globalPos() - self.frameGeometry().topLeft()
+            event.accept()
+
+    def mouseMoveEvent(self, event):
+        if event.buttons() == Qt.LeftButton:
+            self.move(event.globalPos() - self._drag_pos)
+            event.accept()
+
 
 class DownloadWorker(QThread):
-    progress_signal = Signal(int, int, float)
+    progress_signal = Signal(object, object, float, object)
     status_signal = Signal(str)
     finished_signal = Signal(bool, str)
 
-    def __init__(self, url, save_dir=None, proxy_config=None):
+    def __init__(self, url, save_dir=None, proxy_config=None, worker_count=4):
         super().__init__()
         self.url = url
         self.save_dir = save_dir
@@ -50,30 +155,52 @@ class DownloadWorker(QThread):
         self.is_running = True
         self.last_time = time.time()
         self.last_bytes = 0
+        self.worker_count = worker_count
 
     def run(self):
         self.downloader = Downloader(
-            self.url, 
+            self.url,
             save_dir=self.save_dir,
             progress_callback=self.emit_progress,
             status_callback=self.emit_status,
             completion_callback=self.emit_finished,
-            proxy_config=self.proxy_config
+            proxy_config=self.proxy_config,
+            worker_count=self.worker_count,
         )
         self.downloader.start()
 
     def emit_progress(self, downloaded, total):
+        # Throttle logic integrated
         if self.is_running:
             now = time.time()
+            if now - self.last_time < 0.1 and downloaded < total:
+                return
+
             elapsed = now - self.last_time
             speed = 0.0
             if elapsed > 0:
                 diff = downloaded - self.last_bytes
-                speed = diff / elapsed
+                instant_speed = diff / elapsed
+
+                # EMA Smoothing (Alpha = 0.1 for smoothness)
+                if not hasattr(self, "avg_speed"):
+                    self.avg_speed = instant_speed
+                else:
+                    self.avg_speed = 0.1 * instant_speed + 0.9 * self.avg_speed
+
+                speed = self.avg_speed
                 self.last_bytes = downloaded
                 self.last_time = now
-            
-            self.progress_signal.emit(downloaded, total, speed)
+
+            segments_data = []
+            if self.downloader and hasattr(self.downloader, "segments"):
+                for s in self.downloader.segments:
+                    total_seg = (s["end"] - s["start"]) + 1
+                    done_seg = s["downloaded"]
+                    p = done_seg / total_seg if total_seg > 0 else 0
+                    segments_data.append(p)
+
+            self.progress_signal.emit(downloaded, total, speed, segments_data)
 
     def emit_status(self, msg):
         if self.is_running:
@@ -82,350 +209,234 @@ class DownloadWorker(QThread):
     def emit_finished(self, success, filename):
         if self.is_running:
             self.finished_signal.emit(success, filename)
-    
+
     def stop(self):
         self.is_running = False
-        self.terminate() 
+        if self.downloader:
+            self.downloader.stop()
+        self.terminate()
 
-from src.core.config import ConfigManager
-
-class DownloadCompleteDialog(QDialog):
-    """Popup shown when download finishes."""
-    def __init__(self, filename, url, size_str, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Download complete")
-        self.resize(500, 250)
-        self.filename = filename
-        self.config = ConfigManager()
-        
-        # Make modal and topmost to catch attention
-        self.setWindowFlags(Qt.Dialog | Qt.WindowStaysOnTopHint)
-        self.setModal(True)
-        
-        # Style
-        self.setStyleSheet("""
-            QDialog { background-color: #2b2b2b; color: #e0e0e0; font-family: 'Segoe UI'; }
-            QLabel { color: #e0e0e0; }
-            QLineEdit { background: #444; border: 1px solid #555; color: white; padding: 4px; }
-            QPushButton { 
-                background: #333; border: 1px solid #555; padding: 6px 14px; min-width: 80px; color: #e0e0e0;
-            }
-            QPushButton:hover { background: #444; border-color: #007acc; }
-            QPushButton#OpenBtn { font-weight: bold; border: 1px solid #007acc; background-color: #005a9e; color: white; }
-            QPushButton#OpenBtn:hover { background-color: #0078d7; }
-            QCheckBox { color: #ccc; }
-        """)
-
-        layout = QVBoxLayout()
-        self.setLayout(layout)
-
-        # Header: Icon + Details
-        h_layout = QHBoxLayout()
-        
-        # Icon
-        icon_lbl = QLabel()
-        icon = QApplication.style().standardIcon(QStyle.SP_DialogApplyButton) 
-        icon_lbl.setPixmap(icon.pixmap(48, 48))
-        h_layout.addWidget(icon_lbl)
-        
-        # Text Info
-        info_layout = QVBoxLayout()
-        info_layout.addWidget(QLabel("<b>Download complete</b>"))
-        info_layout.addWidget(QLabel(f"Downloaded {size_str}"))
-        h_layout.addLayout(info_layout)
-        h_layout.addStretch()
-        
-        layout.addLayout(h_layout)
-
-        # Address
-        layout.addWidget(QLabel("Address"))
-        self.url_edit = QLineEdit(url)
-        self.url_edit.setReadOnly(True)
-        layout.addWidget(self.url_edit)
-
-        # File Saved As
-        layout.addWidget(QLabel("The file saved as"))
-        self.path_edit = QLineEdit(os.path.abspath(filename))
-        self.path_edit.setReadOnly(True)
-        layout.addWidget(self.path_edit)
-
-        # Buttons
-        btn_layout = QHBoxLayout()
-        
-        self.open_btn = QPushButton("Open")
-        self.open_btn.setObjectName("OpenBtn")
-        self.with_btn = QPushButton("Open with...")
-        self.folder_btn = QPushButton("Open folder")
-        self.close_btn = QPushButton("Close")
-        
-        self.open_btn.clicked.connect(self.action_open)
-        self.folder_btn.clicked.connect(self.action_folder)
-        self.close_btn.clicked.connect(self.accept)
-        
-        btn_layout.addWidget(self.open_btn)
-        btn_layout.addWidget(self.with_btn)
-        btn_layout.addWidget(self.folder_btn)
-        btn_layout.addStretch()
-        btn_layout.addWidget(self.close_btn)
-        layout.addLayout(btn_layout)
-
-        # Footer
-        self.not_show_chk = QCheckBox("Don't show this dialog again")
-        layout.addWidget(self.not_show_chk)
-
-    def accept(self):
-        if self.not_show_chk.isChecked():
-            self.config.set("show_complete_dialog", False)
-        super().accept()
-
-    def action_open(self):
-        self.open_file_system(self.filename)
-        self.accept()
-
-    def action_folder(self):
-        path = os.path.dirname(os.path.abspath(self.filename))
-        self.open_file_system(path, is_folder=True)
-        
-    def open_file_system(self, path, is_folder=False):
-        url = QUrl.fromLocalFile(path)
-        QDesktopServices.openUrl(url)
 
 class DownloadDialog(QDialog):
-    # Defined at class level
     download_complete = Signal(bool, str)
+    finished = Signal()
 
     def __init__(self, url, parent=None, save_dir=None):
         super().__init__(parent)
-        self.setWindowTitle("Downloading...")
-        self.resize(600, 450)
+        self.setWindowTitle(I18n.get("downloading"))
+        self.resize(720, 520)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setWindowFlags(self.windowFlags() | Qt.FramelessWindowHint)
+
         self.url = url
         self.save_dir = save_dir
-        self.success = False
-        self.filename = "Unknown"
-        self.expanded = True
-        self.final_total_bytes = 0
-        
         self.config = ConfigManager()
 
-        self.setup_ui()
-        
-        # Prepare proxy config
         proxy_cfg = {
             "enabled": self.config.get("proxy_enabled"),
             "host": self.config.get("proxy_host"),
-            "port": self.config.get("proxy_port"),
+            "port": int(self.config.get("proxy_port") or 8080),
             "user": self.config.get("proxy_user"),
-            "pass": self.config.get("proxy_pass")
+            "pass": self.config.get("proxy_pass"),
         }
-        
-        # Worker
-        self.worker = DownloadWorker(url, save_dir, proxy_config=proxy_cfg)
+
+        # FIX: Get max connections from config
+        self.max_connections = int(self.config.get("max_connections", 8))
+
+        # FIX: Pass worker_count to worker
+        self.worker = DownloadWorker(url, save_dir, proxy_config=proxy_cfg, worker_count=self.max_connections)
         self.worker.progress_signal.connect(self.update_progress)
         self.worker.status_signal.connect(self.update_status)
         self.worker.finished_signal.connect(self.on_finished)
+
+        self.setup_ui()
         self.worker.start()
 
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self._drag_pos = event.globalPos() - self.frameGeometry().topLeft()
+            event.accept()
+
+    def mouseMoveEvent(self, event):
+        if event.buttons() == Qt.LeftButton:
+            self.move(event.globalPos() - self._drag_pos)
+            event.accept()
+
     def setup_ui(self):
-        self.setStyleSheet("""
-            QDialog { background-color: #2b2b2b; color: #e0e0e0; font-family: 'Segoe UI'; }
-            QTabWidget::pane { border: 1px solid #444; background: #333; }
-            QTabBar::tab { background: #2b2b2b; color: #ccc; border: 1px solid #444; padding: 5px; }
-            QTabBar::tab:selected { background: #333; color: white; border-bottom: 2px solid #007acc; }
-            QLabel { color: #e0e0e0; }
-            
-            QProgressBar {
-                border: 1px solid #555; background-color: #333; height: 20px; text-align: center; color: white;
+        self.container = QFrame(self)
+        self.container.setStyleSheet(
+            """
+            QFrame {
+                background-color: #11111b;
+                border: 1px solid #45475a;
+                border-radius: 24px;
             }
-            QProgressBar::chunk { background-color: #00cc00; width: 10px; margin: 1px; }
-            
-            QPushButton {
-                background-color: #333; border: 1px solid #555; padding: 4px 12px; border-radius: 2px;
-                min-width: 80px; color: #e0e0e0;
-            }
-            QPushButton:hover { background-color: #444; border-color: #007acc; }
-            
-            QTableWidget {
-                background-color: #333; gridline-color: #444; color: #e0e0e0; border: 1px solid #555;
-            }
-            QHeaderView::section {
-                background-color: #2b2b2b; color: #ccc; border: 1px solid #444; padding: 4px;
-            }
-        """)
+            QLabel { color: #cdd6f4; border: none; }
+        """
+        )
 
-        layout = QVBoxLayout()
-        self.setLayout(layout)
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(30)
+        shadow.setColor(QColor(0, 0, 0, 180))
+        shadow.setOffset(0, 10)
+        self.container.setGraphicsEffect(shadow)
 
-        # Tabs
-        tabs = QTabWidget()
-        self.status_tab = QWidget()
-        tabs.addTab(self.status_tab, "Download status")
-        tabs.addTab(QWidget(), "Speed Limiter")
-        tabs.addTab(QWidget(), "Options on completion")
-        layout.addWidget(tabs)
+        main_layout = QVBoxLayout(self)
+        main_layout.addWidget(self.container)
+        main_layout.setContentsMargins(10, 10, 10, 10)
 
-        # Status Tab Layout
-        stab_layout = QVBoxLayout(self.status_tab)
-        
-        # Info Grid
-        grid = QGridLayout()
-        grid.addWidget(QLabel(self.url), 0, 0, 1, 2)
-        
-        grid.addWidget(QLabel("Status:"), 1, 0)
-        self.status_val = QLabel("Initializing...")
-        self.status_val.setStyleSheet("color: #007acc;")
-        grid.addWidget(self.status_val, 1, 1)
-        
-        grid.addWidget(QLabel("File size:"), 2, 0)
-        self.size_val = QLabel("Unknown")
-        grid.addWidget(self.size_val, 2, 1)
-        
-        grid.addWidget(QLabel("Downloaded:"), 3, 0)
-        self.downloaded_val = QLabel("0 bytes")
-        grid.addWidget(self.downloaded_val, 3, 1)
-        
-        grid.addWidget(QLabel("Transfer rate:"), 4, 0)
-        self.speed_val = QLabel("0 KB/sec")
-        grid.addWidget(self.speed_val, 4, 1)
-        
-        grid.addWidget(QLabel("Time left:"), 5, 0)
-        self.time_val = QLabel("Calculating...")
-        grid.addWidget(self.time_val, 5, 1)
-        
-        grid.addWidget(QLabel("Resume capability:"), 6, 0)
-        self.resume_val = QLabel("Yes")
-        grid.addWidget(self.resume_val, 6, 1)
-        
-        stab_layout.addLayout(grid)
+        layout = QVBoxLayout(self.container)
+        layout.setContentsMargins(35, 35, 35, 35)
+        layout.setSpacing(25)
 
-        # Progress Bar
-        self.progress_bar = QProgressBar()
-        layout.addWidget(self.progress_bar)
+        header = QHBoxLayout()
+        icon_lbl = QLabel()
+        icon = QApplication.style().standardIcon(QStyle.SP_DialogSaveButton)
+        icon_lbl.setPixmap(icon.pixmap(54, 54))
+        icon_lbl.setStyleSheet(
+            "background-color: #1e1e2e; border-radius: 16px; padding: 12px; border: 1px solid #313244;"
+        )
 
-        # Middle Buttons
-        mid_layout = QHBoxLayout()
-        self.toggle_details_btn = QPushButton("<< Hide details")
-        self.toggle_details_btn.clicked.connect(self.toggle_details)
-        mid_layout.addWidget(self.toggle_details_btn)
-        mid_layout.addStretch()
-        self.pause_btn = QPushButton("Pause")
-        self.pause_btn.clicked.connect(self.toggle_pause) 
-        self.cancel_btn = QPushButton("Cancel")
-        self.cancel_btn.clicked.connect(self.reject)
-        mid_layout.addWidget(self.pause_btn)
-        mid_layout.addWidget(self.cancel_btn)
-        layout.addLayout(mid_layout)
+        title_box = QVBoxLayout()
+        self.fname_lbl = QLabel(I18n.get("initializing"))
+        self.fname_lbl.setStyleSheet("font-size: 24px; font-weight: bold; color: white;")
 
-        # Details Area (Connections + Log)
-        self.details_frame = QFrame()
-        d_layout = QVBoxLayout(self.details_frame)
-        d_layout.setContentsMargins(0, 0, 0, 0)
-        
-        d_layout.addWidget(QLabel("Start positions and download progress by connections"))
-        self.conn_grid = ConnectionGrid()
-        d_layout.addWidget(self.conn_grid)
+        self.url_lbl = QLabel(self.url)
+        self.url_lbl.setStyleSheet("color: #a6adc8; font-size: 13px;")
+        font_metrics = self.url_lbl.fontMetrics()
+        elided_url = font_metrics.elidedText(self.url, Qt.ElideMiddle, 400)
+        self.url_lbl.setText(elided_url)
 
-        self.log_table = QTableWidget()
-        self.log_table.setColumnCount(3)
-        self.log_table.setHorizontalHeaderLabels(["N.", "Downloaded", "Info"])
-        self.log_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
-        self.log_table.verticalHeader().setVisible(False)
-        self.log_table.setAlternatingRowColors(True)
-        # Dummy data
-        for i in range(1, 9):
-            r = self.log_table.rowCount()
-            self.log_table.insertRow(r)
-            self.log_table.setItem(r, 0, QTableWidgetItem(str(i)))
-            self.log_table.setItem(r, 1, QTableWidgetItem("0 KB"))
-            self.log_table.setItem(r, 2, QTableWidgetItem("Connecting..."))
-            
-        d_layout.addWidget(self.log_table)
-        layout.addWidget(self.details_frame)
+        title_box.addWidget(self.fname_lbl)
+        title_box.addWidget(self.url_lbl)
 
-    def toggle_details(self):
-        if self.expanded:
-            self.details_frame.hide()
-            self.toggle_details_btn.setText("Show details >>")
-            self.resize(self.width(), 250)
-        else:
-            self.details_frame.show()
-            self.toggle_details_btn.setText("<< Hide details")
-            self.resize(self.width(), 450)
-        self.expanded = not self.expanded
+        header.addWidget(icon_lbl)
+        header.addSpacing(15)
+        header.addLayout(title_box)
+        header.addStretch()
+        layout.addLayout(header)
 
-    def update_progress(self, downloaded, total, speed):
-        self.progress_bar.setMaximum(total)
-        self.progress_bar.setValue(downloaded)
-        self.final_total_bytes = total
-        
-        dl_mb = downloaded / (1024*1024)
-        tot_mb = total / (1024*1024)
-        pct = (downloaded / total) * 100 if total else 0
-        self.downloaded_val.setText(f"{dl_mb:.2f} MB ({pct:.1f}%)")
-        self.size_val.setText(f"{tot_mb:.2f} MB")
-        
-        if speed > 0:
-            if speed < 1024*1024:
-                self.speed_val.setText(f"{speed/1024:.2f} KB/sec")
-            else:
-                self.speed_val.setText(f"{speed/(1024*1024):.2f} MB/sec")
-            
-            rem = total - downloaded
-            secs = int(rem / speed)
-            if secs < 60:
-                self.time_val.setText(f"{secs} sec")
-            else:
-                self.time_val.setText(QTime(0,0,0).addSecs(secs).toString("HH:mm:ss"))
-        
-        self.status_val.setText("Receiving data...")
-        
-        segments = []
-        base_fill = pct / 100.0
-        for i in range(8):
-            v = base_fill + ((i % 3) * 0.05) if base_fill < 1.0 else 1.0
-            segments.append(min(v, 1.0))
-        self.conn_grid.update_segments(segments)
+        stats_layout = QGridLayout()
+        stats_layout.setSpacing(15)
 
-    def toggle_pause(self):
+        self.card_speed = MainInfoCard(I18n.get("speed"), "0 MB/s", with_graph=True)
+        self.card_eta = InfoCard(I18n.get("eta"), "--:--:--")
+        self.card_downloaded = InfoCard(I18n.get("downloaded"), "0 GB")
+        self.card_total = InfoCard(I18n.get("total"), I18n.get("unknown"))
+
+        stats_layout.addWidget(self.card_speed, 0, 0)
+        stats_layout.addWidget(self.card_eta, 0, 1)
+        stats_layout.addWidget(self.card_downloaded, 1, 0)
+        stats_layout.addWidget(self.card_total, 1, 1)
+
+        layout.addLayout(stats_layout)
+
+        # Dynamic thread count from Config
+        max_conn = self.max_connections
+
+        layout.addWidget(QLabel(I18n.get("thread_heatmap")))
+        self.heatmap = HeatmapBar(segments=max_conn)
+        layout.addWidget(self.heatmap)
+
+        layout.addStretch()
+
+        footer = QHBoxLayout()
+        footer.addStretch()
+
+        self.btn_hide = ModernButton(I18n.get("hide"))
+        self.btn_hide.clicked.connect(self.hide)
+
+        self.btn_pause = ModernButton(I18n.get("pause"))
+        self.btn_pause.clicked.connect(self.toggle_pause)
+
+        self.btn_cancel = ModernButton(I18n.get("cancel"))
+        self.btn_cancel.clicked.connect(self.cancel_download)
+
+        footer.addWidget(self.btn_hide)
+        footer.addWidget(self.btn_pause)
+        footer.addWidget(self.btn_cancel)
+        layout.addLayout(footer)
+
+    def cancel_download(self):
         if self.worker.is_running:
             self.worker.stop()
-            self.pause_btn.setText("Resume")
-            self.status_val.setText("Paused")
-            self.time_val.setText("--")
-            self.speed_val.setText("0 KB/s")
+        self.reject()
+
+    def update_progress(self, downloaded, total, speed, segments):
+        if self.worker.downloader and self.worker.downloader.filename:
+            fname = os.path.basename(self.worker.downloader.filename)
+            self.fname_lbl.setText(fname)
+
+        # Smooth speed logic is tricky without history, but let's assume 'speed' coming in is instantaneous.
+        # We can implement a simple smoother here.
+        if not hasattr(self, "_speed_history"):
+            self._speed_history = []
+        self._speed_history.append(speed)
+        if len(self._speed_history) > 5:
+            self._speed_history.pop(0)
+        avg_speed = sum(self._speed_history) / len(self._speed_history)
+
+        sp_str = f"{avg_speed/(1024*1024):.1f} MB/s" if avg_speed > 1024 * 1024 else f"{avg_speed/1024:.1f} KB/s"
+        self.card_speed.set_value(sp_str)
+        self.card_speed.update_graph(avg_speed)
+
+        if downloaded > 1024 * 1024 * 1024:
+            dl_str = f"{downloaded/(1024*1024*1024):.2f} GB"
         else:
-            self.worker = DownloadWorker(self.url)
-            self.worker.progress_signal.connect(self.update_progress)
-            self.worker.status_signal.connect(self.update_status)
-            self.worker.finished_signal.connect(self.on_finished)
-            self.worker.start()
-            self.pause_btn.setText("Pause")
+            dl_str = f"{downloaded/(1024*1024):.2f} MB"
+        self.card_downloaded.set_value(dl_str)
+
+        if total > 1024 * 1024 * 1024:
+            tot_str = f"{total/(1024*1024*1024):.2f} GB"
+        else:
+            tot_str = f"{total/(1024*1024):.2f} MB"
+        self.card_total.set_value(tot_str)
+
+        if total > 0:
+            pct = int((downloaded / total) * 100)
+            rem = total - downloaded
+            if speed > 0:
+                secs = int(rem / speed)
+                if secs > 86400:  # > 24h
+                    eta_str = "> 1d"
+                else:
+                    try:
+                        eta_str = QTime(0, 0, 0).addSecs(secs).toString("HH:mm:ss")
+                    except Exception:
+                        eta_str = "--:--:--"
+            else:
+                eta_str = "--:--:--"
+            self.card_eta.set_value(eta_str + f"\n({pct}%)")
+
+        if segments:
+            self.heatmap.update_segments(segments)
 
     def update_status(self, msg):
         pass
 
+    def toggle_pause(self):
+        if self.worker.is_running:
+            self.worker.stop()
+            self.btn_pause.setText(I18n.get("resume"))
+            self.fname_lbl.setText(f"{self.fname_lbl.text()} ({I18n.get('stopped')})")
+        else:
+            self.worker = DownloadWorker(self.url, self.save_dir)
+            self.worker.progress_signal.connect(self.update_progress)
+            self.worker.status_signal.connect(self.update_status)
+            self.worker.finished_signal.connect(self.on_finished)
+            self.worker.start()
+            self.btn_pause.setText(I18n.get("pause"))
+
     def on_finished(self, success, filename):
-        self.success = success
-        self.filename = filename
-        
-        # Always emit signal first
         self.download_complete.emit(success, filename)
-        
-        # If success, Switch to Complete Dialog
         if success:
-            # Hide this dialog
-            self.hide()
-            
-            # Show the "Download Complete" popup if enabled
-            from src.core.config import ConfigManager
-            cfg = ConfigManager()
-            if cfg.get("show_complete_dialog", True):
-                size_str = f"{self.final_total_bytes / (1024*1024):.2f} MB"
-                comp_dlg = DownloadCompleteDialog(filename, self.url, size_str, self.parent())
+            self.finished.emit()
+            if self.config.get("show_complete_dialog", True):
+                self.hide()
+                # Open Complete Dialog
+                comp_dlg = CompleteDialog(filename, self.parent())
                 comp_dlg.exec()
-            
-            # Now close the progress dialog for real
             self.accept()
         else:
-            self.status_val.setText("Failed")
-            self.status_val.setStyleSheet("color: red")
-            # Keep dialog open to show error
+            # Maybe keep dialog open or show error?
+            pass
