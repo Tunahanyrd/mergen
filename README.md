@@ -2,7 +2,7 @@
 
 [![GitHub release](https://img.shields.io/github/v/release/Tunahanyrd/mergen)](https://github.com/Tunahanyrd/mergen/releases)
 [![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS-lightgrey)](https://github.com/Tunahanyrd/mergen)
+[![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey)](https://github.com/Tunahanyrd/mergen)
 
 Modern, fast, and feature-rich download manager with browser integration.
 
@@ -19,6 +19,22 @@ Modern, fast, and feature-rich download manager with browser integration.
 - 📥 **Pre-download Dialog** - Configure before downloading
 
 ## 📦 Installation
+
+### Pre-built Packages (Recommended)
+
+Download the latest release for your platform:
+
+**🪟 Windows:**
+- [**MergenSetup.exe**](https://github.com/Tunahanyrd/mergen/releases/latest/download/MergenSetup.exe) - Installer with auto-update
+
+**🐧 Linux:**
+- [**Debian/Ubuntu (.deb)**](https://github.com/Tunahanyrd/mergen/releases/latest) - `sudo dpkg -i mergen_0.7.0-1_amd64.deb`
+- [**Fedora/RHEL (.rpm)**](https://github.com/Tunahanyrd/mergen/releases/latest) - `sudo rpm -i mergen-0.7.0-1.x86_64.rpm`
+- [**AppImage**](https://github.com/Tunahanyrd/mergen/releases/latest) - Universal binary for all distros
+- [**Arch Linux (.pkg.tar.zst)**](https://github.com/Tunahanyrd/mergen/releases/latest) - `sudo pacman -U mergen-0.7.0-1-x86_64.pkg.tar.zst`
+
+**🍎 macOS:**
+- [**Mergen.dmg**](https://github.com/Tunahanyrd/mergen/releases/latest) - Drag & drop to Applications
 
 ### Requirements
 
@@ -161,9 +177,9 @@ Settings: `~/.config/mergen/config.json`
 
 ### Operating Systems
 
-- ✅ Linux (All distributions)
-- ✅ macOS 10.14+
-- ⚠️ Windows (Coming soon)
+- ✅ **Linux** - All distributions (Ubuntu, Fedora, Debian, Arch, etc.)
+- ✅ **macOS** - 10.14+ (Mojave and later)
+- ✅ **Windows** - 10/11 (64-bit)
 
 ### Browsers (with extension)
 
@@ -180,15 +196,6 @@ Settings: `~/.config/mergen/config.json`
 - ✅ KDE Plasma
 - ✅ XFCE
 - ✅ Any DE with system tray support
-
-## 📚 Package Managers
-
-**Coming Soon:**
-
-- Arch Linux (AUR)
-- Debian/Ubuntu (APT)
-- Fedora (DNF/RPM)
-- macOS (Homebrew)
 
 ## 🤝 Contributing
 
