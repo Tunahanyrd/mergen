@@ -488,11 +488,15 @@ class SettingsDialog(QDialog):
         guide_group = QGroupBox("📋 Installation")
         guide_layout = QVBoxLayout()
 
-        # Download link
+        # Download links
         download_label = QLabel(
             "<b>1. Download Extension:</b><br>"
-            '<a href="https://github.com/Tunahanyrd/mergen/releases/latest/download/mergen-browser-extension.zip">'
-            "📦 Download mergen-browser-extension.zip</a>"
+            '<a href="https://github.com/Tunahanyrd/mergen/releases/latest/download/mergen-browser-extension.zip" '
+            'style="color: #89b4fa; text-decoration: none;">'
+            "📦 Chrome/Chromium Extension (.zip)</a><br>"
+            '<a href="https://github.com/Tunahanyrd/mergen/releases/latest/download/mergen-firefox-amo.zip" '
+            'style="color: #89b4fa; text-decoration: none;">'
+            "🦊 Firefox Extension (.zip)</a>"
         )
         download_label.setOpenExternalLinks(True)
         download_label.setWordWrap(True)
@@ -503,7 +507,7 @@ class SettingsDialog(QDialog):
             "<b>2. Install in Chrome/Chromium:</b><br>"
             "• Open <code>chrome://extensions/</code><br>"
             '• Enable "Developer mode" (top-right)<br>'
-            "• Drag & drop the .zip file<br>"
+            "• Drag & drop the Chrome .zip file<br>"
             "• Click extension icon to get Extension ID"
         )
         chrome_label.setWordWrap(True)
@@ -514,7 +518,7 @@ class SettingsDialog(QDialog):
             "<b>Or Firefox:</b><br>"
             "• Open <code>about:debugging#/runtime/this-firefox</code><br>"
             '• Click "Load Temporary Add-on"<br>'
-            "• Select the .zip file"
+            "• Select the Firefox .zip file"
         )
         firefox_label.setWordWrap(True)
         guide_layout.addWidget(firefox_label)

@@ -89,12 +89,16 @@ This installs the native messaging host to `~/bin/` and creates manifests for al
 
 #### Firefox
 
+**Download Extension:**
+- [**mergen-firefox-amo.zip**](https://github.com/Tunahanyrd/mergen/releases/latest/download/mergen-firefox-amo.zip) - Firefox Add-on package
+
 **Temporary Installation (Until AMO Approval):**
 
-1. Open: `about:debugging#/runtime/this-firefox`
-2. Click **"Load Temporary Add-on..."**
-3. Select: `mergen-firefox-amo.zip` or `browser-extension/manifest.json`
-4. ⚠️ **Note:** Removed on browser restart
+1. Download `mergen-firefox-amo.zip` from link above
+2. Open: `about:debugging#/runtime/this-firefox`
+3. Click **"Load Temporary Add-on..."**
+4. Select the downloaded `mergen-firefox-amo.zip` file
+5. ⚠️ **Note:** Removed on browser restart
 
 **Permanent Installation:**
 
