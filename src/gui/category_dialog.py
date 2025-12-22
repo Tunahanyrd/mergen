@@ -22,9 +22,7 @@ from src.core.i18n import I18n
 class CategoryDialog(QDialog):
     def __init__(self, parent=None, name="", exts="", icon="folder", save_path=""):
         super().__init__(parent)
-        self.setWindowTitle(
-            I18n.get("add_category") if not name else I18n.get("category_properties", "Category Properties")
-        )
+        self.setWindowTitle(I18n.get("add_category") if not name else I18n.get("category_properties"))
         self.resize(500, 300)
         self.save_path = save_path
 
@@ -49,7 +47,7 @@ class CategoryDialog(QDialog):
 
         # Name
         self.name_edit = QLineEdit(name)
-        form.addRow(I18n.get("category_name", "Category Name:"), self.name_edit)
+        form.addRow(I18n.get("category_name"), self.name_edit)
 
         # Extensions
         self.ext_edit = QLineEdit(exts)

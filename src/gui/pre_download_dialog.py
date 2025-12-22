@@ -30,7 +30,7 @@ class PreDownloadDialog(QDialog):
         self.config = config
         self.queue_manager = queue_manager
 
-        self.setWindowTitle(I18n.get("download_options", "Download Options"))
+        self.setWindowTitle(I18n.get("download_options"))
         self.resize(600, 250)
         self.setup_ui()
 

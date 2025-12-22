@@ -187,6 +187,7 @@ TRANS = {
         "new_queue": "New Queue",
         "queue_name": "Queue Name:",
         "select_download_folder": "Select Download Folder",
+        "download_label": "Download",
         "stream_detected": "Stream Detected",
         # Browser Integration
         "browser_integration_header": "🌐 Browser Integration",
@@ -424,6 +425,7 @@ TRANS = {
         "new_queue": "Yeni Kuyruk",
         "queue_name": "Kuyruk Adı:",
         "select_download_folder": "İndirme Klasörünü Seç",
+        "download_label": "İndir",
         "stream_detected": "Akış Tespit Edildi",
     },
 }

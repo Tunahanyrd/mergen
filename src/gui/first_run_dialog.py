@@ -12,37 +12,35 @@ from src.core.i18n import I18n
 class FirstRunDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle(I18n.get("first_run_title", "Welcome to Mergen"))
+        self.setWindowTitle(I18n.get("first_run_title"))
         self.resize(400, 300)
         self.config = ConfigManager()
 
         layout = QVBoxLayout(self)
 
         # Welcome Text
-        lbl_welcome = QLabel(I18n.get("first_run_welcome", "Thank you for installing Mergen! Let's get you set up."))
+        lbl_welcome = QLabel(I18n.get("first_run_welcome"))
         lbl_welcome.setWordWrap(True)
         lbl_welcome.setStyleSheet("font-size: 14px; font-weight: bold; margin-bottom: 10px;")
         layout.addWidget(lbl_welcome)
 
         # Auto Start
-        self.chk_autostart = QCheckBox(I18n.get("setting_autostart", "Launch Mergen on system startup"))
+        self.chk_autostart = QCheckBox(I18n.get("setting_autostart"))
         self.chk_autostart.setChecked(True)
         layout.addWidget(self.chk_autostart)
 
         # Tray
-        self.chk_tray = QCheckBox(I18n.get("setting_close_to_tray", "Minimize to system tray on close"))
+        self.chk_tray = QCheckBox(I18n.get("setting_close_to_tray"))
         self.chk_tray.setChecked(True)
         layout.addWidget(self.chk_tray)
 
         # Browser Extension (Platform specific info)
-        self.chk_extension = QCheckBox(
-            I18n.get("first_run_extension", "Enable Browser Integration (Chrome/Edge/Brave)")
-        )
+        self.chk_extension = QCheckBox(I18n.get("first_run_extension"))
         self.chk_extension.setChecked(True)
 
         # If macOS, emphasize this
         if platform.system() == "Darwin":
-            self.chk_extension.setText(I18n.get("first_run_extension_mac", "Register Browser Extension for Chrome"))
+            self.chk_extension.setText(I18n.get("first_run_extension_mac"))
 
         layout.addWidget(self.chk_extension)
 

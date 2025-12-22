@@ -22,7 +22,7 @@ class QualityDialog(QDialog):
 
     def __init__(self, parent=None, video_info=None):
         super().__init__(parent)
-        self.setWindowTitle(I18n.get("select_quality", "Select Download Quality"))
+        self.setWindowTitle(I18n.get("select_quality"))
         self.setFixedSize(700, 500)
         self.video_info = video_info or {}
 
@@ -125,9 +125,9 @@ class QualityDialog(QDialog):
 
         self.bottom_layout.addStretch()
 
-        self.download_btn = QPushButton(I18n.get("download_label", "Download"))
+        self.download_btn = QPushButton(I18n.get("download_label"))
         self.download_btn.clicked.connect(self.accept_selection)
-        self.cancel_btn = QPushButton(I18n.get("cancel_btn", "Cancel"))
+        self.cancel_btn = QPushButton(I18n.get("cancel_btn"))
         self.cancel_btn.setStyleSheet("background-color: #3e3e42;")
         self.cancel_btn.clicked.connect(self.reject)
 
