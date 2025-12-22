@@ -1,7 +1,7 @@
 #!/bin/bash
 # Build .rpm package for Fedora/RHEL/CentOS
 
-VERSION="0.7.0"
+VERSION="0.8.0"
 RELEASE="1"
 
 mkdir -p rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
@@ -10,17 +10,17 @@ cat > rpmbuild/SPECS/mergen.spec << EOF
 Name:           mergen
 Version:        ${VERSION}
 Release:        ${RELEASE}
-Summary:        Multi-threaded download manager with browser integration
+Summary:        Multi-threaded download manager with stream support (HLS/DASH)
 License:        GPL-3.0
 URL:            https://github.com/Tunahanyrd/mergen
 
 # BuildArch ve bağımlılıklar
 BuildArch:      x86_64
 AutoReqProv:    no
-Requires:       python3 >= 3.8
+Requires:       python3 >= 3.8, ffmpeg
 
 %description
-Mergen is a modern download manager.
+Mergen is a modern download manager with browser integration and streaming media capture.
 
 %install
 mkdir -p %{buildroot}/usr/bin

@@ -1,7 +1,7 @@
 #!/bin/bash
 # Build .deb package for Debian/Ubuntu
 
-VERSION="0.7.0"
+VERSION="0.8.0"
 ARCH="amd64"
 PKG_NAME="mergen_${VERSION}_${ARCH}"
 
@@ -27,11 +27,12 @@ Section: net
 Priority: optional
 Architecture: ${ARCH}
 Maintainer: Tunahanyrd <your-email@example.com>
-Depends: python3 (>= 3.8)
-Description: Multi-threaded download manager with browser integration
+Depends: python3 (>= 3.8), ffmpeg
+Description: Multi-threaded download manager with browser integration and stream support
  Mergen is a modern download manager featuring:
   - Multi-threaded downloads (up to 32 connections)
   - Browser integration (Chrome, Firefox, Brave, Edge)
+  - Stream capture and download (HLS/DASH)
   - Resume support
   - Queue management
   - Auto-categorization

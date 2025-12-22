@@ -49,15 +49,21 @@ def read_message():
         return None
 
 
-def send_to_mergen(url, filename):
+def send_to_mergen(url, filename, stream_type="direct"):
     """Send download to Mergen app via HTTP."""
     try:
         import requests
 
-        response = requests.post(MERGEN_HTTP_URL, json={"url": url, "filename": filename}, timeout=2)
+        payload = {
+            "url": url,
+            "filename": filename,
+            "stream_type": stream_type  # NEW: hls, dash, mp4, ts, mp3, direct
+        }
+
+        response = requests.post(MERGEN_HTTP_URL, json=payload, timeout=2)
 
         if response.status_code == 200:
-            logging.info(f"✅ Mergen: {url}")
+            logging.info(f"✅ Mergen [{stream_type}]: {url}")
             return {"status": "success", "message": "Added to Mergen"}
         else:
             return {"status": "error", "message": f"HTTP {response.status_code}"}
@@ -86,7 +92,8 @@ def main():
             if action == "add_download":
                 url = message.get("url", "")
                 filename = message.get("filename", "")
-                result = send_to_mergen(url, filename)
+                stream_type = message.get("stream_type", "direct")  # NEW
+                result = send_to_mergen(url, filename, stream_type)
                 send_message(result)
 
             elif action in ["ping", "test_connection"]:

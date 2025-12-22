@@ -32,6 +32,10 @@ jobs:
             --hidden-import=httpx `
             --hidden-import=requests `
             --hidden-import=PySide6 `
+            --hidden-import=yt_dlp `
+            --hidden-import=yt_dlp.extractor `
+            --hidden-import=yt_dlp.utils `
+            --hidden-import=yt_dlp.postprocessor `
             main.py
             
       - name: Setup Inno Setup
@@ -72,6 +76,13 @@ jobs:
             --hidden-import=httpx \
             --hidden-import=requests \
             --hidden-import=PySide6 \
+            --hidden-import=yt_dlp \
+            --hidden-import=yt_dlp.extractor \
+            --hidden-import=yt_dlp.utils \
+            --hidden-import=yt_dlp.postprocessor \
+            --add-data "data:data" \
+            --add-data "browser-extension:browser-extension" \
+            --add-data "native-host:native-host" \
             main.py
       
       - name: Move Binary to Installer Context
@@ -155,6 +166,13 @@ jobs:
             --hidden-import=httpx \
             --hidden-import=requests \
             --hidden-import=PySide6 \
+            --hidden-import=yt_dlp \
+            --hidden-import=yt_dlp.extractor \
+            --hidden-import=yt_dlp.utils \
+            --hidden-import=yt_dlp.postprocessor \
+            --add-data="data:data" \
+            --add-data="browser-extension:browser-extension" \
+            --add-data="native-host:native-host" \
             main.py
       
       - name: Build DMG

@@ -1,12 +1,12 @@
 # Maintainer: Tunahanyrd <tunahanyrd@gmail.com>
 pkgname=mergen
-pkgver=0.7.0
+pkgver=0.8.0
 pkgrel=1
-pkgdesc="Multi-threaded download manager with browser integration"
+pkgdesc="Multi-threaded download manager with browser integration and stream support (HLS/DASH)"
 arch=('x86_64')
 url="https://github.com/Tunahanyrd/mergen"
 license=('GPL3')
-depends=('glibc' 'gcc-libs' 'zlib' 'hicolor-icon-theme')
+depends=('glibc' 'gcc-libs' 'zlib' 'hicolor-icon-theme' 'ffmpeg')
 
 package() {
     # All files are already in the build directory (copied by CI workflow)

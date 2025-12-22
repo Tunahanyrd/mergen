@@ -85,6 +85,11 @@ class Downloader:
         # Stats
         self.start_time = 0
         self.running = True
+        
+        # NEW: Stream detection for v0.8.0
+        self.stream_type = self._detect_stream_type(url)
+        if self.stream_type in ['hls', 'dash']:
+            self.log(f"🎬 Detected {self.stream_type.upper()} stream")
 
     def stop(self):
         """Stops the download gracefully."""
@@ -214,6 +219,113 @@ class Downloader:
 
         proxy_url = f"{scheme}://{url}"
         return {"all://": proxy_url}
+    
+    # ==================== v0.8.0: Stream Support ====================
+    
+    def _detect_stream_type(self, url):
+        """Detect if URL is a streaming protocol."""
+        if re.search(r'\.m3u8(\?.*)?$', url, re.I):
+            return 'hls'
+        elif re.search(r'\.mpd(\?.*)?$', url, re.I):
+            return 'dash'
+        elif re.search(r'\.(ts|mp4|mp3)(\?.*)?$', url, re.I):
+            return 'media'
+        return 'direct'
+    
+    def _check_ytdlp(self):
+        """Check if yt-dlp is available."""
+        try:
+            import yt_dlp
+            return True
+        except ImportError:
+            self.log("❌ yt-dlp not installed! Install with: pip install yt-dlp")
+            return False
+    
+    def _check_ffmpeg(self):
+        """Check if FFmpeg is installed on system."""
+        import shutil
+        return shutil.which('ffmpeg') is not None
+    
+    def _show_ffmpeg_guide(self):
+        """Show platform-specific FFmpeg installation guide."""
+        guides = {
+            'linux': (
+                "⚠️ FFmpeg not found! Install via package manager:\n"
+                "  • Ubuntu/Debian: sudo apt install ffmpeg\n"
+                "  • Fedora/RHEL: sudo dnf install ffmpeg\n"
+                "  • Arch Linux: sudo pacman -S ffmpeg"
+            ),
+            'darwin': (
+                "⚠️ FFmpeg not found! Install via Homebrew:\n"
+                "  • brew install ffmpeg\n"
+                "  Or download from: https://ffmpeg.org/download.html"
+            ),
+            'win32': (
+                "⚠️ FFmpeg not found! Install options:\n"
+                "  • Recommended: winget install Gyan.FFmpeg\n"
+                "  • Alternative: choco install ffmpeg\n"
+                "  • Manual: https://www.gyan.dev/ffmpeg/builds/"
+            )
+        }
+        
+        platform = sys.platform
+        guide = guides.get(platform, "Install FFmpeg from https://ffmpeg.org")
+        self.log(guide)
+    
+    def _ytdlp_progress_hook(self, d):
+        """Convert yt-dlp progress to our callback format."""
+        if d['status'] == 'downloading':
+            downloaded = d.get('downloaded_bytes', 0)
+            total = d.get('total_bytes') or d.get('total_bytes_estimate', 0)
+            
+            if self.progress_callback:
+                self.progress_callback(downloaded, total)
+    
+    def _download_with_ytdlp(self):
+        """Download stream using yt-dlp."""
+        if not self._check_ytdlp():
+            return False
+        
+        import yt_dlp
+        
+        # Check FFmpeg
+        has_ffmpeg = self._check_ffmpeg()
+        if not has_ffmpeg:
+            self._show_ffmpeg_guide()
+            self.log("⚠️ Continuing without FFmpeg (may fail for some streams)")
+        
+        # Prepare output filename (without .part extension for yt-dlp)
+        output_path = self.filename.replace('.part', '')
+        
+        ydl_opts = {
+            'outtmpl': output_path,
+            'progress_hooks': [self._ytdlp_progress_hook],
+            'quiet': True,
+            'no_warnings': True,
+        }
+        
+        # Only add FFmpeg opts if available
+        if has_ffmpeg:
+            ydl_opts['merge_output_format'] = 'mp4'
+            ydl_opts['postprocessors'] = [{
+                'key': 'FFmpegVideoConvertor',
+                'preferedformat': 'mp4',
+            }]
+        
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                self.log(f"🎬 Downloading {self.stream_type.upper()} stream...")
+                ydl.download([self.url])
+            
+            self.log("✅ Stream download complete")
+            return True
+            
+        except Exception as e:
+            self.log(f"❌ yt-dlp error: {e}")
+            traceback.print_exc()
+            return False
+    
+    # ==================== End Stream Support ====================
 
     def prepare(self):
         """Prepares for a fresh download: checks existence, gets size, allocate file."""
@@ -357,7 +469,17 @@ class Downloader:
         """Main execution flow."""
         self.log("Starting process...")
         self.start_time = time.time()
-
+        
+        # NEW v0.8.0: Check if stream
+        if self.stream_type in ['hls', 'dash']:
+            self.log(f"🎬 Detected {self.stream_type.upper()} stream protocol")
+            success = self._download_with_ytdlp()
+            
+            if self.completion_callback:
+                self.completion_callback(success, self.filename)
+            return
+        
+        # Standard multi-threaded download for direct files
         initial_downloaded = self.load_resume_state()
         if initial_downloaded is None:
             if not self.prepare():

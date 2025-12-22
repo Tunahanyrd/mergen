@@ -1,14 +1,20 @@
 {
   "manifest_version": 3,
   "name": "Mergen Download Manager",
-  "version": "0.7.0",
-  "description": "Capture downloads and send to Mergen Download Manager. Multi-threaded downloads with browser integration.",
+  "version": "0.8.0",
+  "description": "Capture downloads and streams (HLS/DASH) with Mergen. Multi-threaded downloads with browser integration.",
   "author": "Tunahanyrd",
   "homepage_url": "https://github.com/Tunahanyrd/mergen",
   "permissions": [
     "downloads",
     "nativeMessaging",
-    "contextMenus"
+    "contextMenus",
+    "declarativeNetRequest",
+    "declarativeNetRequestFeedback",
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
   ],
   "background": {
     "service_worker": "background.js",
