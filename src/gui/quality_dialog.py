@@ -224,6 +224,13 @@ class QualityDialog(QDialog):
         # Get selected format
         selected_items = self.table.selectedItems()
         if not selected_items:
+            # Fallback if list is empty or nothing selected
+            # For HLS streams where formats might be hidden or just one manifest
+            # we can tell Main Window to proceed with default "best"
+            if self.table.rowCount() == 0:
+                 self.quality_selected.emit({}) # Emit empty dict for "auto"
+                 self.accept()
+                 return
             return
             
         format_data = selected_items[0].data(Qt.UserRole)
