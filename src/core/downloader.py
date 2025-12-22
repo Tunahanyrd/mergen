@@ -479,19 +479,30 @@ class Downloader:
         self.log("Starting process...")
         self.start_time = time.time()
         
-        # Check if URL is from streaming platforms (YouTube, Twitch, etc.)
-        streaming_platforms = [
-            'youtube.com', 'youtu.be', 'twitch.tv', 'vimeo.com',
-            'dailymotion.com', 'facebook.com/watch', 'instagram.com',
-            'tiktok.com', 'twitter.com', 'x.com'
-        ]
+    def start(self):
+        """Main execution flow."""
+        self.log("Starting process...")
+        self.start_time = time.time()
         
-        is_streaming_site = any(platform in self.url.lower() for platform in streaming_platforms)
+        # Dynamic check using yt-dlp's 1800+ extractors
+        is_streaming_site = False
+        try:
+            import yt_dlp.extractor
+            # Iterate through all extractors to see if one matches (excluding generic)
+            for ie in yt_dlp.extractor.gen_extractors():
+                if ie.IE_NAME != 'generic' and ie.suitable(self.url):
+                    is_streaming_site = True
+                    self.log(f"🌍 Detected supported platform: {ie.IE_NAME}")
+                    break
+        except ImportError:
+            self.log("⚠️ yt-dlp not found, skipping advanced detection")
+        except Exception as e:
+            self.log(f"⚠️ Detection error: {e}")
         
-        # NEW v0.8.0: Use yt-dlp for streams OR streaming platforms
+        # Use yt-dlp for detected streaming sites OR known stream protocols
         if self.stream_type in ['hls', 'dash'] or is_streaming_site:
             if is_streaming_site:
-                self.log(f"🎥 Detected streaming platform URL - using yt-dlp for best quality")
+                self.log(f"🎥 Detected streaming platform - delegating to yt-dlp")
             else:
                 self.log(f"🎬 Detected {self.stream_type.upper()} stream protocol")
             
