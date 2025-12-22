@@ -2,7 +2,7 @@
 ; Creates Windows installer with FFmpeg auto-installation support
 
 #define MyAppName "Mergen Download Manager"
-#define MyAppVersion "0.9.2"
+#define MyAppVersion "0.9.3"
 #define MyAppPublisher "Tunahanyrd"
 #define MyAppURL "https://github.com/Tunahanyrd/mergen"
 #define MyAppExeName "mergen.exe"

@@ -2,7 +2,7 @@
 # Build .deb package for Debian/Ubuntu
 set -e
 
-VERSION="0.9.2"
+VERSION="0.9.3"
 ARCH="amd64"
 PKG_NAME="mergen_${VERSION}_${ARCH}"
 

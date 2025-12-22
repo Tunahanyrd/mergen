@@ -2,7 +2,7 @@
 # Build AppImage for Linux (universal)
 set -e
 
-VERSION="0.9.2"
+VERSION="0.9.3"
 APPDIR="Mergen.AppDir"
 
 mkdir -p "${APPDIR}/usr/bin"
