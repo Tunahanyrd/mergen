@@ -40,7 +40,9 @@ def create_crx(extension_dir, key_path, output_path):
         cmd = [
             'google-chrome', 
             f'--pack-extension={os.path.abspath(extension_dir)}', 
-            f'--pack-extension-key={os.path.abspath(key_path)}'
+            f'--pack-extension-key={os.path.abspath(key_path)}',
+            '--no-sandbox',
+            '--disable-gpu'
         ]
         print(f"Running: {' '.join(cmd)}")
         subprocess.run(cmd, check=True)
