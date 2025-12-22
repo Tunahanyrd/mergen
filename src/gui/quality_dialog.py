@@ -163,6 +163,20 @@ class QualityDialog(QDialog):
 
         # Populate Formats
         formats = info.get("formats", [])
+
+        # CRITICAL FIX: If no formats, create a default one from URL
+        if not formats:
+            self.log("⚠️ No formats found, using direct URL")
+            formats = [
+                {
+                    "url": info.get("url", info.get("webpage_url", "")),
+                    "ext": info.get("ext", "mp4"),
+                    "format_id": "direct",
+                    "format_note": "Direct Stream",
+                    "vcodec": "copy",
+                    "acodec": "copy",
+                }
+            ]
         # Filter and sort formats
         # Priority: Video+Audio > Video Only (high res) > Audio Only
 
@@ -218,6 +232,20 @@ class QualityDialog(QDialog):
 
         # Sort by resolution (height) descending
         filtered_formats.sort(key=lambda x: x["data"].get("height", 0) or 0, reverse=True)
+
+        # CRITICAL FIX: If no valid formats after filtering, add a fallback
+        if not filtered_formats:
+            self.log("⚠️ No valid formats after filtering, adding fallback")
+            filtered_formats = [
+                {
+                    "data": {"url": info.get("url", ""), "ext": "mp4", "format_id": "fallback"},
+                    "res": "Auto",
+                    "ext": "mp4",
+                    "size": "--",
+                    "codec": "copy",
+                    "is_video": True,
+                }
+            ]
 
         self.table.setRowCount(len(filtered_formats))
         for row, item in enumerate(filtered_formats):
