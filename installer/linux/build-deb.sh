@@ -12,12 +12,12 @@ mkdir -p "${PKG_NAME}/usr/share/applications"
 mkdir -p "${PKG_NAME}/usr/share/icons/hicolor/128x128/apps"
 mkdir -p "${PKG_NAME}/usr/share/mergen"
 
-# Copy files
-cp ../../dist/mergen "${PKG_NAME}/usr/bin/"
-cp ../../data/mergen.desktop "${PKG_NAME}/usr/share/applications/"
-cp ../../data/mergen.png "${PKG_NAME}/usr/share/icons/hicolor/128x128/apps/"
-cp -r ../../browser-extension "${PKG_NAME}/usr/share/mergen/"
-cp -r ../../native-host "${PKG_NAME}/usr/share/mergen/"
+# Copy files (Files are moved here by CI workflow)
+cp mergen "${PKG_NAME}/usr/bin/"
+cp mergen.desktop "${PKG_NAME}/usr/share/applications/"
+cp mergen.png "${PKG_NAME}/usr/share/icons/hicolor/128x128/apps/"
+cp -r browser-extension "${PKG_NAME}/usr/share/mergen/"
+cp -r native-host "${PKG_NAME}/usr/share/mergen/"
 
 # Create control file
 cat > "${PKG_NAME}/DEBIAN/control" << EOF
