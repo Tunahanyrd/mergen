@@ -233,6 +233,16 @@ function testNativeConnection() {
 // Handle context menu clicks
 browser.contextMenus.onClicked.addListener((info, tab) => {
     if (info.menuItemId === "mergen-download" && info.linkUrl) {
+        // Reject browser-internal URLs
+        if (info.linkUrl.startsWith('chrome://') ||
+            info.linkUrl.startsWith('about://') ||
+            info.linkUrl.startsWith('chrome-extension://') ||
+            info.linkUrl.startsWith('moz-extension://') ||
+            info.linkUrl.startsWith('file://')) {
+            console.log("⚠️ Cannot download browser-internal URL:", info.linkUrl);
+            return;
+        }
+
         console.log("📥 Context menu download requested:", info.linkUrl);
         const streamType = detectStreamType(info.linkUrl);
         sendToMergen(info.linkUrl, info.linkUrl.split('/').pop() || 'download', streamType);
@@ -268,6 +278,17 @@ function extractFilename(url) {
 // PRIMARY: Intercept downloads BEFORE they start (prevents save dialog)
 browser.downloads.onDeterminingFilename.addListener((downloadItem, suggest) => {
     console.log("🚫 Intercepting download:", downloadItem.url);
+
+    // Reject browser-internal URLs
+    if (downloadItem.url.startsWith('chrome://') ||
+        downloadItem.url.startsWith('about://') ||
+        downloadItem.url.startsWith('chrome-extension://') ||
+        downloadItem.url.startsWith('moz-extension://') ||
+        downloadItem.url.startsWith('file://')) {
+        console.log("⚠️ Skipping browser-internal URL:", downloadItem.url);
+        suggest({ filename: downloadItem.filename }); // Let browser handle it
+        return;
+    }
 
     // Check for duplicates
     const downloadKey = downloadItem.url + downloadItem.filename;
