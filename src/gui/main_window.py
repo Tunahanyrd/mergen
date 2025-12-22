@@ -37,6 +37,7 @@ from src.core.queue_manager import QueueManager
 from src.gui.download_dialog import DownloadDialog
 from src.gui.properties_dialog import PropertiesDialog
 from src.gui.quality_dialog import QualityDialog
+from src.gui.first_run_dialog import FirstRunDialog
 from src.gui.queue_manager_dialog import QueueManagerDialog
 from src.gui.settings_dialog import SettingsDialog
 from src.gui.styles import MERGEN_THEME, MERGEN_THEME_LIGHT
@@ -95,6 +96,14 @@ class MainWindow(QMainWindow):
         self.apply_theme()
         self.refresh_table()
         self.setup_tray()
+
+        # First Run Check
+        if self.config.get("first_run", True):
+            QTimer.singleShot(100, self.show_first_run_dialog)
+
+    def show_first_run_dialog(self):
+        dlg = FirstRunDialog(self)
+        dlg.exec()
 
     def closeEvent(self, event):
         """Handle window close - minimize to tray if enabled."""
