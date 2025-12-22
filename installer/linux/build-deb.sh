@@ -1,7 +1,7 @@
 #!/bin/bash
 # Build .deb package for Debian/Ubuntu
 
-VERSION="0.8.0"
+VERSION="0.9.0"
 ARCH="amd64"
 PKG_NAME="mergen_${VERSION}_${ARCH}"
 
