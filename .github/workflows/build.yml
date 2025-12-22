@@ -191,16 +191,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Zip Browser Extension
+      - name: Zip Browser Extension (Chrome)
         run: |
           cd browser-extension
           zip -r ../mergen-browser-extension.zip ./*
       
-      - name: Upload Extension Artifact
+      - name: Zip Browser Extension (Firefox AMO)
+        run: |
+          cd browser-extension
+          zip -r ../mergen-firefox-amo.zip ./*
+      
+      - name: Upload Chrome Extension Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: browser-extension-artifact
+          name: browser-extension-chrome
           path: mergen-browser-extension.zip
+      
+      - name: Upload Firefox Extension Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-extension-firefox
+          path: mergen-firefox-amo.zip
 
   release:
     needs: [build-windows, build-linux, build-macos, package-extension]
@@ -225,7 +236,8 @@ jobs:
             artifacts/mergen-linux-packages/*.AppImage
             artifacts/mergen-linux-packages/*.pkg.tar.zst
             artifacts/mergen-macos-dmg/Mergen-*.dmg
-            artifacts/browser-extension-artifact/mergen-browser-extension.zip
+            artifacts/browser-extension-chrome/mergen-browser-extension.zip
+            artifacts/browser-extension-firefox/mergen-firefox-amo.zip
           draft: false
           prerelease: false
         env:

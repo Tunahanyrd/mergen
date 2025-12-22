@@ -95,39 +95,11 @@ function detectStreamType(url) {
     return 'direct';
 }
 
-// Listen for web requests to detect media
-chrome.webRequest.onBeforeRequest.addListener(
-    (details) => {
-        const streamType = detectStreamType(details.url);
-
-        if (streamType !== 'direct') {
-            const streamKey = `${details.url}_${Date.now()}`;
-
-            // Store detected stream
-            detectedStreams.set(streamKey, {
-                url: details.url,
-                type: streamType,
-                timestamp: Date.now(),
-                tabId: details.tabId
-            });
-
-            console.log(`🎬 Detected ${streamType.toUpperCase()} stream:`, details.url.substring(0, 100));
-
-            // Update badge
-            updateBadgeCount();
-
-            // Clean old detections (keep last 50)
-            if (detectedStreams.size > 50) {
-                const oldestKey = detectedStreams.keys().next().value;
-                detectedStreams.delete(oldestKey);
-            }
-        }
-    },
-    {
-        urls: ["<all_urls>"],
-        types: ["xmlhttprequest", "media"]
-    }
-);
+// NOTE: webRequest API is NOT available in Manifest V3 Service Workers
+// Streams will be detected via:
+// 1. downloads.onDeterminingFilename (direct downloads)
+// 2. Context menu on video/audio elements
+// 3. User manually selecting "Download Stream" on links
 
 // Update extension badge with stream count
 function updateBadgeCount() {
