@@ -144,3 +144,15 @@ class ConfigManager:
                 json.dump(data, f, indent=4)
         except Exception as e:
             print(f"Error saving history: {e}")
+
+    def get_proxy_config(self):
+        """
+        Returns a dictionary with proxy configuration.
+        """
+        return {
+            "enabled": self.get("proxy_enabled"),
+            "host": self.get("proxy_host"),
+            "port": int(self.get("proxy_port") or 8080),
+            "user": self.get("proxy_user"),
+            "pass": self.get("proxy_pass"),
+        }
