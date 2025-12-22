@@ -104,8 +104,9 @@ class MainWindow(QMainWindow):
             current_version = version("mergen")
         except Exception:
             # Fallback for bundled/dev mode - read from pyproject.toml
-            import tomllib
             from pathlib import Path
+
+            import tomllib
 
             try:
                 if hasattr(sys, "_MEIPASS"):
