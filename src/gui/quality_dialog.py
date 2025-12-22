@@ -158,8 +158,8 @@ class QualityDialog(QDialog):
         
         filtered_formats = []
         for f in formats:
-            # Skip m3u8 playlists if mp4 available, skip dash manifests
-            if f.get('protocol') in ['m3u8', 'm3u8_native', 'http_dash_segments']:
+            # Skip dash manifests if better formats exist, but keep m3u8 as valid stream candidates
+            if f.get('protocol') in ['http_dash_segments']:
                continue
             
             # Simple metadata
