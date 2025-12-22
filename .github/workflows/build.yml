@@ -76,7 +76,10 @@ jobs:
       
       - name: Move Binary to Installer Context
         run: |
+          # Move/copy all required files for Linux packages
           mv dist/mergen installer/linux/
+          cp data/mergen.desktop installer/linux/
+          cp data/mergen.png installer/linux/
       
       - name: Build .deb package
         run: |
@@ -101,10 +104,7 @@ jobs:
       
       - name: Build Arch Linux Package (PKGBUILD)
         run: |
-          # Copy all required files to installer/linux
-          cp dist/mergen installer/linux/
-          cp data/mergen.desktop installer/linux/
-          cp data/mergen.png installer/linux/
+          # Copy additional files needed for Arch package (binary, desktop, icon already copied)
           cp -r browser-extension installer/linux/
           cp -r native-host installer/linux/
           
