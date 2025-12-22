@@ -122,7 +122,7 @@ jobs:
           docker run --rm -v $(pwd)/installer/linux:/src archlinux:base-devel /bin/bash -c "
             # Sync package database and install dependencies as ROOT
             pacman -Sy --noconfirm && \
-            pacman -S --noconfirm hicolor-icon-theme && \
+            pacman -S --noconfirm hicolor-icon-theme ffmpeg && \
             
             # Create non-root user for makepkg
             useradd -m builder && \

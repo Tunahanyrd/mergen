@@ -8,7 +8,7 @@
 #define MyAppExeName "mergen.exe"
 
 [Setup]
-AppId={8F9B5C3D-7E2A-4B1C-9D8E-1F2A3B4C5D6E}
+AppId={{{{8F9B5C3D-7E2A-4B1C-9D8E-1F2A3B4C5D6E}}}}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
