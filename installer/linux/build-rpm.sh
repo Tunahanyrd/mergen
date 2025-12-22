@@ -17,7 +17,7 @@ URL:            https://github.com/Tunahanyrd/mergen
 # BuildArch ve bağımlılıklar
 BuildArch:      x86_64
 AutoReqProv:    no
-Requires:       python3 >= 3.8, ffmpeg
+Requires:       python3 >= 3.8, (ffmpeg or ffmpeg-free)
 
 %description
 Mergen is a modern download manager with browser integration and streaming media capture.
