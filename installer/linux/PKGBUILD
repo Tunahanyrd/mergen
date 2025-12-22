@@ -10,9 +10,11 @@ depends=('glibc' 'gcc-libs' 'zlib' 'hicolor-icon-theme')
 
 source=("mergen"
         "mergen.desktop"
-        "mergen.png")
+        "mergen.png"
+        "browser-extension"
+        "native-host")
 
-sha256sums=('SKIP' 'SKIP' 'SKIP')
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP' 'SKIP')
 
 package() {
 
