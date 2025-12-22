@@ -95,8 +95,85 @@ function detectStreamType(url) {
     return 'direct';
 }
 
-// NOTE: webRequest API is NOT available in Manifest V3 Service Workers
-// Streams will be detected via:
+// Firefox MV3 still supports webRequest API (Chrome Service Workers don't)
+// Detect browser and enable webRequest for Firefox
+const isFirefox = typeof browser !== 'undefined';
+
+if (isFirefox && browser.webRequest && browser.webRequest.onBeforeRequest) {
+    console.log("🦊 Firefox detected - enabling webRequest media sniffing");
+
+    browser.webRequest.onBeforeRequest.addListener(
+        (details) => {
+            const streamType = detectStreamType(details.url);
+
+            if (streamType !== 'direct') {
+                const streamKey = `${details.url}_${Date.now()}`;
+
+                // Store detected stream
+                detectedStreams.set(streamKey, {
+                    url: details.url,
+                    type: streamType,
+                    timestamp: Date.now(),
+                    tabId: details.tabId
+                });
+
+                console.log(`🎬 Detected ${streamType.toUpperCase()} stream:`, details.url.substring(0, 100));
+
+                // Update badge
+                updateBadgeCount();
+
+                // Clean old detections (keep last 50)
+                if (detectedStreams.size > 50) {
+                    const oldestKey = detectedStreams.keys().next().value;
+                    detectedStreams.delete(oldestKey);
+                }
+            }
+        },
+        {
+            urls: ["<all_urls>"],
+            types: ["xmlhttprequest", "media"]
+        }
+    );
+} else {
+    // Chrome: Use declarativeNetRequest.onRuleMatched for automatic detection
+    console.log("🌐 Chrome detected - using declarativeNetRequest events");
+
+    if (chrome.declarativeNetRequest && chrome.declarativeNetRequest.onRuleMatched) {
+        chrome.declarativeNetRequest.onRuleMatched.addListener((details) => {
+            const url = details.request.url;
+            const streamType = detectStreamType(url);
+
+            if (streamType !== 'direct') {
+                const streamKey = `${url}_${Date.now()}`;
+
+                // Store detected stream
+                detectedStreams.set(streamKey, {
+                    url: url,
+                    type: streamType,
+                    timestamp: Date.now(),
+                    tabId: details.request.tabId
+                });
+
+                console.log(`🎬 Rule matched - ${streamType.toUpperCase()} stream:`, url.substring(0, 100));
+
+                // Update badge
+                updateBadgeCount();
+
+                // Clean old detections (keep last 50)
+                if (detectedStreams.size > 50) {
+                    const oldestKey = detectedStreams.keys().next().value;
+                    detectedStreams.delete(oldestKey);
+                }
+            }
+        });
+
+        console.log("✅ Automatic stream detection enabled via declarativeNetRequest");
+    } else {
+        console.log("⚠️ declarativeNetRequest events not available - using context menu only");
+    }
+}
+
+// Both Firefox and Chrome now have automatic sniffing! ✅
 // 1. downloads.onDeterminingFilename (direct downloads)
 // 2. Context menu on video/audio elements
 // 3. User manually selecting "Download Stream" on links
