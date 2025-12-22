@@ -336,6 +336,15 @@ class Downloader:
             return True
 
         # 3. Request metadata (HEAD/GET range 0-0)
+        # Validate URL protocol
+        if self.url.startswith(('chrome://', 'about://', 'file://', 'chrome-extension://', 'moz-extension://')):
+            self.log(f"❌ Cannot download browser-internal URL: {self.url[:50]}")
+            raise ValueError(f"Browser-internal URLs are not downloadable: {self.url}")
+        
+        if not self.url.startswith(('http://', 'https://', 'ftp://')):
+            self.log(f"⚠️ URL missing protocol, adding https://: {self.url[:50]}")
+            self.url = 'https://' + self.url
+        
         req_headers = {**self.headers, "Range": "bytes=0-0"}
         try:
             r = httpx.get(self.url, headers=req_headers, follow_redirects=True, proxy=self.get_proxies(), timeout=10)

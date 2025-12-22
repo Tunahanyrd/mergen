@@ -1,6 +1,13 @@
 // Mergen Download Manager - Browser Extension v0.8.0
 // Captures downloads AND streaming media (HLS/DASH) via Manifest V3
 
+// Browser API polyfill - Firefox uses 'browser', Chrome uses 'chrome'
+if (typeof browser === 'undefined') {
+    // Chrome/Chromium - use chrome API
+    globalThis.browser = chrome;
+}
+// Now 'browser' works in both Firefox and Chrome!
+
 const NATIVE_HOST_NAME = "com.tunahanyrd.mergen";
 
 // Track processed downloads to avoid duplicates
@@ -19,21 +26,34 @@ const MEDIA_PATTERNS = {
 };
 
 // Initialize extension
-chrome.runtime.onInstalled.addListener(() => {
+browser.runtime.onInstalled.addListener(() => {
     console.log("✅ Mergen v0.8.0 extension installed!");
 
     // Create context menus
-    chrome.contextMenus.create({
+    browser.contextMenus.create({
         id: "mergen-download",
         title: "Download with Mergen",
         contexts: ["link"]
     });
 
-    chrome.contextMenus.create({
+    browser.contextMenus.create({
         id: "mergen-stream",
         title: "Download Stream with Mergen",
         contexts: ["link", "video", "audio"]
     });
+
+    // Show Extension ID to user for easy registration
+    const extensionId = browser.runtime.id;
+    browser.notifications.create({
+        type: "basic",
+        iconUrl: browser.runtime.getURL("icons/icon128.png"),
+        title: "🎉 Mergen Extension Installed!",
+        message: `Extension ID: ${extensionId}\n\n📋 Copy this ID and paste it in Mergen Settings → Browser Integration to complete registration.`,
+        priority: 2
+    });
+
+    console.log(`📋 Extension ID: ${extensionId}`);
+    console.log("👉 Register this ID in Mergen app Settings!");
 
     // Setup declarativeNetRequest rules for media detection
     setupMediaDetectionRules();
@@ -75,7 +95,7 @@ function setupMediaDetectionRules() {
         }
     ];
 
-    chrome.declarativeNetRequest.updateDynamicRules({
+    browser.declarativeNetRequest.updateDynamicRules({
         removeRuleIds: rules.map(r => r.id),
         addRules: rules
     }).then(() => {
@@ -138,8 +158,8 @@ if (isFirefox && browser.webRequest && browser.webRequest.onBeforeRequest) {
     // Chrome: Use declarativeNetRequest.onRuleMatched for automatic detection
     console.log("🌐 Chrome detected - using declarativeNetRequest events");
 
-    if (chrome.declarativeNetRequest && chrome.declarativeNetRequest.onRuleMatched) {
-        chrome.declarativeNetRequest.onRuleMatched.addListener((details) => {
+    if (browser.declarativeNetRequest && browser.declarativeNetRequest.onRuleMatched) {
+        browser.declarativeNetRequest.onRuleMatched.addListener((details) => {
             const url = details.request.url;
             const streamType = detectStreamType(url);
 
@@ -182,22 +202,22 @@ if (isFirefox && browser.webRequest && browser.webRequest.onBeforeRequest) {
 function updateBadgeCount() {
     const count = detectedStreams.size;
     if (count > 0) {
-        chrome.action.setBadgeText({ text: count.toString() });
-        chrome.action.setBadgeBackgroundColor({ color: "#007acc" });
+        browser.action.setBadgeText({ text: count.toString() });
+        browser.action.setBadgeBackgroundColor({ color: "#007acc" });
     } else {
-        chrome.action.setBadgeText({ text: "" });
+        browser.action.setBadgeText({ text: "" });
     }
 }
 
 // Test native messaging connection
 function testNativeConnection() {
-    chrome.runtime.sendNativeMessage(
+    browser.runtime.sendNativeMessage(
         NATIVE_HOST_NAME,
         { action: "ping", test: true },
         (response) => {
-            if (chrome.runtime.lastError) {
+            if (browser.runtime.lastError) {
                 console.error("❌ Native messaging connection FAILED:");
-                console.error("   Error:", chrome.runtime.lastError.message);
+                console.error("   Error:", browser.runtime.lastError.message);
                 console.error("   This usually means:");
                 console.error("   1. Native host not registered correctly");
                 console.error("   2. Extension ID doesn't match manifest");
@@ -211,7 +231,7 @@ function testNativeConnection() {
 }
 
 // Handle context menu clicks
-chrome.contextMenus.onClicked.addListener((info, tab) => {
+browser.contextMenus.onClicked.addListener((info, tab) => {
     if (info.menuItemId === "mergen-download" && info.linkUrl) {
         console.log("📥 Context menu download requested:", info.linkUrl);
         const streamType = detectStreamType(info.linkUrl);
@@ -246,14 +266,14 @@ function extractFilename(url) {
 }
 
 // PRIMARY: Intercept downloads BEFORE they start (prevents save dialog)
-chrome.downloads.onDeterminingFilename.addListener((downloadItem, suggest) => {
+browser.downloads.onDeterminingFilename.addListener((downloadItem, suggest) => {
     console.log("🚫 Intercepting download:", downloadItem.url);
 
     // Check for duplicates
     const downloadKey = downloadItem.url + downloadItem.filename;
     if (processedDownloads.has(downloadKey)) {
         console.log("⚠️ Duplicate download, skipping:", downloadKey);
-        chrome.downloads.cancel(downloadItem.id);
+        browser.downloads.cancel(downloadItem.id);
         return false;
     }
 
@@ -269,8 +289,8 @@ chrome.downloads.onDeterminingFilename.addListener((downloadItem, suggest) => {
     sendToMergen(downloadItem.url, downloadItem.filename, streamType);
 
     // Cancel immediately - NO save dialog will appear
-    chrome.downloads.cancel(downloadItem.id, () => {
-        chrome.downloads.erase({ id: downloadItem.id });
+    browser.downloads.cancel(downloadItem.id, () => {
+        browser.downloads.erase({ id: downloadItem.id });
     });
 
     // Return false to prevent Chrome from asking for filename
@@ -289,20 +309,20 @@ function sendToMergen(url, filename, streamType = 'direct') {
 
     console.log("📤 Sending to native host:", message);
 
-    chrome.runtime.sendNativeMessage(
+    browser.runtime.sendNativeMessage(
         NATIVE_HOST_NAME,
         message,
         (response) => {
-            if (chrome.runtime.lastError) {
+            if (browser.runtime.lastError) {
                 console.error("❌ Native messaging error:");
-                console.error("   Message:", chrome.runtime.lastError.message);
+                console.error("   Message:", browser.runtime.lastError.message);
                 console.error("   URL:", url);
             } else {
                 console.log("✅ Native host response:", response);
 
                 // Show notification
                 if (streamType !== 'direct') {
-                    chrome.notifications.create({
+                    browser.notifications.create({
                         type: 'basic',
                         iconUrl: 'icons/icon128.png',
                         title: 'Mergen - Stream Detected',
@@ -315,7 +335,7 @@ function sendToMergen(url, filename, streamType = 'direct') {
 }
 
 // Handle messages from popup
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "test_connection") {
         console.log("🧪 Manual test triggered");
         testNativeConnection();
