@@ -109,11 +109,17 @@ jobs:
           cp -r native-host installer/linux/
           
           docker run --rm -v $(pwd)/installer/linux:/src archlinux:base-devel /bin/bash -c "
+            # Sync package database and install dependencies as ROOT
             pacman -Sy --noconfirm && \
+            pacman -S --noconfirm hicolor-icon-theme && \
+            
+            # Create non-root user for makepkg
             useradd -m builder && \
             chown -R builder:builder /src && \
+            
+            # Run makepkg as non-root WITHOUT -s (dependencies already installed)
             cd /src && \
-            su builder -c 'makepkg -s --noconfirm'
+            su builder -c 'makepkg --noconfirm'
           "
 
       - name: Upload artifacts
