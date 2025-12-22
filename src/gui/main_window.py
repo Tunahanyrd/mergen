@@ -97,13 +97,25 @@ class MainWindow(QMainWindow):
         self.refresh_table()
         self.setup_tray()
 
-        # First Run Check
+        # First Run / Version Update Check
+        from importlib.metadata import version
+        current_version = version("mergen")
+        last_version = self.config.get("last_version", None)
+        
         if self.config.get("first_run", True):
+            # True first run
             QTimer.singleShot(100, self.show_first_run_dialog)
+        elif last_version != current_version:
+            # Version changed - could show "What's New" dialog
+            # For now, just update the version
+            self.config.set("last_version", current_version)
 
     def show_first_run_dialog(self):
         dlg = FirstRunDialog(self)
-        dlg.exec()
+        if dlg.exec():
+            # Save version on first run completion
+            from importlib.metadata import version
+            self.config.set("last_version", version("mergen"))
 
     def closeEvent(self, event):
         """Handle window close - minimize to tray if enabled."""
@@ -680,6 +692,15 @@ class MainWindow(QMainWindow):
             text = text.strip()
             if not re.match(r"^https?://", text):
                 text = "https://" + text
+            
+            # Validate URL format
+            if not re.match(r"^https?://[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(/.*)?$", text):
+                QMessageBox.warning(
+                    self, 
+                    I18n.get("error"),
+                    I18n.get("invalid_url")
+                )
+                return
 
             # Use pre-download dialog
             show_pre_dialog = self.config.get("show_pre_download_dialog", True)

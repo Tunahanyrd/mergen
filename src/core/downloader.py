@@ -350,7 +350,9 @@ class Downloader:
 
         except Exception as e:
             self.log(f"❌ yt-dlp error: {e}")
-            traceback.print_exc()
+            # Log full traceback only in debug mode
+            import logging
+            logging.debug(f"yt-dlp traceback: {traceback.format_exc()}")
             return False
 
     # ==================== End Stream Support ====================
@@ -435,7 +437,9 @@ class Downloader:
 
         except Exception as e:
             self.log(f"Error during preparation: {e}")
-            traceback.print_exc()
+            # Log full traceback only in debug mode
+            import logging
+            logging.debug(f"Prepare traceback: {traceback.format_exc()}")
             return False
 
     def download_segment(self, segment_idx):
@@ -537,9 +541,9 @@ class Downloader:
 
         except Exception as e:
             self.log(f"❌ Analysis failed: {e}")
-            import traceback
-
-            traceback.print_exc()
+            # Log full traceback only in debug mode
+            import logging
+            logging.debug(f"Analysis traceback: {traceback.format_exc()}")
             return None
 
     def start(self):
