@@ -322,8 +322,21 @@ browser.downloads.onDeterminingFilename.addListener((downloadItem, suggest) => {
     return false;
 });
 
+// Rate limiting for sending streams to native host
+const sentStreams = new Set();
+
 // Send download/stream to native host
 function sendToMergen(url, filename, streamType = 'direct') {
+    // Prevent duplicate stream notifications within 5 seconds
+    if (streamType !== 'direct') {
+        const streamKey = `${url}_${streamType}`;
+        if (sentStreams.has(streamKey)) {
+            console.log("⚠️ Skipper duplicate stream notification:", streamKey);
+            return;
+        }
+        sentStreams.add(streamKey);
+        setTimeout(() => sentStreams.delete(streamKey), 5000); // 5 sec cooldown
+    }
     const message = {
         action: "add_download",
         url: url,
