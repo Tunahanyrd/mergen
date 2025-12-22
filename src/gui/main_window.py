@@ -98,9 +98,31 @@ class MainWindow(QMainWindow):
         self.setup_tray()
 
         # First Run / Version Update Check
-        from importlib.metadata import version
+        try:
+            from importlib.metadata import version
 
-        current_version = version("mergen")
+            current_version = version("mergen")
+        except Exception:
+            # Fallback for bundled/dev mode - read from pyproject.toml
+            import tomllib
+            from pathlib import Path
+
+            try:
+                if hasattr(sys, "_MEIPASS"):
+                    # Bundled mode - version baked into config or use default
+                    current_version = "0.9.3"  # Hardcoded for bundled releases
+                else:
+                    # Dev mode - read from pyproject.toml
+                    pyproject_path = Path(__file__).parents[2] / "pyproject.toml"
+                    if pyproject_path.exists():
+                        with open(pyproject_path, "rb") as f:
+                            pyproject = tomllib.load(f)
+                            current_version = pyproject.get("project", {}).get("version", "0.0.0")
+                    else:
+                        current_version = "0.0.0"
+            except Exception:
+                current_version = "0.0.0"
+
         last_version = self.config.get("last_version", None)
 
         if self.config.get("first_run", True):
@@ -115,9 +137,9 @@ class MainWindow(QMainWindow):
         dlg = FirstRunDialog(self)
         if dlg.exec():
             # Save version on first run completion
-            from importlib.metadata import version
-
-            self.config.set("last_version", version("mergen"))
+            # Use already-detected version from __init__
+            current_version = self.config.get("last_version", "0.9.3")
+            self.config.set("last_version", current_version)
 
     def closeEvent(self, event):
         """Handle window close - minimize to tray if enabled."""

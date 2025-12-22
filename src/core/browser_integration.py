@@ -33,6 +33,13 @@ class MergenHTTPHandler(BaseHTTPRequestHandler):
 
                 # Emit signal to main window (thread-safe)
                 if self.main_window and hasattr(self.main_window, "browser_download_signal"):
+                    # Auto-wake: Show window if hidden/minimized
+                    if self.main_window.isHidden() or self.main_window.isMinimized():
+                        print("📱 Auto-wake: Restoring window for incoming download")
+                        self.main_window.show()
+                        self.main_window.raise_()
+                        self.main_window.activateWindow()
+
                     self.main_window.browser_download_signal.emit(url, filename)
 
                     # Log stream type for debugging
@@ -59,7 +66,7 @@ class MergenHTTPHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         """Handle GET requests (health check)."""
         if self.path == "/health" or self.path == "/":
-            response = {"status": "ok", "app": "Mergen", "version": "0.9.2"}
+            response = {"status": "ok", "app": "Mergen", "version": "0.9.3"}
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.send_header("Access-Control-Allow-Origin", "*")
