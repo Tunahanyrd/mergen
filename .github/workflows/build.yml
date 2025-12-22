@@ -19,7 +19,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+                                                                                                                                                                                                                                                                                                                                       
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -28,10 +28,10 @@ jobs:
       
       - name: Build executable
         run: |
-          pyinstaller --onefile --windowed --name mergen --icon data/mergen.png \
-            --hidden-import=httpx \
-            --hidden-import=requests \
-            --hidden-import=PySide6 \
+          pyinstaller --onefile --windowed --name mergen --icon data/mergen.png `
+            --hidden-import=httpx `
+            --hidden-import=requests `
+            --hidden-import=PySide6 `
             main.py
             
       - name: Setup Inno Setup
@@ -101,10 +101,15 @@ jobs:
       
       - name: Build Arch Linux Package (PKGBUILD)
         run: |
+          # Copy all required files to installer/linux
+          cp dist/mergen installer/linux/
+          cp data/mergen.desktop installer/linux/
+          cp data/mergen.png installer/linux/
           cp -r browser-extension installer/linux/
           cp -r native-host installer/linux/
           
           docker run --rm -v $(pwd)/installer/linux:/src archlinux:base-devel /bin/bash -c "
+            pacman -Sy --noconfirm && \
             useradd -m builder && \
             chown -R builder:builder /src && \
             cd /src && \
