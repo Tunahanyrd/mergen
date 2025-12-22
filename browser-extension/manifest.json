@@ -12,13 +12,17 @@
     "declarativeNetRequest",
     "declarativeNetRequestFeedback",
     "storage",
-    "webRequest"
+    "webRequest",
+    "notifications"
   ],
   "host_permissions": [
     "<all_urls>"
   ],
   "background": {
     "service_worker": "background.js",
+    "scripts": [
+      "background.js"
+    ],
     "type": "module"
   },
   "action": {
