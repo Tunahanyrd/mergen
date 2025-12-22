@@ -23,3 +23,22 @@ class AnalysisWorker(QThread):
             self.finished.emit(info)
         except Exception as e:
             self.error.emit(str(e))
+
+class ThumbnailWorker(QThread):
+    """
+    Background worker to fetch video thumbnail.
+    """
+    finished = Signal(bytes)
+
+    def __init__(self, url):
+        super().__init__()
+        self.url = url
+
+    def run(self):
+        try:
+            import requests
+            response = requests.get(self.url, timeout=10)
+            if response.status_code == 200:
+                self.finished.emit(response.content)
+        except:
+            pass

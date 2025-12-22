@@ -232,20 +232,24 @@ function testNativeConnection() {
 
 // Handle context menu clicks
 browser.contextMenus.onClicked.addListener((info, tab) => {
-    if (info.menuItemId === "mergen-download" && info.linkUrl) {
+    if (info.menuItemId === "mergen-download") {
+        let targetUrl = info.linkUrl || info.srcUrl || info.pageUrl;
+
+        if (!targetUrl) return;
+
         // Reject browser-internal URLs
-        if (info.linkUrl.startsWith('chrome://') ||
-            info.linkUrl.startsWith('about://') ||
-            info.linkUrl.startsWith('chrome-extension://') ||
-            info.linkUrl.startsWith('moz-extension://') ||
-            info.linkUrl.startsWith('file://')) {
-            console.log("⚠️ Cannot download browser-internal URL:", info.linkUrl);
+        if (targetUrl.startsWith('chrome://') ||
+            targetUrl.startsWith('about://') ||
+            targetUrl.startsWith('chrome-extension://') ||
+            targetUrl.startsWith('moz-extension://') ||
+            targetUrl.startsWith('file://')) {
+            console.log("⚠️ Cannot download browser-internal URL:", targetUrl);
             return;
         }
 
-        console.log("📥 Context menu download requested:", info.linkUrl);
-        const streamType = detectStreamType(info.linkUrl);
-        sendToMergen(info.linkUrl, info.linkUrl.split('/').pop() || 'download', streamType);
+        console.log("📥 Context menu download requested:", targetUrl);
+        const streamType = detectStreamType(targetUrl);
+        sendToMergen(targetUrl, targetUrl.split('/').pop() || 'download', streamType);
     } else if (info.menuItemId === "mergen-stream") {
         // Get most recent detected stream for this tab
         const recentStream = Array.from(detectedStreams.values())

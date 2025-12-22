@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QSize, Signal
 from PySide6.QtGui import QIcon, QPixmap, QColor, QBrush, QImage
 import requests
+from src.gui.workers import ThumbnailWorker
 
 class QualityDialog(QDialog):
     quality_selected = Signal(dict)  # Emits selected format info: {'format_id': '...', 'ext': 'mp4', ...}
@@ -143,16 +144,12 @@ class QualityDialog(QDialog):
             dur_str = "--:--"
         self.meta_label.setText(f"{dur_str} • {info.get('uploader', 'Unknown Source')}")
 
-        # Load Thumbnail (Async ideally, but sync for prototype)
+        # Load Thumbnail (Async)
         thumb_url = info.get('thumbnail')
         if thumb_url:
-            try:
-                # Basic sync download (should be threaded in production)
-                # But for now it's fine as dialog loads after info execution
-                # We can update this from main thread later
-                pass 
-            except:
-                pass
+            self.thumb_worker = ThumbnailWorker(thumb_url)
+            self.thumb_worker.finished.connect(self.set_thumbnail)
+            self.thumb_worker.start()
 
         # Populate Formats
         formats = info.get('formats', [])
@@ -213,6 +210,15 @@ class QualityDialog(QDialog):
         # Select top item
         if filtered_formats:
             self.table.selectRow(0)
+
+    def set_thumbnail(self, data):
+        pixmap = QPixmap()
+        pixmap.loadFromData(data)
+        if not pixmap.isNull():
+            scaled = pixmap.scaled(160, 90, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
+            # Center crop or just set content
+            self.thumb_label.setPixmap(scaled)
+
 
     def accept_selection(self):
         # Get selected format

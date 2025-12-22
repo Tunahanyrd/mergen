@@ -762,12 +762,7 @@ class MainWindow(QMainWindow):
         self.refresh_table()
 
         # Start download dialog
-        # TODO: Pass format_info to DownloadDialog (needs update in DownloadDialog.__init__)
-        dlg = DownloadDialog(url, self, save_dir=save_dir)
-        
-        # Inject format info if available (monkey patch for now, proper init later)
-        if format_info:
-            dlg.format_info = format_info 
+        dlg = DownloadDialog(url, self, save_dir=save_dir, format_info=format_info)
             
         dlg.download_complete.connect(lambda s, f: self.update_download_status(new_item, s, f))
         dlg.worker.progress_signal.connect(lambda d, t, s, seg: self.update_live_row(new_item, d, t, s))

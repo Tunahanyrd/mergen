@@ -397,7 +397,7 @@ class DownloadDialog(QDialog):
             self.btn_pause.setText(I18n.get("resume"))
             self.fname_lbl.setText(f"{self.fname_lbl.text()} ({I18n.get('stopped')})")
         else:
-            self.worker = DownloadWorker(self.url, self.save_dir)
+            self.worker = DownloadWorker(self.url, self.save_dir, format_info=self.format_info)
             self.worker.progress_signal.connect(self.update_progress)
             self.worker.status_signal.connect(self.update_status)
             self.worker.finished_signal.connect(self.on_finished)
