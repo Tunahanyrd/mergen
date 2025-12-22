@@ -45,6 +45,7 @@ class Downloader:
         self.status_callback = status_callback  # func(message_string)
         self.completion_callback = completion_callback  # func(success, filename)
         self.proxy_config = proxy_config  # {enabled, host, port, user, pass}
+        self.format_info = None  # NEW v0.9.0: Stores selected format metadata
 
         # Ensure dir exists
         if self.save_dir and not os.path.exists(self.save_dir):
@@ -302,7 +303,30 @@ class Downloader:
             'progress_hooks': [self._ytdlp_progress_hook],
             'quiet': True,
             'no_warnings': True,
+            # 'format': 'bestvideo+bestaudio/best', # moved below
         }
+        
+        # Apply specific format if selected (v0.9.0)
+        if self.format_info and 'format_id' in self.format_info:
+            fid = self.format_info['format_id']
+            # Determine logic based on codecs
+            vcodec = self.format_info.get('vcodec', 'none')
+            acodec = self.format_info.get('acodec', 'none')
+            
+            if vcodec != 'none' and acodec != 'none':
+                # Container with both, assume standalone
+                ydl_opts['format'] = fid
+            elif vcodec != 'none':
+                # Video only, needs audio merge
+                ydl_opts['format'] = f"{fid}+bestaudio/best"
+            else:
+                # Audio only
+                ydl_opts['format'] = fid
+                
+            self.log(f"🎯 Using selected format: {fid}")
+        else:
+            # Default auto-best behavior
+            ydl_opts['format'] = 'bestvideo+bestaudio/best'
         
         # Only add FFmpeg opts if available
         if has_ffmpeg:
@@ -472,7 +496,45 @@ class Downloader:
         except Exception as e:
             # Silent fail for thread, main process or retry logic handles it
             self.log(f"Error in Segment {segment_idx}: {e}")
+    # NEW v0.9.0: Fetch video info for Quality Selector
+    def fetch_video_info(self):
+        """
+        Fetches metadata and available formats for the URL using yt-dlp.
+        Does NOT download the video.
+        Returns:
+            dict: Structured metadata (title, thumbnail, duration, formats_list) or None on failure.
+        """
+        self.log("🔍 Analyzing stream metadata...")
+        try:
+            import yt_dlp
+            
+            ydl_opts = {
+                'quiet': True,
+                'no_warnings': True,
+                'nocheckcertificate': True,
+            }
+
+            # Add proxy if configured
+            proxies = self.get_proxies()
+            if proxies:
+                ydl_opts['proxy'] = proxies.get('http') or proxies.get('https')
+
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(self.url, download=False)
+                
+                # Check if it's a playlist
+                if 'entries' in info:
+                    # It's a playlist, take the first video for now (or handle differently)
+                    self.log(f"⚠️ Playlist detected: {len(info['entries'])} videos. Using first video for info.")
+                    info = info['entries'][0]
+
+                return info
+
+        except Exception as e:
+            self.log(f"❌ Analysis failed: {e}")
+            import traceback
             traceback.print_exc()
+            return None
 
     def start(self):
         """Main execution flow."""

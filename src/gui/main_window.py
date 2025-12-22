@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QMenu,
     QMessageBox,
+    QProgressDialog,
     QStyle,
     QSystemTrayIcon,
     QTableWidget,
@@ -35,9 +36,11 @@ from src.core.models import DownloadItem
 from src.core.queue_manager import QueueManager
 from src.gui.download_dialog import DownloadDialog
 from src.gui.properties_dialog import PropertiesDialog
+from src.gui.quality_dialog import QualityDialog
 from src.gui.queue_manager_dialog import QueueManagerDialog
 from src.gui.settings_dialog import SettingsDialog
 from src.gui.styles import MERGEN_THEME, MERGEN_THEME_LIGHT
+from src.gui.workers import AnalysisWorker
 
 
 class MainWindow(QMainWindow):
@@ -661,75 +664,35 @@ class MainWindow(QMainWindow):
         self.total_speed_lbl.setText(f"Total Speed: {s_str}")
 
     def add_url(self):
-        # Same as before...
+        # Triggered by toolbar/menu
         text, ok = QInputDialog.getText(self, I18n.get("add_url"), I18n.get("address"))
         if ok and text:
-            # ...
+            # Basic validation
             text = text.strip()
             if not re.match(r"^https?://", text):
-                return
-
-            # Check if pre-download dialog should be shown
+                text = "https://" + text
+            
+            # Use pre-download dialog
             show_pre_dialog = self.config.get("show_pre_download_dialog", True)
-
+            
             if show_pre_dialog:
-                # Show pre-download dialog
                 from src.gui.pre_download_dialog import PreDownloadDialog
-
-                pre_dlg = PreDownloadDialog(text, self.config, self.queue_manager, self)
-                if pre_dlg.exec() != QDialog.Accepted:
-                    return  # User cancelled
-
-                # Get values from dialog
-                values = pre_dlg.get_values()
-                save_dir = values["save_path"]
-                queue_name = values["queue"]
-
-                # Update config if user selected "don't ask again"
-                if values["dont_ask"]:
-                    self.config.set("show_pre_download_dialog", False)
+                
+                pre_dlg = PreDownloadDialog(text, self.config, self.queue_manager, parent=self)
+                if pre_dlg.exec() == QDialog.Accepted:
+                    values = pre_dlg.get_values()
+                    save_dir = values["save_path"]
+                    queue_name = values["queue"]
+                    if values["dont_ask"]:
+                        self.config.set("show_pre_download_dialog", False)
+                else:
+                    return # Cancelled
             else:
-                # Use default values
-                fname = Path(text.split("?")[0]).name or "file.dat"
                 save_dir = self.config.get("default_download_dir")
                 queue_name = self.config.get("default_queue", "Main download queue")
-
-                # Cat detection (only if file has extension)
-                cats = self.config.get("categories", {})
-                ext = Path(fname).suffix.lstrip(".").lower()
-                if ext:  # Only check categories if extension exists
-                    for name, val in cats.items():
-                        if len(val) >= 2:
-                            cexts = val[0]
-                            cpath = val[2] if len(val) > 2 else ""
-                            if ext in cexts and cpath:
-                                save_dir = cpath
-                                break
-
-            fname = Path(text.split("?")[0]).name or "file.dat"
-            new_item = DownloadItem(
-                url=text, filename=os.path.join(save_dir, fname), save_path=save_dir, queue=queue_name
-            )
-            new_item.status = I18n.get("downloading")
-            new_item.size = I18n.get("initializing")
-            self.downloads.append(new_item)
-            self.config.save_history(self.downloads)
-            self.refresh_table()
-
-            dlg = DownloadDialog(text, self, save_dir=save_dir)
-
-            # 1. Completion -> Update status & history
-            dlg.download_complete.connect(lambda s, f: self.update_download_status(new_item, s, f))
-
-            # 2. Progress -> Update Table Live Row (Speed, ETA, Size)
-            dlg.worker.progress_signal.connect(lambda d, t, s, seg: self.update_live_row(new_item, d, t, s))
-
-            # 3. Status -> Update Table Status Column
-            dlg.worker.status_signal.connect(lambda m: self.update_item_status(new_item, m))
-
-            self.active_dialogs.append(dlg)
-            dlg.finished.connect(lambda: self.cleanup_dialog(dlg))
-            dlg.show()
+                
+            # Trigger Analysis Flow
+            self.analyze_and_start(text, save_dir, queue_name)
 
     def handle_browser_download(self, url, filename):
         """
@@ -742,12 +705,7 @@ class MainWindow(QMainWindow):
             self.tray_icon.showMessage(I18n.get("app_title"), f"📥 {display_name}", QSystemTrayIcon.Information, 2000)
 
         # Add URL using existing dialog system
-        # This will work because we're now in UI thread
         if url and url.strip():
-            # Simulate user adding URL
-
-            # Don't show dialog, just process the URL directly
-            # by calling the add_url logic without the input dialog
             text = url.strip()
 
             # Use pre-download dialog if enabled, otherwise auto-add
@@ -755,6 +713,10 @@ class MainWindow(QMainWindow):
                 from src.gui.pre_download_dialog import PreDownloadDialog
 
                 pre_dlg = PreDownloadDialog(text, self.config, self.queue_manager, parent=self)
+                # Ensure PreDialog is brought to front
+                pre_dlg.activateWindow()
+                pre_dlg.raise_()
+                
                 if pre_dlg.exec() == QDialog.Accepted:
                     values = pre_dlg.get_values()
                     save_dir = values["save_path"]
@@ -767,38 +729,111 @@ class MainWindow(QMainWindow):
                 # Auto-add without dialog
                 save_dir = self.config.get("default_download_dir")
                 queue_name = self.config.get("default_queue", "Main download queue")
-
-            # Add download
-            import os
-            from pathlib import Path
-
-            fname = filename if filename else Path(text.split("?")[0]).name or "file.dat"
-            new_item = DownloadItem(
-                url=text, filename=os.path.join(save_dir, fname), save_path=save_dir, queue=queue_name
-            )
-            new_item.status = I18n.get("downloading")
-            new_item.size = I18n.get("initializing")
-            self.downloads.append(new_item)
-            self.config.save_history(self.downloads)
-
-            # Refresh table to show new download
-            self.refresh_table()
-
-            # Start download dialog
-            dlg = DownloadDialog(text, self, save_dir=save_dir)
-
-            # Connect signals for live updates
-            dlg.download_complete.connect(lambda s, f: self.update_download_status(new_item, s, f))
-            dlg.worker.progress_signal.connect(lambda d, t, s, seg: self.update_live_row(new_item, d, t, s))
-            dlg.worker.status_signal.connect(lambda m: self.update_item_status(new_item, m))
-
-            self.active_dialogs.append(dlg)
-            dlg.finished.connect(lambda: self.cleanup_dialog(dlg))
-            dlg.show()
+                
+            # Trigger Analysis Flow
+            self.analyze_and_start(text, save_dir, queue_name)
 
     def cleanup_dialog(self, dlg):
         if dlg in self.active_dialogs:
             self.active_dialogs.remove(dlg)
+
+    # NEW v0.9.0: Final step of download initiation
+    def start_download_final(self, url, save_dir, queue_name, format_info=None):
+        import os
+        from pathlib import Path
+        
+        fname = Path(url.split("?")[0]).name or "file.dat"
+        # If we have format info, update extension
+        if format_info and format_info.get('ext'):
+            base = os.path.splitext(fname)[0]
+            fname = f"{base}.{format_info['ext']}"
+            
+        new_item = DownloadItem(
+            url=url, filename=os.path.join(save_dir, fname), save_path=save_dir, queue=queue_name
+        )
+        new_item.status = I18n.get("downloading")
+        new_item.size = I18n.get("initializing")
+        
+        # Store format info in item (we will need to update DownloadItem model later to support this persistence)
+        # For now, pass it to DownloadDialog directly
+        
+        self.downloads.append(new_item)
+        self.config.save_history(self.downloads)
+        self.refresh_table()
+
+        # Start download dialog
+        # TODO: Pass format_info to DownloadDialog (needs update in DownloadDialog.__init__)
+        dlg = DownloadDialog(url, self, save_dir=save_dir)
+        
+        # Inject format info if available (monkey patch for now, proper init later)
+        if format_info:
+            dlg.format_info = format_info 
+            
+        dlg.download_complete.connect(lambda s, f: self.update_download_status(new_item, s, f))
+        dlg.worker.progress_signal.connect(lambda d, t, s, seg: self.update_live_row(new_item, d, t, s))
+        dlg.worker.status_signal.connect(lambda m: self.update_item_status(new_item, m))
+
+        self.active_dialogs.append(dlg)
+        dlg.finished.connect(lambda: self.cleanup_dialog(dlg))
+        dlg.show()
+
+    # NEW v0.9.0: Analysis Flow
+    def analyze_and_start(self, url, save_dir, queue_name):
+        # Interactive mode check (default True for now)
+        interactive = self.config.get("interactive_mode", True)
+        
+        if not interactive:
+            self.start_download_final(url, save_dir, queue_name)
+            return
+
+        # Show Progress
+        progress = QProgressDialog(I18n.get("checking"), I18n.get("cancel"), 0, 0, self)
+        progress.setWindowTitle("Mergen Pro")
+        progress.setWindowModality(Qt.WindowModal)
+        progress.setMinimumDuration(0) # Show immediately
+        
+        # Custom style for progress
+        progress.setStyleSheet("""
+            QProgressDialog {
+                background-color: #1e1e1e;
+                color: white;
+            }
+            QLabel { color: white; }
+        """)
+        
+        worker = AnalysisWorker(url, self.config.get_proxy_config())
+        
+        # Define callback
+        def on_analysis_finished(info):
+            progress.close()
+            if not info:
+                # Fallback to direct download if analysis fails (or not supported site)
+                # But wait, fetch_video_info returns None on error.
+                # If it's a direct file link, yt-dlp might fail or return info.
+                # If fail, assume direct download.
+                self.start_download_final(url, save_dir, queue_name)
+                return
+                
+            # Show Quality Dialog
+            q_dlg = QualityDialog(self, info)
+            
+            # Handle selection
+            def on_selected(fmt_info):
+                self.start_download_final(url, save_dir, queue_name, fmt_info)
+                
+            q_dlg.quality_selected.connect(on_selected)
+            q_dlg.exec()
+            
+        worker.finished.connect(on_analysis_finished)
+        
+        # Handle cancel
+        progress.canceled.connect(worker.terminate)
+        
+        worker.start()
+        progress.exec() # Block main UI slightly but keep event loop
+        
+        # Keep ref
+        self._analysis_worker = worker
 
     # Copying remaining methods to ensure file completeness
     def open_settings(self, tab_index=0):

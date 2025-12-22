@@ -146,7 +146,7 @@ class DownloadWorker(QThread):
     status_signal = Signal(str)
     finished_signal = Signal(bool, str)
 
-    def __init__(self, url, save_dir=None, proxy_config=None, worker_count=4):
+    def __init__(self, url, save_dir=None, proxy_config=None, worker_count=4, format_info=None):
         super().__init__()
         self.url = url
         self.save_dir = save_dir
@@ -156,6 +156,7 @@ class DownloadWorker(QThread):
         self.last_time = time.time()
         self.last_bytes = 0
         self.worker_count = worker_count
+        self.format_info = format_info
 
     def run(self):
         self.downloader = Downloader(
@@ -167,6 +168,11 @@ class DownloadWorker(QThread):
             proxy_config=self.proxy_config,
             worker_count=self.worker_count,
         )
+        
+        # Apply format info if provided (v0.9.0)
+        if self.format_info:
+            self.downloader.format_info = self.format_info
+            
         self.downloader.start()
 
     def emit_progress(self, downloaded, total):
@@ -221,7 +227,7 @@ class DownloadDialog(QDialog):
     download_complete = Signal(bool, str)
     finished = Signal()
 
-    def __init__(self, url, parent=None, save_dir=None):
+    def __init__(self, url, parent=None, save_dir=None, format_info=None):
         super().__init__(parent)
         self.setWindowTitle(I18n.get("downloading"))
         self.resize(720, 520)
@@ -231,6 +237,7 @@ class DownloadDialog(QDialog):
 
         self.url = url
         self.save_dir = save_dir
+        self.format_info = format_info
         self.config = ConfigManager()
 
         proxy_cfg = {
@@ -245,7 +252,7 @@ class DownloadDialog(QDialog):
         self.max_connections = int(self.config.get("max_connections", 8))
 
         # FIX: Pass worker_count to worker
-        self.worker = DownloadWorker(url, save_dir, proxy_config=proxy_cfg, worker_count=self.max_connections)
+        self.worker = DownloadWorker(url, save_dir, proxy_config=proxy_cfg, worker_count=self.max_connections, format_info=self.format_info)
         self.worker.progress_signal.connect(self.update_progress)
         self.worker.status_signal.connect(self.update_status)
         self.worker.finished_signal.connect(self.on_finished)
