@@ -4,6 +4,9 @@
 [![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey)](https://github.com/Tunahanyrd/mergen)
 
+> [!WARNING]
+> **Beta Software**: Mergen is currently in **active development (Beta)**. You may encounter bugs, startup issues, or incomplete features. We are working hard to stabilize the release. Please report any issues on [GitHub](https://github.com/Tunahanyrd/mergen/issues).
+
 Modern, fast, and feature-rich download manager with browser integration.
 
 ## ✨ Features
