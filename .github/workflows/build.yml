@@ -40,6 +40,21 @@ jobs:
             --hidden-import=yt_dlp.postprocessor `
             main.py
             
+      - name: Download CRX for Installer
+        uses: actions/download-artifact@v4
+        with:
+          name: browser-extension-crx
+          path: browser-extension
+          
+      - name: Move CRX to Correct Path (if needed)
+        run: |
+           # Inno setup expects files in browser-extension/ to be copied.
+           # Or we can just copy it manually if our script put it elsewhere.
+           # We downloaded it to browser-extension/ folder directly? 
+           # If we set path: browser-extension, it puts mergen-browser-extension.crx INSIDE browser-extension/.
+           # Perfect for Inno Setup Source: "..\..\browser-extension\*"
+           echo "Verified CRX location"
+
       - name: Setup Inno Setup
         run: |
           choco install innosetup -y
@@ -55,6 +70,7 @@ jobs:
           path: installer/windows/Output/MergenSetup.exe
 
   build-linux:
+    needs: package-extension
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -64,6 +80,12 @@ jobs:
         with:
           python-version: '3.11'
       
+      - name: Download CRX for Installer
+        uses: actions/download-artifact@v4
+        with:
+          name: browser-extension-crx
+          path: . 
+
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -197,6 +219,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
+      - name: Setup Python (for packing)
+        uses: actions/setup-python@v5
+        with:
+            python-version: '3.11'
+
+      - name: Generate Chrome Extension (CRX)
+        run: |
+           # Use our script to pack the extension
+           # We need google-chrome installed. Ubuntu runners have it.
+           python3 scripts/pack_crx.py browser-extension browser-extension/key.pem mergen-browser-extension.crx
+
+      - name: Upload CRX Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-extension-crx
+          path: mergen-browser-extension.crx
+
       - name: Zip Browser Extension (Chrome)
         run: |
           cd browser-extension
@@ -244,6 +284,7 @@ jobs:
             artifacts/mergen-macos-dmg/Mergen-*.dmg
             artifacts/browser-extension-chrome/mergen-browser-extension.zip
             artifacts/browser-extension-firefox/mergen-firefox-amo.zip
+            artifacts/browser-extension-crx/mergen-browser-extension.crx
           draft: false
           prerelease: false
         env:

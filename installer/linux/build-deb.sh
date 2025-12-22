@@ -1,7 +1,7 @@
 #!/bin/bash
 # Build .deb package for Debian/Ubuntu
 
-VERSION="0.9.0"
+VERSION="0.9.1"
 ARCH="amd64"
 PKG_NAME="mergen_${VERSION}_${ARCH}"
 
@@ -58,6 +58,19 @@ exit 0
 EOF
 
 chmod 755 "${PKG_NAME}/DEBIAN/postinst"
+
+# Copy Browser Extension (Auto-install)
+mkdir -p "${BUILD_DIR}/usr/share/mergen"
+cp ../mergen-browser-extension.crx "${BUILD_DIR}/usr/share/mergen/browser-extension.crx"
+
+# Chrome/Chromium External Extension Config
+# Chrome
+mkdir -p "${BUILD_DIR}/usr/share/google-chrome/extensions"
+cp jahgeondjmbcjleahkcmegfenejicoeb.json "${BUILD_DIR}/usr/share/google-chrome/extensions/"
+
+# Chromium
+mkdir -p "${BUILD_DIR}/usr/share/chromium/extensions"
+cp jahgeondjmbcjleahkcmegfenejicoeb.json "${BUILD_DIR}/usr/share/chromium/extensions/"
 
 # Build package
 dpkg-deb --build "${PKG_NAME}"

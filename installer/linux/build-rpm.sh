@@ -1,7 +1,7 @@
 #!/bin/bash
 # Build .rpm package for Fedora/RHEL/CentOS
 
-VERSION="0.9.0"
+VERSION="0.9.1"
 RELEASE="1"
 
 mkdir -p rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
@@ -40,6 +40,16 @@ install -m 644 %{_sourcedir}/mergen.png %{buildroot}/usr/share/icons/hicolor/128
 cp -r %{_sourcedir}/browser-extension %{buildroot}/usr/share/mergen/
 cp -r %{_sourcedir}/native-host %{buildroot}/usr/share/mergen/
 
+# Browser Extension Auto-Install
+mkdir -p %{buildroot}/usr/share/google-chrome/extensions
+cp %{_sourcedir}/jahgeondjmbcjleahkcmegfenejicoeb.json %{buildroot}/usr/share/google-chrome/extensions/
+
+mkdir -p %{buildroot}/usr/share/chromium/extensions
+cp %{_sourcedir}/jahgeondjmbcjleahkcmegfenejicoeb.json %{buildroot}/usr/share/chromium/extensions/
+
+mkdir -p %{buildroot}/usr/share/mergen
+cp %{_sourcedir}/mergen-browser-extension.crx %{buildroot}/usr/share/mergen/browser-extension.crx
+
 %files
 /usr/bin/mergen
 /usr/bin/mergen.bin
@@ -58,6 +68,8 @@ cp ../../data/mergen.desktop rpmbuild/SOURCES/
 cp ../../data/mergen.png rpmbuild/SOURCES/
 cp -r ../../browser-extension rpmbuild/SOURCES/
 cp -r ../../native-host rpmbuild/SOURCES/
+cp ../jahgeondjmbcjleahkcmegfenejicoeb.json rpmbuild/SOURCES/
+cp ../../mergen-browser-extension.crx rpmbuild/SOURCES/
 
 rpmbuild --define "_topdir $(pwd)/rpmbuild" -bb rpmbuild/SPECS/mergen.spec
 

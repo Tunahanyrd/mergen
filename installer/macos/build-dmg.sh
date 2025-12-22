@@ -1,7 +1,7 @@
 #!/bin/bash
 # Build DMG for macOS
 
-VERSION="0.7.0"
+VERSION="0.9.1"
 APP_NAME="Mergen"
 
 # Ensure app bundle exists

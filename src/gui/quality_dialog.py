@@ -177,11 +177,21 @@ class QualityDialog(QDialog):
             
             note = f.get('format_note', '')
             
-            # Friendly name
+            # Friendly name and resolution handling
+            
+            # HLS manifests often have limited info
+            if f.get('protocol') == 'm3u8' and res == 'Unknown':
+                 res = "Stream (Auto)"
+
             if vcodec != 'none' and acodec != 'none':
                 type_str = f"Video + Audio ({note})"
             elif vcodec != 'none':
                 type_str = f"Video Only ({note})"
+            elif vcodec == 'none' and acodec == 'none' and ext == 'mp4':
+                 # Common for HLS master playlists
+                 type_str = "Stream Container"
+                 vcodec = "copy" 
+                 acodec = "copy"
             else:
                 type_str = "Audio Only"
                 

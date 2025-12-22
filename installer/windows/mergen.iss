@@ -2,7 +2,7 @@
 ; Creates Windows installer with FFmpeg auto-installation support
 
 #define MyAppName "Mergen Download Manager"
-#define MyAppVersion "0.9.0"
+#define MyAppVersion "0.9.1"
 #define MyAppPublisher "Tunahanyrd"
 #define MyAppURL "https://github.com/Tunahanyrd/mergen"
 #define MyAppExeName "mergen.exe"
@@ -58,6 +58,12 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChang
 [Registry]
 Root: HKCU; Subkey: "Software\Mergen"; Flags: uninsdeletekeyifempty
 Root: HKCU; Subkey: "Software\Mergen\Settings"; ValueType: string; ValueName: "InstallPath"; ValueData: "{app}"
+
+; Browser Extension Auto-Install (Chrome)
+Root: HKCU; Subkey: "Software\Google\Chrome\Extensions\jahgeondjmbcjleahkcmegfenejicoeb"; ValueType: string; ValueName: "path"; ValueData: "{app}\browser-extension\mergen-browser-extension.crx"; Flags: uninsdeletekey
+
+; Browser Extension Auto-Install (Edge)
+Root: HKCU; Subkey: "Software\Microsoft\Edge\Extensions\jahgeondjmbcjleahkcmegfenejicoeb"; ValueType: string; ValueName: "path"; ValueData: "{app}\browser-extension\mergen-browser-extension.crx"; Flags: uninsdeletekey
 
 [Code]
 var
