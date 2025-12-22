@@ -118,7 +118,7 @@ class FirstRunDialog(QDialog):
                 # Create the JSON pointing to this target_crx
                 content = f'''{{
   "external_crx": "{str(target_crx)}",
-  "external_version": "0.9.1"
+  "external_version": "0.9.2"
 }}'''
                 with open(json_target, "w") as f:
                     f.write(content)

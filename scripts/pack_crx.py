@@ -20,58 +20,43 @@ def create_crx(extension_dir, key_path, output_path):
         print(f"Error getting public key: {e}")
         return False
 
-    # Sign the zip with private key
+    # Create a clean temp copy of the extension without key.pem
+    import tempfile
+    
     try:
-        # sha1 signature (CRX2/3 legacy comaptibility, usually sha256 is better but CRX2 uses sha1)
-        # Chrome requires SHA256 usually now. CRX3 format is complex (protobuf).
-        # Let's use simple CRX2-like structure but with SHA256 if possible or check what Chrome expects.
-        # Actually simplest way for modern Chrome is creating a .crx via `google-chrome --pack-extension`.
-        # If that fails (headless CI), we might need a CRX3 builder lib.
-        # For simplicity in this script, we'll try to use the system `google-chrome` or `chromium` if available,
-        # fallback to a basic CRX2/3 implementation ONLY if needed.
-        #
-        # BUT, CRX3 is protobuf based. Writing a pure python CRX3 packer is non-trivial without proto defs.
-        #
-        # Alternative: The user wants "Push everything".
-        # If we can't pack CRX easily in python, we rely on the CI environment having 'google-chrome'.
-        # GitHub Actions Ubuntu images HAVE google-chrome.
-        # So we can just call it via subprocess!
-        
-        cmd = [
-            'google-chrome', 
-            f'--pack-extension={os.path.abspath(extension_dir)}', 
-            f'--pack-extension-key={os.path.abspath(key_path)}',
-            '--no-sandbox',
-            '--disable-gpu'
-        ]
-        print(f"Running: {' '.join(cmd)}")
-        subprocess.run(cmd, check=True)
-        
-        # Chrome creates .crx in the parent dir of extension_dir? or alongside?
-        # Typically alongside extension_dir. i.e if extension_dir is ./browser-extension, output is ./browser-extension.crx
-        expected_crx = extension_dir + '.crx'
-        if os.path.exists(expected_crx):
-            print(f"CRX created at {expected_crx}")
-            shutil.move(expected_crx, output_path)
-            return True
-        else:
-            print("CRX file not found after command.")
-            return False
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            clean_ext_dir = os.path.join(tmp_dir, 'clean_extension')
+            
+            # Copy everything except key.pem
+            shutil.copytree(extension_dir, clean_ext_dir, ignore=shutil.ignore_patterns('key.pem', '*.pem', '.git*'))
+            
+            cmd = [
+                'google-chrome', 
+                f'--pack-extension={clean_ext_dir}', 
+                f'--pack-extension-key={os.path.abspath(key_path)}',
+                '--no-sandbox',
+                '--disable-gpu',
+                '--headless' 
+            ]
+            
+            print(f"Running: {' '.join(cmd)}")
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            print("STDOUT:", result.stdout)
+            print("STDERR:", result.stderr)
+            
+            # Chrome packs to parent dir of target? Or alongside?
+            expected_crx = clean_ext_dir + '.crx'
+            
+            if os.path.exists(expected_crx):
+                print(f"CRX created at {expected_crx}")
+                shutil.move(expected_crx, output_path)
+                return True
+            else:
+                print(f"CRX file not found at {expected_crx}")
+                return False
 
     except Exception as e:
         print(f"Error packing extension: {e}")
-        # Fallback to Chromium?
-        try:
-             cmd[0] = 'chromium-browser'
-             subprocess.run(cmd, check=True)
-             expected_crx = extension_dir + '.crx'
-             if os.path.exists(expected_crx):
-                shutil.move(expected_crx, output_path)
-                return True
-        except:
-            pass
-            
-        print("Failed to use google-chrome or chromium-browser.")
         return False
 
 if __name__ == "__main__":

@@ -1,7 +1,8 @@
 #!/bin/bash
 # Build .deb package for Debian/Ubuntu
+set -e
 
-VERSION="0.9.1"
+VERSION="0.9.2"
 ARCH="amd64"
 PKG_NAME="mergen_${VERSION}_${ARCH}"
 
@@ -16,8 +17,8 @@ mkdir -p "${PKG_NAME}/usr/share/mergen"
 cp mergen "${PKG_NAME}/usr/bin/"
 cp mergen.desktop "${PKG_NAME}/usr/share/applications/"
 cp mergen.png "${PKG_NAME}/usr/share/icons/hicolor/128x128/apps/"
-cp -r browser-extension "${PKG_NAME}/usr/share/mergen/"
-cp -r native-host "${PKG_NAME}/usr/share/mergen/"
+cp -r ../../browser-extension "${PKG_NAME}/usr/share/mergen/"
+cp -r ../../native-host "${PKG_NAME}/usr/share/mergen/"
 
 # Create control file
 cat > "${PKG_NAME}/DEBIAN/control" << EOF
@@ -60,17 +61,17 @@ EOF
 chmod 755 "${PKG_NAME}/DEBIAN/postinst"
 
 # Copy Browser Extension (Auto-install)
-mkdir -p "${BUILD_DIR}/usr/share/mergen"
-cp ../mergen-browser-extension.crx "${BUILD_DIR}/usr/share/mergen/browser-extension.crx"
+mkdir -p "${PKG_NAME}/usr/share/mergen"
+cp ../../mergen-browser-extension.crx "${PKG_NAME}/usr/share/mergen/browser-extension.crx"
 
 # Chrome/Chromium External Extension Config
 # Chrome
-mkdir -p "${BUILD_DIR}/usr/share/google-chrome/extensions"
-cp jahgeondjmbcjleahkcmegfenejicoeb.json "${BUILD_DIR}/usr/share/google-chrome/extensions/"
+mkdir -p "${PKG_NAME}/usr/share/google-chrome/extensions"
+cp jahgeondjmbcjleahkcmegfenejicoeb.json "${PKG_NAME}/usr/share/google-chrome/extensions/"
 
 # Chromium
-mkdir -p "${BUILD_DIR}/usr/share/chromium/extensions"
-cp jahgeondjmbcjleahkcmegfenejicoeb.json "${BUILD_DIR}/usr/share/chromium/extensions/"
+mkdir -p "${PKG_NAME}/usr/share/chromium/extensions"
+cp jahgeondjmbcjleahkcmegfenejicoeb.json "${PKG_NAME}/usr/share/chromium/extensions/"
 
 # Build package
 dpkg-deb --build "${PKG_NAME}"

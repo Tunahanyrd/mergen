@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Mergen Download Manager",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "description": "Capture downloads and streams (HLS/DASH) with Mergen. Multi-threaded downloads with browser integration.",
   "author": "Tunahanyrd",
   "homepage_url": "https://github.com/Tunahanyrd/mergen",

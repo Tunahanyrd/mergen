@@ -1,7 +1,8 @@
 #!/bin/bash
 # Build AppImage for Linux (universal)
+set -e
 
-VERSION="0.9.1"
+VERSION="0.9.2"
 APPDIR="Mergen.AppDir"
 
 mkdir -p "${APPDIR}/usr/bin"
@@ -17,6 +18,8 @@ cp ../../data/mergen.png "${APPDIR}/mergen.png"  # AppImage icon
 cp ../../data/mergen.desktop "${APPDIR}/"
 cp -r ../../browser-extension "${APPDIR}/usr/share/mergen/"
 cp -r ../../native-host "${APPDIR}/usr/share/mergen/"
+cp ../../mergen-browser-extension.crx "${APPDIR}/usr/share/mergen/browser-extension.crx"
+
 
 cat > "${APPDIR}/AppRun" << 'EOF'
 #!/bin/bash
@@ -29,6 +32,10 @@ EOF
 
 chmod +x "${APPDIR}/AppRun"
 
-ARCH=x86_64 appimagetool "${APPDIR}" "Mergen-${VERSION}-x86_64.AppImage"
+# Use custom appimagetool path if set, otherwise use default
+APPIMAGETOOL_BIN="${APPIMAGETOOL:-appimagetool}"
+
+# Run appimagetool with --appimage-extract-and-run to avoid FUSE requirement
+ARCH=x86_64 "$APPIMAGETOOL_BIN" --appimage-extract-and-run "${APPDIR}" "Mergen-${VERSION}-x86_64.AppImage"
 
 echo "✅ AppImage created: Mergen-${VERSION}-x86_64.AppImage"

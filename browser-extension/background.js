@@ -1,4 +1,4 @@
-// Mergen Download Manager - Browser Extension v0.9.1
+// Mergen Download Manager - Browser Extension v0.9.2
 // Captures downloads AND streaming media (HLS/DASH) via Manifest V3
 
 // Browser API polyfill - Firefox uses 'browser', Chrome uses 'chrome'
@@ -27,7 +27,7 @@ const MEDIA_PATTERNS = {
 
 // Initialize extension
 browser.runtime.onInstalled.addListener(() => {
-    console.log("✅ Mergen v0.9.1 extension installed!");
+    console.log("✅ Mergen v0.9.2 extension installed!");
 
     // Create context menus
     browser.contextMenus.create({

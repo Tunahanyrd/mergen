@@ -11,6 +11,7 @@ permissions:
 
 jobs:
   build-windows:
+    needs: package-extension
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -133,17 +134,24 @@ jobs:
       - name: Build AppImage
         # AppImage tool'u global bir yere çekip yetki veriyoruz, path sorunu olmasın.
         run: |
-          wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O /usr/local/bin/appimagetool
-          chmod +x /usr/local/bin/appimagetool
+          # Install FUSE for appimagetool
+          sudo apt-get update
+          sudo apt-get install -y libfuse2
+          
+          wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O /tmp/appimagetool
+          chmod +x /tmp/appimagetool
           cd installer/linux
           chmod +x build-appimage.sh
-          ./build-appimage.sh
+          
+          # Use --appimage-extract-and-run if FUSE still fails
+          APPIMAGETOOL=/tmp/appimagetool ./build-appimage.sh
       
       - name: Build Arch Linux Package (PKGBUILD)
         run: |
           # Copy additional files needed for Arch package (binary, desktop, icon already copied)
           cp -r browser-extension installer/linux/
           cp -r native-host installer/linux/
+          cp mergen-browser-extension.crx installer/linux/
           
           docker run --rm -v $(pwd)/installer/linux:/src archlinux:base-devel /bin/bash -c "
             # Sync package database and install dependencies as ROOT
