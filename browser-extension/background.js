@@ -258,8 +258,22 @@ browser.contextMenus.onClicked.addListener((info, tab) => {
 
         if (recentStream) {
             console.log("🎬 Downloading detected stream:", recentStream.url);
-            const filename = extractFilename(recentStream.url) || 'stream';
-            sendToMergen(recentStream.url, filename, recentStream.type);
+
+            // CRITICAL: For YouTube, send page URL instead of HLS manifest
+            // yt-dlp handles YouTube natively and needs the watch URL, not the manifest
+            const isYouTube = tab.url && (
+                tab.url.includes('youtube.com') ||
+                tab.url.includes('youtu.be')
+            );
+
+            if (isYouTube) {
+                console.log("📺 YouTube detected - sending page URL instead of HLS manifest");
+                const filename = 'video'; // yt-dlp will set the real filename
+                sendToMergen(tab.url, filename, 'youtube');
+            } else {
+                const filename = extractFilename(recentStream.url) || 'stream';
+                sendToMergen(recentStream.url, filename, recentStream.type);
+            }
         } else if (info.linkUrl) {
             const streamType = detectStreamType(info.linkUrl);
             sendToMergen(info.linkUrl, info.linkUrl.split('/').pop() || 'stream', streamType);

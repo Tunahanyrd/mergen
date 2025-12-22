@@ -828,7 +828,15 @@ class MainWindow(QMainWindow):
             q_dlg.quality_selected.connect(on_selected)
             q_dlg.exec()
 
+        def on_analysis_error(error_msg):
+            """Handle errors from AnalysisWorker"""
+            progress.close()
+            # Log error but don't show to user - just fallback to direct download
+            print(f"Analysis failed: {error_msg}")
+            self.start_download_final(url, save_dir, queue_name)
+
         worker.finished.connect(on_analysis_finished)
+        worker.error.connect(on_analysis_error)  # CRITICAL FIX: Handle errors
 
         # Handle cancel
         progress.canceled.connect(worker.terminate)
