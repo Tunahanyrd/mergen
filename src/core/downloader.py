@@ -479,9 +479,22 @@ class Downloader:
         self.log("Starting process...")
         self.start_time = time.time()
         
-        # NEW v0.8.0: Check if stream
-        if self.stream_type in ['hls', 'dash']:
-            self.log(f"🎬 Detected {self.stream_type.upper()} stream protocol")
+        # Check if URL is from streaming platforms (YouTube, Twitch, etc.)
+        streaming_platforms = [
+            'youtube.com', 'youtu.be', 'twitch.tv', 'vimeo.com',
+            'dailymotion.com', 'facebook.com/watch', 'instagram.com',
+            'tiktok.com', 'twitter.com', 'x.com'
+        ]
+        
+        is_streaming_site = any(platform in self.url.lower() for platform in streaming_platforms)
+        
+        # NEW v0.8.0: Use yt-dlp for streams OR streaming platforms
+        if self.stream_type in ['hls', 'dash'] or is_streaming_site:
+            if is_streaming_site:
+                self.log(f"🎥 Detected streaming platform URL - using yt-dlp for best quality")
+            else:
+                self.log(f"🎬 Detected {self.stream_type.upper()} stream protocol")
+            
             success = self._download_with_ytdlp()
             
             if self.completion_callback:
