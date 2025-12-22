@@ -96,7 +96,8 @@ class FirstRunDialog(QDialog):
             # if we can ensure the CRX stays there, OR use the "update_url" method if we had a web store link.
             # Since we want offline install, we must point to a file globally readable or user readable.
             #
-            # Best practice for detached apps: Copy CRX to a stable user location like ~/Library/Application Support/Mergen/
+            # Best practice for detached apps: Copy CRX to a stable user location
+            # like ~/Library/Application Support/Mergen/
             mergen_support_dir = Path.home() / "Library" / "Application Support" / "Mergen"
             if not mergen_support_dir.exists():
                 mergen_support_dir.mkdir(parents=True, exist_ok=True)

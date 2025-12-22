@@ -57,7 +57,7 @@ def send_to_mergen(url, filename, stream_type="direct"):
         payload = {
             "url": url,
             "filename": filename,
-            "stream_type": stream_type  # NEW: hls, dash, mp4, ts, mp3, direct
+            "stream_type": stream_type,  # NEW: hls, dash, mp4, ts, mp3, direct
         }
 
         response = requests.post(MERGEN_HTTP_URL, json=payload, timeout=2)

@@ -236,7 +236,7 @@ class Downloader:
     def _check_ytdlp(self):
         """Check if yt-dlp is available."""
         try:
-            import yt_dlp
+            import yt_dlp  # noqa: F401
 
             return True
         except ImportError:
@@ -352,6 +352,7 @@ class Downloader:
             self.log(f"❌ yt-dlp error: {e}")
             # Log full traceback only in debug mode
             import logging
+
             logging.debug(f"yt-dlp traceback: {traceback.format_exc()}")
             return False
 
@@ -439,6 +440,7 @@ class Downloader:
             self.log(f"Error during preparation: {e}")
             # Log full traceback only in debug mode
             import logging
+
             logging.debug(f"Prepare traceback: {traceback.format_exc()}")
             return False
 
@@ -543,13 +545,9 @@ class Downloader:
             self.log(f"❌ Analysis failed: {e}")
             # Log full traceback only in debug mode
             import logging
+
             logging.debug(f"Analysis traceback: {traceback.format_exc()}")
             return None
-
-    def start(self):
-        """Main execution flow."""
-        self.log("Starting process...")
-        self.start_time = time.time()
 
     def start(self):
         """Main execution flow."""

@@ -99,9 +99,10 @@ class MainWindow(QMainWindow):
 
         # First Run / Version Update Check
         from importlib.metadata import version
+
         current_version = version("mergen")
         last_version = self.config.get("last_version", None)
-        
+
         if self.config.get("first_run", True):
             # True first run
             QTimer.singleShot(100, self.show_first_run_dialog)
@@ -115,6 +116,7 @@ class MainWindow(QMainWindow):
         if dlg.exec():
             # Save version on first run completion
             from importlib.metadata import version
+
             self.config.set("last_version", version("mergen"))
 
     def closeEvent(self, event):
@@ -692,14 +694,10 @@ class MainWindow(QMainWindow):
             text = text.strip()
             if not re.match(r"^https?://", text):
                 text = "https://" + text
-            
+
             # Validate URL format
             if not re.match(r"^https?://[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(/.*)?$", text):
-                QMessageBox.warning(
-                    self, 
-                    I18n.get("error"),
-                    I18n.get("invalid_url")
-                )
+                QMessageBox.warning(self, I18n.get("error"), I18n.get("invalid_url"))
                 return
 
             # Use pre-download dialog

@@ -208,16 +208,15 @@ class QualityDialog(QDialog):
                 res = "Stream (Auto)"
 
             if vcodec != "none" and acodec != "none":
-                type_str = f"Video + Audio ({note})"
+                pass
             elif vcodec != "none":
-                type_str = f"Video Only ({note})"
+                pass
             elif vcodec == "none" and acodec == "none" and ext == "mp4":
                 # Common for HLS master playlists
-                type_str = "Stream Container"
                 vcodec = "copy"
                 acodec = "copy"
             else:
-                type_str = "Audio Only"
+                pass
 
             filtered_formats.append(
                 {
@@ -283,7 +282,7 @@ class QualityDialog(QDialog):
             return
 
         format_data = selected_items[0].data(Qt.UserRole)
-        audio_choice = self.audio_combo.currentData()
+        self.audio_combo.currentData()
 
         # Prepare result
         result = {

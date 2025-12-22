@@ -46,5 +46,5 @@ class ThumbnailWorker(QThread):
             response = requests.get(self.url, timeout=10)
             if response.status_code == 200:
                 self.finished.emit(response.content)
-        except:
+        except Exception:
             pass
