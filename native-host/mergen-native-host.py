@@ -97,8 +97,8 @@ def main():
                 send_message(result)
 
             elif action in ["ping", "test_connection"]:
-                result = send_to_mergen("test", "test")
-                send_message(result)
+                # Do NOT send to Mergen, just reply to extension
+                send_message({"status": "success", "message": "Pong"})
 
             else:
                 send_message({"status": "error", "message": "Unknown action"})
