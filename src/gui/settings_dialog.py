@@ -467,7 +467,7 @@ class SettingsDialog(QDialog):
         layout = QVBoxLayout()
 
         # Header
-        header = QLabel("🌐 Browser Integration")
+        header = QLabel(I18n.get("browser_integration_header"))
         header.setStyleSheet("font-size: 16px; font-weight: bold; margin-bottom: 10px;")
         layout.addWidget(header)
 
@@ -475,7 +475,7 @@ class SettingsDialog(QDialog):
         status_widget = QWidget()
         status_layout = QHBoxLayout()
         self.browser_status_icon = QLabel("⚫")
-        self.browser_status_text = QLabel("Checking...")
+        self.browser_status_text = QLabel(I18n.get("browser_status_checking"))
         status_layout.addWidget(self.browser_status_icon)
         status_layout.addWidget(self.browser_status_text)
         status_layout.addStretch()
@@ -485,18 +485,18 @@ class SettingsDialog(QDialog):
         layout.addSpacing(10)
 
         # Installation guide
-        guide_group = QGroupBox("📋 Installation")
+        guide_group = QGroupBox(I18n.get("browser_installation_header"))
         guide_layout = QVBoxLayout()
 
         # Download links
         download_label = QLabel(
-            "<b>1. Download Extension:</b><br>"
+            f"<b>{I18n.get('browser_download_extension')}</b><br>"
             '<a href="https://github.com/Tunahanyrd/mergen/releases/latest/download/mergen-browser-extension.zip" '
             'style="color: #89b4fa; text-decoration: none;">'
-            "📦 Chrome/Chromium Extension (.zip)</a><br>"
+            f"{I18n.get('browser_chrome_extension')}</a><br>"
             '<a href="https://github.com/Tunahanyrd/mergen/releases/latest/download/mergen-firefox-amo.zip" '
             'style="color: #89b4fa; text-decoration: none;">'
-            "🦊 Firefox Extension (.zip)</a>"
+            f"{I18n.get('browser_firefox_extension')}</a>"
         )
         download_label.setOpenExternalLinks(True)
         download_label.setWordWrap(True)
@@ -504,21 +504,21 @@ class SettingsDialog(QDialog):
 
         # Chrome instructions
         chrome_label = QLabel(
-            "<b>2. Install in Chrome/Chromium:</b><br>"
-            "• Open <code>chrome://extensions/</code><br>"
-            '• Enable "Developer mode" (top-right)<br>'
-            "• Drag & drop the Chrome .zip file<br>"
-            "• Click extension icon to get Extension ID"
+            f"<b>{I18n.get('browser_chrome_install')}</b><br>"
+            f"{I18n.get('browser_chrome_step1')}<br>"
+            f"{I18n.get('browser_chrome_step2')}<br>"
+            f"{I18n.get('browser_chrome_step3')}<br>"
+            f"{I18n.get('browser_chrome_step4')}"
         )
         chrome_label.setWordWrap(True)
         guide_layout.addWidget(chrome_label)
 
         # Firefox instructions
         firefox_label = QLabel(
-            "<b>Or Firefox:</b><br>"
-            "• Open <code>about:debugging#/runtime/this-firefox</code><br>"
-            '• Click "Load Temporary Add-on"<br>'
-            "• Select the Firefox .zip file"
+            f"<b>{I18n.get('browser_firefox_install')}</b><br>"
+            f"{I18n.get('browser_firefox_step1')}<br>"
+            f"{I18n.get('browser_firefox_step2')}<br>"
+            f"{I18n.get('browser_firefox_step3')}"
         )
         firefox_label.setWordWrap(True)
         guide_layout.addWidget(firefox_label)
@@ -527,24 +527,24 @@ class SettingsDialog(QDialog):
         layout.addWidget(guide_group)
 
         # Registration section
-        reg_group = QGroupBox("🔑 Register Extension")
+        reg_group = QGroupBox(I18n.get("browser_register_header"))
         reg_layout = QVBoxLayout()
 
         # Extension ID input
         id_layout = QHBoxLayout()
-        id_layout.addWidget(QLabel("Extension ID:"))
+        id_layout.addWidget(QLabel(I18n.get("browser_ext_id_label")))
         self.ext_id_input = QLineEdit()
-        self.ext_id_input.setPlaceholderText("Paste Extension ID here...")
+        self.ext_id_input.setPlaceholderText(I18n.get("ext_id_placeholder"))
         id_layout.addWidget(self.ext_id_input)
         reg_layout.addLayout(id_layout)
 
         # Register button
-        register_btn = QPushButton("✅ Register")
+        register_btn = QPushButton(I18n.get("browser_register_btn"))
         register_btn.clicked.connect(self.register_extension)
         reg_layout.addWidget(register_btn)
 
         # Help text
-        help_text = QLabel("<i>ℹ️ Copy Extension ID from extension popup and paste here.</i>")
+        help_text = QLabel(f"<i>{I18n.get('browser_ext_id_help')}</i>")
         help_text.setWordWrap(True)
         reg_layout.addWidget(help_text)
 
@@ -575,21 +575,21 @@ class SettingsDialog(QDialog):
                     origins = data.get("allowed_origins", [])
                     if origins and "PLACEHOLDER" not in origins[0]:
                         self.browser_status_icon.setText("🟢")
-                        self.browser_status_text.setText("Connected!")
+                        self.browser_status_text.setText(I18n.get("browser_status_connected"))
                         return
 
             if firefox_manifest.exists():
                 self.browser_status_icon.setText("🟢")
-                self.browser_status_text.setText("Connected (Firefox)")
+                self.browser_status_text.setText(I18n.get("browser_status_connected_firefox"))
                 return
 
             # Not registered
             self.browser_status_icon.setText("🔴")
-            self.browser_status_text.setText("Not Registered")
+            self.browser_status_text.setText(I18n.get("browser_status_not_registered"))
 
         except Exception:
             self.browser_status_icon.setText("⚠️")
-            self.browser_status_text.setText("Error")
+            self.browser_status_text.setText(I18n.get("browser_status_error"))
 
     def register_extension(self):
         """Register browser extension with given Extension ID."""
