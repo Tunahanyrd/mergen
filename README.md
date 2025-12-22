@@ -10,8 +10,10 @@ Modern, fast, and feature-rich download manager with browser integration.
 
 - ⚡ **Multi-threaded Downloads** - Up to 32 parallel connections
 - 🌐 **Browser Integration** - Capture downloads from Chrome, Firefox, Brave, Edge
+- 🎬 **Quality Selector** - Choose video quality and format (HLS/DASH support)
 - ⏸️ **Resume Support** - Resume interrupted downloads
-- 📊 **Queue Management** - Organize downloads in queues
+- 📊 **Queue Management** - Organize downloads in queues with scheduling
+- 🚀 **Auto-Start** - Launch on system boot (Windows, Linux, macOS)
 - 🎨 **Modern UI** - Dark theme with glassmorphism design
 - 🌍 **i18n Support** - English and Turkish
 - 📂 **Auto-categorization** - Smart file type detection
@@ -28,10 +30,10 @@ Download the latest release for your platform:
 - [**MergenSetup.exe**](https://github.com/Tunahanyrd/mergen/releases/latest/download/MergenSetup.exe) - Installer with auto-update
 
 **🐧 Linux:**
-- [**Debian/Ubuntu (.deb)**](https://github.com/Tunahanyrd/mergen/releases/latest) - `sudo dpkg -i mergen_0.7.0-1_amd64.deb`
-- [**Fedora/RHEL (.rpm)**](https://github.com/Tunahanyrd/mergen/releases/latest) - `sudo rpm -i mergen-0.7.0-1.x86_64.rpm`
+- [**Debian/Ubuntu (.deb)**](https://github.com/Tunahanyrd/mergen/releases/latest) - `sudo dpkg -i mergen_0.9.2_amd64.deb`
+- [**Fedora/RHEL (.rpm)**](https://github.com/Tunahanyrd/mergen/releases/latest) - `sudo rpm -i mergen-0.9.2-1.x86_64.rpm`
 - [**AppImage**](https://github.com/Tunahanyrd/mergen/releases/latest) - Universal binary for all distros
-- [**Arch Linux (.pkg.tar.zst)**](https://github.com/Tunahanyrd/mergen/releases/latest) - `sudo pacman -U mergen-0.7.0-1-x86_64.pkg.tar.zst`
+- [**Arch Linux (.pkg.tar.zst)**](https://github.com/Tunahanyrd/mergen/releases/latest) - `sudo pacman -U mergen-0.9.2-1-x86_64.pkg.tar.zst`
 
 **🍎 macOS:**
 - [**Mergen.dmg**](https://github.com/Tunahanyrd/mergen/releases/latest) - Drag & drop to Applications

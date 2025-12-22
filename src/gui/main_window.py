@@ -35,9 +35,9 @@ from src.core.i18n import I18n
 from src.core.models import DownloadItem
 from src.core.queue_manager import QueueManager
 from src.gui.download_dialog import DownloadDialog
+from src.gui.first_run_dialog import FirstRunDialog
 from src.gui.properties_dialog import PropertiesDialog
 from src.gui.quality_dialog import QualityDialog
-from src.gui.first_run_dialog import FirstRunDialog
 from src.gui.queue_manager_dialog import QueueManagerDialog
 from src.gui.settings_dialog import SettingsDialog
 from src.gui.styles import MERGEN_THEME, MERGEN_THEME_LIGHT
@@ -511,7 +511,7 @@ class MainWindow(QMainWindow):
         """Starts a download item (callback for queue manager)."""
         download_item.status = "Downloading..."
         self.refresh_table()
-        # TODO: Create DownloadDialog and start actual download
+        # This is called by queue manager; actual download handled by DownloadDialog
 
     # Removed open_scheduler
 
@@ -680,13 +680,13 @@ class MainWindow(QMainWindow):
             text = text.strip()
             if not re.match(r"^https?://", text):
                 text = "https://" + text
-            
+
             # Use pre-download dialog
             show_pre_dialog = self.config.get("show_pre_download_dialog", True)
-            
+
             if show_pre_dialog:
                 from src.gui.pre_download_dialog import PreDownloadDialog
-                
+
                 pre_dlg = PreDownloadDialog(text, self.config, self.queue_manager, parent=self)
                 if pre_dlg.exec() == QDialog.Accepted:
                     values = pre_dlg.get_values()
@@ -695,11 +695,11 @@ class MainWindow(QMainWindow):
                     if values["dont_ask"]:
                         self.config.set("show_pre_download_dialog", False)
                 else:
-                    return # Cancelled
+                    return  # Cancelled
             else:
                 save_dir = self.config.get("default_download_dir")
                 queue_name = self.config.get("default_queue", "Main download queue")
-                
+
             # Trigger Analysis Flow
             self.analyze_and_start(text, save_dir, queue_name)
 
@@ -725,7 +725,7 @@ class MainWindow(QMainWindow):
                 # Ensure PreDialog is brought to front
                 pre_dlg.activateWindow()
                 pre_dlg.raise_()
-                
+
                 if pre_dlg.exec() == QDialog.Accepted:
                     values = pre_dlg.get_values()
                     save_dir = values["save_path"]
@@ -738,7 +738,7 @@ class MainWindow(QMainWindow):
                 # Auto-add without dialog
                 save_dir = self.config.get("default_download_dir")
                 queue_name = self.config.get("default_queue", "Main download queue")
-                
+
             # Trigger Analysis Flow
             self.analyze_and_start(text, save_dir, queue_name)
 
@@ -750,29 +750,27 @@ class MainWindow(QMainWindow):
     def start_download_final(self, url, save_dir, queue_name, format_info=None):
         import os
         from pathlib import Path
-        
+
         fname = Path(url.split("?")[0]).name or "file.dat"
         # If we have format info, update extension
-        if format_info and format_info.get('ext'):
+        if format_info and format_info.get("ext"):
             base = os.path.splitext(fname)[0]
             fname = f"{base}.{format_info['ext']}"
-            
-        new_item = DownloadItem(
-            url=url, filename=os.path.join(save_dir, fname), save_path=save_dir, queue=queue_name
-        )
+
+        new_item = DownloadItem(url=url, filename=os.path.join(save_dir, fname), save_path=save_dir, queue=queue_name)
         new_item.status = I18n.get("downloading")
         new_item.size = I18n.get("initializing")
-        
+
         # Store format info in item (we will need to update DownloadItem model later to support this persistence)
         # For now, pass it to DownloadDialog directly
-        
+
         self.downloads.append(new_item)
         self.config.save_history(self.downloads)
         self.refresh_table()
 
         # Start download dialog
         dlg = DownloadDialog(url, self, save_dir=save_dir, format_info=format_info)
-            
+
         dlg.download_complete.connect(lambda s, f: self.update_download_status(new_item, s, f))
         dlg.worker.progress_signal.connect(lambda d, t, s, seg: self.update_live_row(new_item, d, t, s))
         dlg.worker.status_signal.connect(lambda m: self.update_item_status(new_item, m))
@@ -785,7 +783,7 @@ class MainWindow(QMainWindow):
     def analyze_and_start(self, url, save_dir, queue_name):
         # Interactive mode check (default True for now)
         interactive = self.config.get("interactive_mode", True)
-        
+
         if not interactive:
             self.start_download_final(url, save_dir, queue_name)
             return
@@ -794,19 +792,21 @@ class MainWindow(QMainWindow):
         progress = QProgressDialog(I18n.get("checking"), I18n.get("cancel"), 0, 0, self)
         progress.setWindowTitle("Mergen Pro")
         progress.setWindowModality(Qt.WindowModal)
-        progress.setMinimumDuration(0) # Show immediately
-        
+        progress.setMinimumDuration(0)  # Show immediately
+
         # Custom style for progress
-        progress.setStyleSheet("""
+        progress.setStyleSheet(
+            """
             QProgressDialog {
                 background-color: #1e1e1e;
                 color: white;
             }
             QLabel { color: white; }
-        """)
-        
+        """
+        )
+
         worker = AnalysisWorker(url, self.config.get_proxy_config())
-        
+
         # Define callback
         def on_analysis_finished(info):
             progress.close()
@@ -817,25 +817,25 @@ class MainWindow(QMainWindow):
                 # If fail, assume direct download.
                 self.start_download_final(url, save_dir, queue_name)
                 return
-                
+
             # Show Quality Dialog
             q_dlg = QualityDialog(self, info)
-            
+
             # Handle selection
             def on_selected(fmt_info):
                 self.start_download_final(url, save_dir, queue_name, fmt_info)
-                
+
             q_dlg.quality_selected.connect(on_selected)
             q_dlg.exec()
-            
+
         worker.finished.connect(on_analysis_finished)
-        
+
         # Handle cancel
         progress.canceled.connect(worker.terminate)
-        
+
         worker.start()
-        progress.exec() # Block main UI slightly but keep event loop
-        
+        progress.exec()  # Block main UI slightly but keep event loop
+
         # Keep ref
         self._analysis_worker = worker
 

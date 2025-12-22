@@ -1,12 +1,13 @@
 import os
-import sys
 import platform
+import sys
 from pathlib import Path
+
 
 class AutoStartManager:
     APP_NAME = "Mergen"
     APP_KEY = "com.tunahanyrd.mergen"
-    
+
     @staticmethod
     def set_autostart(enable: bool = True):
         system = platform.system()
@@ -30,7 +31,7 @@ class AutoStartManager:
 
     @staticmethod
     def _get_executable_path():
-        if getattr(sys, 'frozen', False):
+        if getattr(sys, "frozen", False):
             return sys.executable
         return sys.executable + ' "' + os.path.abspath(sys.argv[0]) + '"'
 
@@ -39,7 +40,10 @@ class AutoStartManager:
     def _set_windows(enable):
         try:
             import winreg
-            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Run", 0, winreg.KEY_ALL_ACCESS)
+
+            key = winreg.OpenKey(
+                winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Run", 0, winreg.KEY_ALL_ACCESS
+            )
             if enable:
                 exe_path = AutoStartManager._get_executable_path()
                 # Quote path if it contains spaces and not already quoted
@@ -59,7 +63,10 @@ class AutoStartManager:
     def _check_windows():
         try:
             import winreg
-            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Run", 0, winreg.KEY_READ)
+
+            key = winreg.OpenKey(
+                winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Run", 0, winreg.KEY_READ
+            )
             try:
                 winreg.QueryValueEx(key, AutoStartManager.APP_NAME)
                 return True
@@ -75,13 +82,13 @@ class AutoStartManager:
     def _set_linux(enable):
         autostart_dir = Path.home() / ".config" / "autostart"
         desktop_file = autostart_dir / "mergen.desktop"
-        
+
         if enable:
             if not autostart_dir.exists():
                 autostart_dir.mkdir(parents=True, exist_ok=True)
-            
+
             exe_path = AutoStartManager._get_executable_path()
-            
+
             content = f"""[Desktop Entry]
 Type=Application
 Name={AutoStartManager.APP_NAME}
@@ -105,15 +112,15 @@ X-GNOME-Autostart-enabled=true
     def _set_macos(enable):
         launch_agents = Path.home() / "Library" / "LaunchAgents"
         plist_file = launch_agents / f"{AutoStartManager.APP_KEY}.plist"
-        
+
         if enable:
             if not launch_agents.exists():
                 launch_agents.mkdir(parents=True, exist_ok=True)
-                
+
             exe_path = AutoStartManager._get_executable_path()
             # On macOS, sys.executable in a bundle points to the binary inside MacOS/
             # e.g. Mergen.app/Contents/MacOS/Mergen
-            
+
             plist_content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">

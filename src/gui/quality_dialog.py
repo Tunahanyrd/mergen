@@ -1,25 +1,34 @@
-import sys
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, 
-    QComboBox, QTableWidget, QTableWidgetItem, QHeaderView, 
-    QFrame, QAbstractItemView, QCheckBox, QProgressBar
+    QAbstractItemView,
+    QComboBox,
+    QDialog,
+    QHBoxLayout,
+    QHeaderView,
+    QLabel,
+    QPushButton,
+    QTableWidget,
+    QTableWidgetItem,
+    QVBoxLayout,
 )
-from PySide6.QtCore import Qt, QSize, Signal
-from PySide6.QtGui import QIcon, QPixmap, QColor, QBrush, QImage
-import requests
+
+from src.core.i18n import I18n
 from src.gui.workers import ThumbnailWorker
+
 
 class QualityDialog(QDialog):
     quality_selected = Signal(dict)  # Emits selected format info: {'format_id': '...', 'ext': 'mp4', ...}
 
     def __init__(self, parent=None, video_info=None):
         super().__init__(parent)
-        self.setWindowTitle("Select Download Quality - Mergen")
+        self.setWindowTitle(I18n.get("select_quality", "Select Download Quality"))
         self.setFixedSize(700, 500)
         self.video_info = video_info or {}
-        
+
         # Stylesheet (Glassmorphism adapted from main theme)
-        self.setStyleSheet("""
+        self.setStyleSheet(
+            """
             QDialog {
                 background-color: #1e1e1e;
                 color: #ffffff;
@@ -57,7 +66,8 @@ class QualityDialog(QDialog):
                 border: 1px solid #3e3e42;
                 color: #cccccc;
             }
-        """)
+        """
+        )
 
         self.layout = QVBoxLayout(self)
         self.layout.setSpacing(15)
@@ -65,28 +75,28 @@ class QualityDialog(QDialog):
 
         # 1. Header Area (Thumbnail + Title)
         self.header_layout = QHBoxLayout()
-        
+
         # Thumbnail
         self.thumb_label = QLabel()
         self.thumb_label.setFixedSize(160, 90)
         self.thumb_label.setStyleSheet("background-color: #000; border: 1px solid #444;")
         self.thumb_label.setAlignment(Qt.AlignCenter)
         self.header_layout.addWidget(self.thumb_label)
-        
+
         # Info
         self.info_layout = QVBoxLayout()
         self.title_label = QLabel("Analyzing video...")
         self.title_label.setWordWrap(True)
         self.title_label.setStyleSheet("font-size: 16px; font-weight: bold;")
-        
+
         self.meta_label = QLabel("--:-- • -- MB")
         self.meta_label.setStyleSheet("color: #aaaaaa;")
-        
+
         self.info_layout.addWidget(self.title_label)
         self.info_layout.addWidget(self.meta_label)
         self.info_layout.addStretch()
         self.header_layout.addLayout(self.info_layout)
-        
+
         self.layout.addLayout(self.header_layout)
 
         # 2. Quality List
@@ -104,38 +114,38 @@ class QualityDialog(QDialog):
 
         # 3. Bottom Controls
         self.bottom_layout = QHBoxLayout()
-        
+
         # Audio Selection (for video-only streams)
         self.audio_combo = QComboBox()
         self.audio_combo.setPlaceholderText("Select Audio Track")
         self.audio_combo.addItem("Best Audio (Auto-Merge)", "best")
-        
+
         self.bottom_layout.addWidget(QLabel("Audio:"))
         self.bottom_layout.addWidget(self.audio_combo, 1)
-        
+
         self.bottom_layout.addStretch()
-        
-        self.download_btn = QPushButton("Download")
+
+        self.download_btn = QPushButton(I18n.get("download_label", "Download"))
         self.download_btn.clicked.connect(self.accept_selection)
-        self.cancel_btn = QPushButton("Cancel")
+        self.cancel_btn = QPushButton(I18n.get("cancel_btn", "Cancel"))
         self.cancel_btn.setStyleSheet("background-color: #3e3e42;")
         self.cancel_btn.clicked.connect(self.reject)
-        
+
         self.bottom_layout.addWidget(self.cancel_btn)
         self.bottom_layout.addWidget(self.download_btn)
-        
+
         self.layout.addLayout(self.bottom_layout)
-        
+
         # Load data if provided
         if self.video_info:
             self.load_info(self.video_info)
 
     def load_info(self, info):
         self.video_info = info
-        self.title_label.setText(info.get('title', 'Unknown Title'))
-        
+        self.title_label.setText(info.get("title", I18n.get("unknown_title")))
+
         # Duration
-        dur = info.get('duration')
+        dur = info.get("duration")
         if dur:
             mins, secs = divmod(dur, 60)
             hrs, mins = divmod(mins, 60)
@@ -145,77 +155,79 @@ class QualityDialog(QDialog):
         self.meta_label.setText(f"{dur_str} • {info.get('uploader', 'Unknown Source')}")
 
         # Load Thumbnail (Async)
-        thumb_url = info.get('thumbnail')
+        thumb_url = info.get("thumbnail")
         if thumb_url:
             self.thumb_worker = ThumbnailWorker(thumb_url)
             self.thumb_worker.finished.connect(self.set_thumbnail)
             self.thumb_worker.start()
 
         # Populate Formats
-        formats = info.get('formats', [])
+        formats = info.get("formats", [])
         # Filter and sort formats
         # Priority: Video+Audio > Video Only (high res) > Audio Only
-        
+
         filtered_formats = []
         for f in formats:
             # Skip dash manifests if better formats exist, but keep m3u8 as valid stream candidates
-            if f.get('protocol') in ['http_dash_segments']:
-               continue
-            
+            if f.get("protocol") in ["http_dash_segments"]:
+                continue
+
             # Simple metadata
-            res = f.get('resolution') or 'Unknown'
-            ext = f['ext']
-            filesize = f.get('filesize_approx') or f.get('filesize')
-            
+            res = f.get("resolution") or "Unknown"
+            ext = f["ext"]
+            filesize = f.get("filesize_approx") or f.get("filesize")
+
             if filesize:
                 size_str = f"{filesize / 1024 / 1024:.1f} MB"
             else:
                 size_str = "--"
-            
-            vcodec = f.get('vcodec', 'none')
-            acodec = f.get('acodec', 'none')
-            
-            note = f.get('format_note', '')
-            
-            # Friendly name and resolution handling
-            
-            # HLS manifests often have limited info
-            if f.get('protocol') == 'm3u8' and res == 'Unknown':
-                 res = "Stream (Auto)"
 
-            if vcodec != 'none' and acodec != 'none':
+            vcodec = f.get("vcodec", "none")
+            acodec = f.get("acodec", "none")
+
+            note = f.get("format_note", "")
+
+            # Friendly name and resolution handling
+
+            # HLS manifests often have limited info
+            if f.get("protocol") == "m3u8" and res == "Unknown":
+                res = "Stream (Auto)"
+
+            if vcodec != "none" and acodec != "none":
                 type_str = f"Video + Audio ({note})"
-            elif vcodec != 'none':
+            elif vcodec != "none":
                 type_str = f"Video Only ({note})"
-            elif vcodec == 'none' and acodec == 'none' and ext == 'mp4':
-                 # Common for HLS master playlists
-                 type_str = "Stream Container"
-                 vcodec = "copy" 
-                 acodec = "copy"
+            elif vcodec == "none" and acodec == "none" and ext == "mp4":
+                # Common for HLS master playlists
+                type_str = "Stream Container"
+                vcodec = "copy"
+                acodec = "copy"
             else:
                 type_str = "Audio Only"
-                
-            filtered_formats.append({
-                'data': f,
-                'res': f"{f.get('height', 0)}p" if f.get('height') else note,
-                'ext': ext,
-                'size': size_str,
-                'codec': vcodec,
-                'is_video': vcodec != 'none'
-            })
-            
+
+            filtered_formats.append(
+                {
+                    "data": f,
+                    "res": f"{f.get('height', 0)}p" if f.get("height") else note,
+                    "ext": ext,
+                    "size": size_str,
+                    "codec": vcodec,
+                    "is_video": vcodec != "none",
+                }
+            )
+
         # Sort by resolution (height) descending
-        filtered_formats.sort(key=lambda x: x['data'].get('height', 0) or 0, reverse=True)
-        
+        filtered_formats.sort(key=lambda x: x["data"].get("height", 0) or 0, reverse=True)
+
         self.table.setRowCount(len(filtered_formats))
         for row, item in enumerate(filtered_formats):
-            self.table.setItem(row, 0, QTableWidgetItem(item['res']))
-            self.table.setItem(row, 1, QTableWidgetItem(item['ext']))
-            self.table.setItem(row, 2, QTableWidgetItem(item['size']))
-            self.table.setItem(row, 3, QTableWidgetItem(item['codec']))
-            
+            self.table.setItem(row, 0, QTableWidgetItem(item["res"]))
+            self.table.setItem(row, 1, QTableWidgetItem(item["ext"]))
+            self.table.setItem(row, 2, QTableWidgetItem(item["size"]))
+            self.table.setItem(row, 3, QTableWidgetItem(item["codec"]))
+
             # Store format ID in first item
-            self.table.item(row, 0).setData(Qt.UserRole, item['data'])
+            self.table.item(row, 0).setData(Qt.UserRole, item["data"])
 
         # Select top item
         if filtered_formats:
@@ -229,7 +241,6 @@ class QualityDialog(QDialog):
             # Center crop or just set content
             self.thumb_label.setPixmap(scaled)
 
-
     def accept_selection(self):
         # Get selected format
         selected_items = self.table.selectedItems()
@@ -238,21 +249,21 @@ class QualityDialog(QDialog):
             # For HLS streams where formats might be hidden or just one manifest
             # we can tell Main Window to proceed with default "best"
             if self.table.rowCount() == 0:
-                 self.quality_selected.emit({}) # Emit empty dict for "auto"
-                 self.accept()
-                 return
+                self.quality_selected.emit({})  # Emit empty dict for "auto"
+                self.accept()
+                return
             return
-            
+
         format_data = selected_items[0].data(Qt.UserRole)
         audio_choice = self.audio_combo.currentData()
-        
+
         # Prepare result
         result = {
-            'format_id': format_data['format_id'],
-            'ext': format_data['ext'],
-            'vcodec': format_data.get('vcodec'),
-            'acodec': format_data.get('acodec')
+            "format_id": format_data["format_id"],
+            "ext": format_data["ext"],
+            "vcodec": format_data.get("vcodec"),
+            "acodec": format_data.get("acodec"),
         }
-        
+
         self.quality_selected.emit(result)
         self.accept()

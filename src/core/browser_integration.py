@@ -29,13 +29,18 @@ class MergenHTTPHandler(BaseHTTPRequestHandler):
 
                 url = data.get("url", "")
                 filename = data.get("filename", "")
+                stream_type = data.get("stream_type", "direct")  # NEW: Support stream type detection
 
                 # Emit signal to main window (thread-safe)
                 if self.main_window and hasattr(self.main_window, "browser_download_signal"):
                     self.main_window.browser_download_signal.emit(url, filename)
 
+                    # Log stream type for debugging
+                    if stream_type in ["hls", "dash"]:
+                        print(f"🎬 Detected {stream_type.upper()} stream: {url[:80]}...")
+
                 # Send success response
-                response = {"status": "success", "message": "Download added"}
+                response = {"status": "success", "message": "Download added", "stream_type": stream_type}
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.send_header("Access-Control-Allow-Origin", "*")
@@ -43,7 +48,8 @@ class MergenHTTPHandler(BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps(response).encode())
 
             except Exception as e:
-                # Send error response
+                # Send error response with better logging
+                print(f"❌ Browser integration error: {e}")
                 error_response = {"status": "error", "message": str(e)}
                 self.send_response(500)
                 self.send_header("Content-Type", "application/json")
@@ -53,7 +59,7 @@ class MergenHTTPHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         """Handle GET requests (health check)."""
         if self.path == "/health" or self.path == "/":
-            response = {"status": "ok", "app": "Mergen", "version": "0.5"}
+            response = {"status": "ok", "app": "Mergen", "version": "0.9.2"}
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.send_header("Access-Control-Allow-Origin", "*")

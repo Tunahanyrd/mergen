@@ -1,19 +1,22 @@
 from PySide6.QtCore import QThread, Signal
+
 from src.core.downloader import Downloader
+
 
 class AnalysisWorker(QThread):
     """
     Background worker to fetch video metadata via yt-dlp.
     Used for pre-download analysis (Format Selector).
     """
+
     finished = Signal(object)  # Returns info dict or None
-    error = Signal(str)        # Returns error message
+    error = Signal(str)  # Returns error message
 
     def __init__(self, url, proxy_config=None):
         super().__init__()
         self.url = url
         self.proxy_config = proxy_config
-        
+
     def run(self):
         try:
             # Initialize minimal downloader just for fetching info
@@ -24,10 +27,12 @@ class AnalysisWorker(QThread):
         except Exception as e:
             self.error.emit(str(e))
 
+
 class ThumbnailWorker(QThread):
     """
     Background worker to fetch video thumbnail.
     """
+
     finished = Signal(bytes)
 
     def __init__(self, url):
@@ -37,6 +42,7 @@ class ThumbnailWorker(QThread):
     def run(self):
         try:
             import requests
+
             response = requests.get(self.url, timeout=10)
             if response.status_code == 200:
                 self.finished.emit(response.content)

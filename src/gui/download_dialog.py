@@ -168,11 +168,11 @@ class DownloadWorker(QThread):
             proxy_config=self.proxy_config,
             worker_count=self.worker_count,
         )
-        
+
         # Apply format info if provided (v0.9.0)
         if self.format_info:
             self.downloader.format_info = self.format_info
-            
+
         self.downloader.start()
 
     def emit_progress(self, downloaded, total):
@@ -252,7 +252,9 @@ class DownloadDialog(QDialog):
         self.max_connections = int(self.config.get("max_connections", 8))
 
         # FIX: Pass worker_count to worker
-        self.worker = DownloadWorker(url, save_dir, proxy_config=proxy_cfg, worker_count=self.max_connections, format_info=self.format_info)
+        self.worker = DownloadWorker(
+            url, save_dir, proxy_config=proxy_cfg, worker_count=self.max_connections, format_info=self.format_info
+        )
         self.worker.progress_signal.connect(self.update_progress)
         self.worker.status_signal.connect(self.update_status)
         self.worker.finished_signal.connect(self.on_finished)

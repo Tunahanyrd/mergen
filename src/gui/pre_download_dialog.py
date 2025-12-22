@@ -30,7 +30,7 @@ class PreDownloadDialog(QDialog):
         self.config = config
         self.queue_manager = queue_manager
 
-        self.setWindowTitle("Download File Info")
+        self.setWindowTitle(I18n.get("download_options", "Download Options"))
         self.resize(600, 250)
         self.setup_ui()
 
@@ -98,7 +98,7 @@ class PreDownloadDialog(QDialog):
 
         # Buttons
         button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-        button_box.button(QDialogButtonBox.Ok).setText("Start Download")
+        button_box.button(QDialogButtonBox.Ok).setText(I18n.get("start_download_btn"))
         button_box.accepted.connect(self.accept)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)
@@ -109,7 +109,7 @@ class PreDownloadDialog(QDialog):
 
     def browse_save_location(self):
         """Open folder browser."""
-        folder = QFileDialog.getExistingDirectory(self, "Select Download Folder", self.save_path.text())
+        folder = QFileDialog.getExistingDirectory(self, I18n.get("select_download_folder"), self.save_path.text())
         if folder:
             self.save_path.setText(folder)
 
@@ -117,7 +117,7 @@ class PreDownloadDialog(QDialog):
         """Quick add new queue."""
         from PySide6.QtWidgets import QInputDialog
 
-        text, ok = QInputDialog.getText(self, "New Queue", "Queue Name:")
+        text, ok = QInputDialog.getText(self, I18n.get("new_queue"), I18n.get("queue_name"))
         if ok and text:
             if self.queue_manager.create_queue(text):
                 self.queue_combo.clear()

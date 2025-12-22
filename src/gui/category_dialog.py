@@ -16,11 +16,15 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
+from src.core.i18n import I18n
+
 
 class CategoryDialog(QDialog):
     def __init__(self, parent=None, name="", exts="", icon="folder", save_path=""):
         super().__init__(parent)
-        self.setWindowTitle("Adding a category to IDM categories list" if not name else "Category Properties")
+        self.setWindowTitle(
+            I18n.get("add_category") if not name else I18n.get("category_properties", "Category Properties")
+        )
         self.resize(500, 300)
         self.save_path = save_path
 
@@ -45,12 +49,12 @@ class CategoryDialog(QDialog):
 
         # Name
         self.name_edit = QLineEdit(name)
-        form.addRow("Category Name:", self.name_edit)
+        form.addRow(I18n.get("category_name", "Category Name:"), self.name_edit)
 
         # Extensions
         self.ext_edit = QLineEdit(exts)
         self.ext_edit.setPlaceholderText("e.g. zip, rar, 7z")
-        form.addRow("Automatically put in this category the following file types:", self.ext_edit)
+        form.addRow(I18n.get("auto_category_prompt"), self.ext_edit)
 
         # Icon Selector with Browse
         icon_layout = QHBoxLayout()
@@ -76,7 +80,7 @@ class CategoryDialog(QDialog):
         if idx >= 0:
             self.icon_combo.setCurrentIndex(idx)
 
-        browse_icon_btn = QPushButton("Browse...")
+        browse_icon_btn = QPushButton(I18n.get("browse"))
         browse_icon_btn.clicked.connect(self.browse_icon)
 
         icon_layout.addWidget(self.icon_combo)
@@ -86,13 +90,13 @@ class CategoryDialog(QDialog):
         # Save Path
         path_layout = QHBoxLayout()
         self.path_edit = QLineEdit(save_path)
-        self.path_edit.setPlaceholderText("General Downloads Folder")
-        browse_path_btn = QPushButton("Browse...")
+        self.path_edit.setPlaceholderText(I18n.get("general_downloads_folder"))
+        browse_path_btn = QPushButton(I18n.get("browse"))
         browse_path_btn.clicked.connect(self.browse_path)
 
         path_layout.addWidget(self.path_edit)
         path_layout.addWidget(browse_path_btn)
-        form.addRow("Save future downloads of this category to:", path_layout)
+        form.addRow(I18n.get("save_category_to"), path_layout)
 
         layout.addLayout(form)
 
@@ -102,13 +106,13 @@ class CategoryDialog(QDialog):
         layout.addWidget(buttons)
 
     def browse_icon(self):
-        fname, _ = QFileDialog.getOpenFileName(self, "Select Icon", "", "Images (*.png *.ico *.jpg)")
+        fname, _ = QFileDialog.getOpenFileName(self, I18n.get("select_icon"), "", "Images (*.png *.ico *.jpg)")
         if fname:
             self.icon_combo.addItem(QIcon(fname), "Custom", fname)
             self.icon_combo.setCurrentIndex(self.icon_combo.count() - 1)
 
     def browse_path(self):
-        d = QFileDialog.getExistingDirectory(self, "Select Directory")
+        d = QFileDialog.getExistingDirectory(self, I18n.get("select_directory"))
         if d:
             self.path_edit.setText(d)
 
