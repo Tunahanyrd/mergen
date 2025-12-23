@@ -830,41 +830,32 @@ class MainWindow(QMainWindow):
             self.start_download_final(url, save_dir, queue_name)
             return
 
-        # Show Progress
-        progress = QProgressDialog(I18n.get("checking"), I18n.get("cancel"), 0, 0, self)
-        progress.setWindowTitle("Mergen Pro")
-        progress.setWindowModality(Qt.WindowModal)
-        progress.setMinimumDuration(0)  # Show immediately
-
-        # Custom style for progress
-        progress.setStyleSheet(
-            """
-            QProgressDialog {
-                background-color: #1e1e1e;
-                color: white;
-            }
-            QLabel { color: white; }
-        """
-        )
-
+        # Try analysis with yt-dlp (supports 1300+ sites)
+        # If it fails or URL isn't supported, fallback to direct download
+        print(f"🔍 Attempting analysis with yt-dlp...")
+        
+        # Show non-blocking status message
+        self.statusBar().showMessage("🔍 Analyzing formats...", 30000)
+        
         worker = AnalysisWorker(url, self.config.get_proxy_config())
 
         # Define callback
         def on_analysis_finished(info):
-            progress.close()
+            print(f"📥 on_analysis_finished called, info={'present' if info else 'None'}")
+            self.statusBar().clearMessage()
+            
             if not info:
-                # Fallback to direct download if analysis fails (or not supported site)
-                # But wait, fetch_video_info returns None on error.
-                # If it's a direct file link, yt-dlp might fail or return info.
-                # If fail, assume direct download.
+                print("⚠️ No info, falling back to direct download")
                 self.start_download_final(url, save_dir, queue_name)
                 return
 
             # Show Quality Dialog
+            print(f"📺 Showing Quality Dialog with {len(info.get('formats', []))} formats")
             q_dlg = QualityDialog(self, info)
 
             # Handle selection
             def on_selected(fmt_info):
+                print(f"✅ Format selected: {fmt_info.get('format_id', 'default')}")
                 self.start_download_final(url, save_dir, queue_name, fmt_info)
 
             q_dlg.quality_selected.connect(on_selected)
@@ -872,22 +863,22 @@ class MainWindow(QMainWindow):
 
         def on_analysis_error(error_msg):
             """Handle errors from AnalysisWorker"""
-            progress.close()
-            # Log error but don't show to user - just fallback to direct download
-            print(f"Analysis failed: {error_msg}")
+            print(f"❌ on_analysis_error called: {error_msg}")
+            self.statusBar().clearMessage()
+            self.statusBar().showMessage(f"⚠️ Analysis failed, using direct download", 5000)
             self.start_download_final(url, save_dir, queue_name)
 
-        worker.finished.connect(on_analysis_finished)
-        worker.error.connect(on_analysis_error)  # CRITICAL FIX: Handle errors
-
-        # Handle cancel
-        progress.canceled.connect(worker.terminate)
-
-        worker.start()
-        progress.exec()  # Block main UI slightly but keep event loop
-
-        # Keep ref
+        # Keep ref BEFORE starting worker (prevent GC)
         self._analysis_worker = worker
+        
+        # Use Qt.QueuedConnection for thread-safe signal handling
+        from PySide6.QtCore import Qt
+        worker.finished.connect(on_analysis_finished, Qt.QueuedConnection)
+        worker.error.connect(on_analysis_error, Qt.QueuedConnection)
+
+        print(f"🔗 Signals connected with QueuedConnection")
+        worker.start()
+        print(f"🚀 Worker started, waiting for callbacks...")
 
     # Copying remaining methods to ensure file completeness
     def open_settings(self, tab_index=0):

@@ -19,12 +19,20 @@ class AnalysisWorker(QThread):
 
     def run(self):
         try:
+            print(f"🔍 AnalysisWorker.run() started for {self.url}")
             # Initialize minimal downloader just for fetching info
             d = Downloader(self.url, proxy_config=self.proxy_config)
             # This method (added in v0.9.0) uses yt-dlp extract_info(download=False)
             info = d.fetch_video_info()
-            self.finished.emit(info)
+            
+            if info:
+                print(f"✅ AnalysisWorker got info, emitting finished signal")
+                self.finished.emit(info)
+            else:
+                print(f"❌ AnalysisWorker got None, emitting error signal")
+                self.error.emit("No video info available")
         except Exception as e:
+            print(f"❌ AnalysisWorker exception: {e}")
             self.error.emit(str(e))
 
 
