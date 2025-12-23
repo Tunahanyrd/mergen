@@ -52,7 +52,8 @@ def read_message():
 def send_to_mergen(url, filename, stream_type="direct"):
     """Send download to Mergen app via HTTP."""
     try:
-        import requests
+        import urllib.request
+        import urllib.error
 
         payload = {
             "url": url,
@@ -60,16 +61,20 @@ def send_to_mergen(url, filename, stream_type="direct"):
             "stream_type": stream_type,  # NEW: hls, dash, mp4, ts, mp3, direct
         }
 
-        response = requests.post(MERGEN_HTTP_URL, json=payload, timeout=2)
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(MERGEN_HTTP_URL, data=data, headers={"Content-Type": "application/json"})
 
-        if response.status_code == 200:
-            logging.info(f"✅ Mergen [{stream_type}]: {url}")
-            return {"status": "success", "message": "Added to Mergen"}
-        else:
-            return {"status": "error", "message": f"HTTP {response.status_code}"}
-    except ImportError:
-        logging.error("requests module not found")
-        return {"status": "error", "message": "Missing requests module"}
+        with urllib.request.urlopen(req, timeout=2) as response:
+            if response.status == 200:
+                logging.info(f"✅ Mergen [{stream_type}]: {url}")
+                return {"status": "success", "message": "Added to Mergen"}
+            else:
+                return {"status": "error", "message": f"HTTP {response.status}"}
+
+    except urllib.error.URLError as e:
+        # Default error when server is down or connection refused
+        logging.error(f"Connection error: {e}")
+        return {"status": "error", "message": f"Connection failed: {e}"}
     except Exception as e:
         logging.error(f"Error: {e}")
         return {"status": "error", "message": str(e)}
