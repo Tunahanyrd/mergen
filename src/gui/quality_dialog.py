@@ -166,7 +166,7 @@ class QualityDialog(QDialog):
 
         # CRITICAL FIX: If no formats, create a default one from URL
         if not formats:
-            self.log("⚠️ No formats found, using direct URL")
+            print("⚠️ No formats found, using direct URL")
             formats = [
                 {
                     "url": info.get("url", info.get("webpage_url", "")),
@@ -234,7 +234,7 @@ class QualityDialog(QDialog):
 
         # CRITICAL FIX: If no valid formats after filtering, add a fallback
         if not filtered_formats:
-            self.log("⚠️ No valid formats after filtering, adding fallback")
+            print("⚠️ No valid formats after filtering, adding fallback")
             filtered_formats = [
                 {
                     "data": {"url": info.get("url", ""), "ext": "mp4", "format_id": "fallback"},
