@@ -2,6 +2,7 @@
 """
 Properties Dialog - file properties viewer with tabs
 """
+
 import os
 import subprocess
 
@@ -265,11 +266,11 @@ class PropertiesDialog(QDialog):
             if os.path.exists(self.item.filename):
                 size_bytes = os.path.getsize(self.item.filename)
                 if size_bytes > 1024**3:
-                    return f"{size_bytes/(1024**3):.2f} GB ({size_bytes:,} bytes)"
+                    return f"{size_bytes / (1024**3):.2f} GB ({size_bytes:,} bytes)"
                 elif size_bytes > 1024**2:
-                    return f"{size_bytes/(1024**2):.2f} MB ({size_bytes:,} bytes)"
+                    return f"{size_bytes / (1024**2):.2f} MB ({size_bytes:,} bytes)"
                 elif size_bytes > 1024:
-                    return f"{size_bytes/1024:.2f} KB ({size_bytes:,} bytes)"
+                    return f"{size_bytes / 1024:.2f} KB ({size_bytes:,} bytes)"
                 else:
                     return f"{size_bytes} bytes"
             else:

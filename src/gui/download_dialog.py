@@ -355,20 +355,20 @@ class DownloadDialog(QDialog):
             self._speed_history.pop(0)
         avg_speed = sum(self._speed_history) / len(self._speed_history)
 
-        sp_str = f"{avg_speed/(1024*1024):.1f} MB/s" if avg_speed > 1024 * 1024 else f"{avg_speed/1024:.1f} KB/s"
+        sp_str = f"{avg_speed / (1024 * 1024):.1f} MB/s" if avg_speed > 1024 * 1024 else f"{avg_speed / 1024:.1f} KB/s"
         self.card_speed.set_value(sp_str)
         self.card_speed.update_graph(avg_speed)
 
         if downloaded > 1024 * 1024 * 1024:
-            dl_str = f"{downloaded/(1024*1024*1024):.2f} GB"
+            dl_str = f"{downloaded / (1024 * 1024 * 1024):.2f} GB"
         else:
-            dl_str = f"{downloaded/(1024*1024):.2f} MB"
+            dl_str = f"{downloaded / (1024 * 1024):.2f} MB"
         self.card_downloaded.set_value(dl_str)
 
         if total > 1024 * 1024 * 1024:
-            tot_str = f"{total/(1024*1024*1024):.2f} GB"
+            tot_str = f"{total / (1024 * 1024 * 1024):.2f} GB"
         else:
-            tot_str = f"{total/(1024*1024):.2f} MB"
+            tot_str = f"{total / (1024 * 1024):.2f} MB"
         self.card_total.set_value(tot_str)
 
         if total > 0:

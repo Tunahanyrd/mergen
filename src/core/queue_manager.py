@@ -2,6 +2,7 @@
 """
 Queue Manager - Manages download queues with scheduling and concurrent limits.
 """
+
 from datetime import datetime
 
 from PySide6.QtCore import QObject, QTimer, Signal

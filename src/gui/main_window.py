@@ -456,19 +456,19 @@ class MainWindow(QMainWindow):
 
         # Format strings
         if speed > 1024 * 1024:
-            sp_str = f"{speed/(1024*1024):.1f} MB/s"
+            sp_str = f"{speed / (1024 * 1024):.1f} MB/s"
         else:
-            sp_str = f"{speed/1024:.1f} KB/s"
+            sp_str = f"{speed / 1024:.1f} KB/s"
 
         if downloaded > 1024 * 1024 * 1024:
-            dl_str = f"{downloaded/(1024*1024*1024):.2f} GB"
+            dl_str = f"{downloaded / (1024 * 1024 * 1024):.2f} GB"
         else:
-            dl_str = f"{downloaded/(1024*1024):.2f} MB"
+            dl_str = f"{downloaded / (1024 * 1024):.2f} MB"
 
         if total > 1024 * 1024 * 1024:
-            tot_str = f"{total/(1024*1024*1024):.2f} GB"
+            tot_str = f"{total / (1024 * 1024 * 1024):.2f} GB"
         else:
-            tot_str = f"{total/(1024*1024):.2f} MB"
+            tot_str = f"{total / (1024 * 1024):.2f} MB"
 
         # ETA
         eta_str = "--:--:--"
@@ -703,9 +703,9 @@ class MainWindow(QMainWindow):
                     pass
 
         if total_speed < 1024 * 1024:
-            s_str = f"{total_speed/1024:.1f} KB/s"
+            s_str = f"{total_speed / 1024:.1f} KB/s"
         else:
-            s_str = f"{total_speed/(1024*1024):.1f} MB/s"
+            s_str = f"{total_speed / (1024 * 1024):.1f} MB/s"
 
         self.total_speed_lbl.setText(f"Total Speed: {s_str}")
 

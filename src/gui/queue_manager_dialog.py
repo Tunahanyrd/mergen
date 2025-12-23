@@ -2,6 +2,7 @@
 """
 Queue Manager Dialog - UI for managing download queues with advanced scheduling.
 """
+
 from datetime import datetime
 
 from PySide6.QtWidgets import (

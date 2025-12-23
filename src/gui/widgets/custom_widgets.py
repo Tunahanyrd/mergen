@@ -59,7 +59,7 @@ class RadialProgressBar(QWidget):
         font = QFont("Segoe UI", 16, QFont.Bold)
         painter.setFont(font)
 
-        progress_text = f"{int((self.value/self.maximum)*100)}%" if self.maximum else "0%"
+        progress_text = f"{int((self.value / self.maximum) * 100)}%" if self.maximum else "0%"
         painter.drawText(rect, Qt.AlignCenter, progress_text)
 
         # Small label "Progress"
@@ -175,7 +175,7 @@ class HeatmapBar(QWidget):
         if 0 <= idx < count:
             val = self.segments[idx]
             # Pass self as 3rd arg to ensure parentage on Wayland
-            QToolTip.showText(event.globalPos(), f"Thread {idx+1}: {int(val*100)}%", self)
+            QToolTip.showText(event.globalPos(), f"Thread {idx + 1}: {int(val * 100)}%", self)
         else:
             QToolTip.hideText()
         count = len(self.segments)
@@ -192,7 +192,7 @@ class HeatmapBar(QWidget):
         if 0 <= index < count:
             val = self.segments[index]
             pct = int(val * 100)
-            QToolTip.showText(QCursor.pos(), f"Thread #{index+1}: {pct}%")
+            QToolTip.showText(QCursor.pos(), f"Thread #{index + 1}: {pct}%")
         else:
             QToolTip.hideText()
 

@@ -405,7 +405,7 @@ class Downloader:
 
             self.log(f"File: {self.filename}")
             if self.total_size:
-                self.log(f"Size: {self.total_size / (1024*1024):.2f} MB")
+                self.log(f"Size: {self.total_size / (1024 * 1024):.2f} MB")
             else:
                 self.log("Size: Unknown")
 

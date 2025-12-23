@@ -2,6 +2,7 @@
 """
 Pre Download Dialog - Shows before starting download to select location and queue.
 """
+
 from pathlib import Path
 
 from PySide6.QtWidgets import (

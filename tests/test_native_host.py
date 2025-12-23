@@ -47,24 +47,21 @@ def test_ping_response(monkeypatch, capsys):
     assert json.loads(content) == {"status": "success"}
 
 
-
-
 def test_add_download(mocker):
     # Mock urllib.request.urlopen since we replaced requests with urllib
     mock_response = mocker.MagicMock()
     mock_response.status = 200
     mock_response.__enter__ = mocker.MagicMock(return_value=mock_response)
     mock_response.__exit__ = mocker.MagicMock(return_value=False)
-    
+
     mock_urlopen = mocker.patch("urllib.request.urlopen", return_value=mock_response)
 
     res = native_host.send_to_mergen("http://example.com", "file.mp4", "direct")
 
     assert res["status"] == "success"
     mock_urlopen.assert_called_once()
-    
+
     # Verify the request was made correctly
     call_args = mock_urlopen.call_args
     request_obj = call_args[0][0]  # First positional arg is the Request object
     assert request_obj.full_url == "http://localhost:8765/add_download"
-
