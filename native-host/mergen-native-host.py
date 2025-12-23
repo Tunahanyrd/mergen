@@ -52,8 +52,8 @@ def read_message():
 def send_to_mergen(url, filename, stream_type="direct"):
     """Send download to Mergen app via HTTP."""
     try:
-        import urllib.request
         import urllib.error
+        import urllib.request
 
         payload = {
             "url": url,
