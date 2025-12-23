@@ -86,10 +86,10 @@ class ConfigManager:
 
             # Try to get system locale
             try:
-                sys_lang = locale.getdefaultlocale()[0]
+                sys_lang, _ = locale.getlocale()
                 if not sys_lang:
                     # Fallback for some linux envs
-                    sys_lang = os.getenv("LANG", "en")
+                    sys_lang = os.getenv("LANG", "en_US").split(".")[0]
 
                 if sys_lang and sys_lang.lower().startswith("tr"):
                     self.config["language"] = "tr"

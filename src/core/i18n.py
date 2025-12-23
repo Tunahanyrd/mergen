@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import locale
+import os
 
 TRANS = {
     "en": {
@@ -444,8 +445,10 @@ class I18n:
     @classmethod
     def detect_os_lang(cls):
         try:
-            loc = locale.getdefaultlocale()[0]
-            if loc and loc.startswith("tr"):
+            loc, _ = locale.getlocale()
+            if not loc:
+                loc = os.getenv("LANG", "en_US").split(".")[0]
+            if loc and loc.lower().startswith("tr"):
                 return "tr"
         except Exception:
             pass
