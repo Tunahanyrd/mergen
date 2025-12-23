@@ -1,7 +1,12 @@
 // Popup script for Mergen extension
 
+// Browser API polyfill - Firefox uses 'browser', Chrome uses 'chrome'
+if (typeof browser === 'undefined') {
+    globalThis.browser = chrome;
+}
+
 // Get and display extension ID
-const extensionId = chrome.runtime.id;
+const extensionId = browser.runtime.id;
 document.getElementById('extension-id').value = extensionId;
 
 // Copy Extension ID to clipboard
@@ -37,8 +42,8 @@ async function checkConnection() {
     statusText.className = 'status-text checking';
 
     // Send test message to background
-    chrome.runtime.sendMessage({ action: 'test_connection' }, (response) => {
-        if (chrome.runtime.lastError || !response) {
+    browser.runtime.sendMessage({ action: 'test_connection' }, (response) => {
+        if (browser.runtime.lastError || !response) {
             // Connection failed
             statusIcon.textContent = '🔴';
             statusText.textContent = 'Disconnected - Please register in Mergen';
