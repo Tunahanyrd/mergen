@@ -180,7 +180,6 @@ jobs:
           # Copy additional files needed for Arch package (binary, desktop, icon already copied)
           cp -r browser-extension installer/linux/
           cp -r native-host installer/linux/
-          cp mergen-browser-extension.crx installer/linux/
           
           docker run --rm -v $(pwd)/installer/linux:/src archlinux:base-devel /bin/bash -c "
             # Sync package database and install dependencies as ROOT
