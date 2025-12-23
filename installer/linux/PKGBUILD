@@ -22,12 +22,6 @@ package() {
     cp -r "${startdir}/browser-extension" "${pkgdir}/usr/share/mergen/"
     cp -r "${startdir}/native-host" "${pkgdir}/usr/share/mergen/"
     
-    # Browser Extension Auto-Install
-    install -Dm644 "${startdir}/mergen-browser-extension.crx" "${pkgdir}/usr/share/mergen/browser-extension.crx"
-    
-    # Chrome External Extension Config
-    install -Dm644 "${startdir}/jahgeondjmbcjleahkcmegfenejicoeb.json" "${pkgdir}/usr/share/google-chrome/extensions/jahgeondjmbcjleahkcmegfenejicoeb.json"
-    
-    # Chromium External Extension Config
-    install -Dm644 "${startdir}/jahgeondjmbcjleahkcmegfenejicoeb.json" "${pkgdir}/usr/share/chromium/extensions/jahgeondjmbcjleahkcmegfenejicoeb.json"
+    # Note: Browser extension included as source files
+    # Users install via "Load Unpacked" or download ZIP
 }
