@@ -18,7 +18,8 @@ cp ../../data/mergen.png "${APPDIR}/mergen.png"  # AppImage icon
 cp ../../data/mergen.desktop "${APPDIR}/"
 cp -r ../../browser-extension "${APPDIR}/usr/share/mergen/"
 cp -r ../../native-host "${APPDIR}/usr/share/mergen/"
-cp ../../mergen-browser-extension.crx "${APPDIR}/usr/share/mergen/browser-extension.crx"
+# Note: Browser extension included as source files
+# Users install via "Load Unpacked" or download ZIP
 
 
 cat > "${APPDIR}/AppRun" << 'EOF'

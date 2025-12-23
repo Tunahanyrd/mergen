@@ -60,18 +60,8 @@ EOF
 
 chmod 755 "${PKG_NAME}/DEBIAN/postinst"
 
-# Copy Browser Extension (Auto-install)
-mkdir -p "${PKG_NAME}/usr/share/mergen"
-cp ../../mergen-browser-extension.crx "${PKG_NAME}/usr/share/mergen/browser-extension.crx"
-
-# Chrome/Chromium External Extension Config
-# Chrome
-mkdir -p "${PKG_NAME}/usr/share/google-chrome/extensions"
-cp jahgeondjmbcjleahkcmegfenejicoeb.json "${PKG_NAME}/usr/share/google-chrome/extensions/"
-
-# Chromium
-mkdir -p "${PKG_NAME}/usr/share/chromium/extensions"
-cp jahgeondjmbcjleahkcmegfenejicoeb.json "${PKG_NAME}/usr/share/chromium/extensions/"
+# Note: Browser extension is included as source in /usr/share/mergen/browser-extension/
+# Users install via "Load Unpacked" or download ZIP from GitHub releases
 
 # Build package
 dpkg-deb --build "${PKG_NAME}"
