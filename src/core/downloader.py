@@ -528,7 +528,10 @@ class Downloader:
                 "socket_timeout": 30,  # Prevent infinite hangs
                 "extractor_args": {
                     "youtube": {
-                        "remote_components": ["ejs:github"],  # Use GitHub for JS challenges with deno
+                        # Skip expensive signature solving that causes hangs
+                        "player_skip": ["webpage", "config"],
+                        "player_client": ["android"],  # Use Android client (no JS needed)
+                        "skip": ["translated_subs"],  # Skip subtitle processing
                     }
                 },
             }
