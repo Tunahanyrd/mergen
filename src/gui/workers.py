@@ -20,27 +20,95 @@ class AnalysisWorker(QThread):
         self.proxy_config = proxy_config
 
     def run(self):
+        """Run yt-dlp analysis in a subprocess to avoid Python GIL + QThread blocking issues."""
         try:
             print(f"🔍 AnalysisWorker.run() started for {self.url}")
             sys.stdout.flush()
-            # Initialize minimal downloader just for fetching info
-            d = Downloader(self.url, proxy_config=self.proxy_config)
-            # This method (added in v0.9.0) uses yt-dlp extract_info(download=False)
-            print("📡 Calling fetch_video_info()...")
-            sys.stdout.flush()
-            info = d.fetch_video_info()
-            print(f"📦 fetch_video_info() returned: {type(info)} ({info is not None})")
+
+            import json
+            import os
+            import subprocess
+
+            print("📡 Calling yt-dlp via subprocess (fixes QThread blocking for YouTube)...")
             sys.stdout.flush()
 
-            if info:
-                print("✅ AnalysisWorker got info, emitting finished signal")
-                sys.stdout.flush()
-                self.finished.emit(info)
+            # Create Python script to run in subprocess
+            script = f"""
+import json
+import sys
+sys.path.insert(0, '.')
+from src.core.downloader import Downloader
+
+try:
+    d = Downloader('{self.url}', proxy_config={self.proxy_config})
+    info = d.fetch_video_info()
+    
+    if info:
+        # Extract JSON-serializable fields only
+        result = {{
+            'title': info.get('title'),
+            'thumbnail': info.get('thumbnail'),
+            'duration': info.get('duration'),
+            'formats': info.get('formats', []),
+            'url': info.get('url'),
+            'ext': info.get('ext'),
+        }}
+        print(json.dumps(result))
+        sys.exit(0)
+    else:
+        sys.exit(1)
+except Exception as e:
+    print(f"ERROR: {{e}}", file=sys.stderr)
+    import traceback
+    traceback.print_exc(file=sys.stderr)
+    sys.exit(1)
+"""
+
+            # CRITICAL: Pass environment variables including DENO path
+            env = os.environ.copy()
+            deno_path = os.path.expanduser("~/.deno/bin")
+            if os.path.exists(deno_path):
+                env["PATH"] = f"{deno_path}:{env.get('PATH', '')}"
+                env["DENO_INSTALL"] = os.path.expanduser("~/.deno")
+
+            # Run subprocess with timeout
+            result = subprocess.run(
+                [sys.executable, "-c", script],
+                capture_output=True,
+                text=True,
+                timeout=45,
+                cwd=".",
+                env=env,  # Pass environment with deno path
+            )
+
+            print(f"📦 subprocess: code={result.returncode}, stdout={len(result.stdout)} chars, stderr={len(result.stderr)} chars")
+            sys.stdout.flush()
+
+            if result.returncode == 0 and result.stdout.strip():
+                try:
+                    info = json.loads(result.stdout.strip())
+                    print(f"✅ Got {len(info.get('formats', []))} formats, emitting signal")
+                    sys.stdout.flush()
+                    self.finished.emit(info)
+                except json.JSONDecodeError as e:
+                    print(f"❌ JSON error: {e}, stdout: {result.stdout[:200]}")
+                    sys.stdout.flush()
+                    self.error.emit(f"Invalid response format")
             else:
-                print("❌ AnalysisWorker got None, emitting error signal")
-                self.error.emit("No video info available")
+                error = result.stderr[:300] if result.stderr else "Analysis failed"
+                print(f"⚠️ Subprocess failed: {error}")
+                sys.stdout.flush()
+                self.error.emit(error)
+
+        except subprocess.TimeoutExpired:
+            print("⏱️ Timeout after 45s")
+            sys.stdout.flush()
+            self.error.emit("Analysis timeout. URL may not be supported or network is slow.")
         except Exception as e:
-            print(f"❌ AnalysisWorker exception: {e}")
+            print(f"❌ Exception: {e}")
+            sys.stdout.flush()
+            import traceback
+            traceback.print_exc()
             self.error.emit(str(e))
 
 

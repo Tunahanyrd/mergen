@@ -515,7 +515,7 @@ class Downloader:
         Returns:
             dict: Structured metadata (title, thumbnail, duration, formats_list) or None on failure.
         """
-        self.log("🔍 Analyzing stream metadata...")
+        # Note: No logging to stdout in subprocess mode - it contaminates JSON output
         try:
             import sys
 
@@ -538,14 +538,9 @@ class Downloader:
             if proxies:
                 ydl_opts["proxy"] = proxies.get("http") or proxies.get("https")
 
-            print(f"📡 Starting yt-dlp extraction for: {self.url}")
-            sys.stdout.flush()
+            # Note: Debug prints removed - they contaminate subprocess JSON output
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                print("⏳ Calling ydl.extract_info() - this may take a moment...")
-                sys.stdout.flush()
                 info = ydl.extract_info(self.url, download=False)
-                print(f"✅ yt-dlp extraction completed! Got {type(info)}")
-                sys.stdout.flush()
 
                 # Check if it's a playlist
                 if "entries" in info:
@@ -553,8 +548,6 @@ class Downloader:
                     self.log(f"⚠️ Playlist detected: {len(info['entries'])} videos. Using first video for info.")
                     info = info["entries"][0]
 
-                print(f"🎯 Returning info dict with title: {info.get('title', 'NO TITLE')}")
-                sys.stdout.flush()
                 return info
 
         except Exception as e:
