@@ -1,3 +1,5 @@
+import sys
+
 from PySide6.QtCore import QThread, Signal
 
 from src.core.downloader import Downloader
@@ -20,13 +22,19 @@ class AnalysisWorker(QThread):
     def run(self):
         try:
             print(f"🔍 AnalysisWorker.run() started for {self.url}")
+            sys.stdout.flush()
             # Initialize minimal downloader just for fetching info
             d = Downloader(self.url, proxy_config=self.proxy_config)
             # This method (added in v0.9.0) uses yt-dlp extract_info(download=False)
+            print("📡 Calling fetch_video_info()...")
+            sys.stdout.flush()
             info = d.fetch_video_info()
+            print(f"📦 fetch_video_info() returned: {type(info)} ({info is not None})")
+            sys.stdout.flush()
 
             if info:
                 print("✅ AnalysisWorker got info, emitting finished signal")
+                sys.stdout.flush()
                 self.finished.emit(info)
             else:
                 print("❌ AnalysisWorker got None, emitting error signal")
