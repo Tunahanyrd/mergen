@@ -303,7 +303,13 @@ class Downloader:
             "progress_hooks": [self._ytdlp_progress_hook],
             "quiet": True,
             "no_warnings": True,
-            # 'format': 'bestvideo+bestaudio/best', # moved below
+            "extractor_args": {
+                "youtube": {
+                    "player_skip": ["webpage", "config"],
+                    "player_client": ["android"],
+                    "skip": ["translated_subs"],
+                }
+            },
         }
 
         # Apply specific format if selected (v0.9.0)
