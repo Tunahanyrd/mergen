@@ -20,6 +20,10 @@ cp mergen.png "${PKG_NAME}/usr/share/icons/hicolor/128x128/apps/"
 cp -r ../../browser-extension "${PKG_NAME}/usr/share/mergen/"
 cp -r ../../native-host "${PKG_NAME}/usr/share/mergen/"
 
+# Install man page
+mkdir -p "${PKG_NAME}/usr/share/man/man1"
+gzip -c mergen.1 > "${PKG_NAME}/usr/share/man/man1/mergen.1.gz"
+
 # Create control file
 cat > "${PKG_NAME}/DEBIAN/control" << EOF
 Package: mergen
@@ -27,7 +31,7 @@ Version: ${VERSION}
 Section: net
 Priority: optional
 Architecture: ${ARCH}
-Maintainer: Tunahanyrd <your-email@example.com>
+Maintainer: Tunahanyrd <tunahanyrd@gmail.com>
 Depends: python3 (>= 3.8), ffmpeg
 Description: Multi-threaded download manager with browser integration and stream support
  Mergen is a modern download manager featuring:

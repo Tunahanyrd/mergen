@@ -6,6 +6,7 @@ Created on December 20, 2025 19:43:23
 @author: tunahan
 """
 
+import argparse
 import os
 import signal
 import sys
@@ -19,6 +20,17 @@ from src.gui.main_window import MainWindow
 os.environ["QT_LOGGING_RULES"] = "*.debug=false;qt.svg.warning=false;qt.qpa.services=false"
 
 if __name__ == "__main__":
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(
+        prog="mergen",
+        description="Mergen - Modern download manager with browser integration and stream support",
+        epilog="Homepage: https://github.com/Tunahanyrd/mergen",
+    )
+    parser.add_argument(
+        "-v", "--version", action="version", version="Mergen 0.9.3", help="Show version information"
+    )
+    args = parser.parse_args()
+
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     app = QApplication(sys.argv)
 

@@ -22,6 +22,9 @@ package() {
     cp -r "${startdir}/browser-extension" "${pkgdir}/usr/share/mergen/"
     cp -r "${startdir}/native-host" "${pkgdir}/usr/share/mergen/"
     
+    # Install man page
+    install -Dm644 "${startdir}/installer/linux/mergen.1" "${pkgdir}/usr/share/man/man1/mergen.1"
+    
     # Note: Browser extension included as source files
     # Users install via "Load Unpacked" or download ZIP
 }

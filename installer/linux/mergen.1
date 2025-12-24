@@ -1,0 +1,67 @@
+.TH MERGEN 1 "December 2025" "Mergen 0.9.3" "User Commands"
+.SH NAME
+mergen \- Modern download manager with browser integration and stream support
+.SH SYNOPSIS
+.B mergen
+[\fIOPTIONS\fR]
+.SH DESCRIPTION
+Mergen is a modern, high-performance download manager with advanced features:
+.IP \(bu 2
+Multi-threaded downloads (up to 32 parallel connections)
+.IP \(bu 2
+Browser integration (Chrome, Firefox, Brave, Edge)
+.IP \(bu 2
+Stream capture and download (HLS/DASH)
+.IP \(bu 2
+Resume support for interrupted downloads
+.IP \(bu 2
+Queue management with multiple queues
+.IP \(bu 2
+Automatic file categorization
+.IP \(bu 2
+Native host integration for browser extensions
+.SH OPTIONS
+.TP
+.B \-h, \-\-help
+Show help message with available command-line options
+.TP
+.B \-v, \-\-version
+Show version information
+.SH FILES
+.TP
+.I ~/.config/mergen/
+User configuration directory
+.TP
+.I ~/.config/mergen/downloads.db
+Download history database
+.TP
+.I ~/.config/mergen/config.json
+Application configuration file
+.TP
+.I ~/.local/share/mergen/
+Application data directory
+.SH BROWSER INTEGRATION
+To use Mergen with your browser:
+.IP 1. 3
+Install the browser extension from
+.I /usr/share/mergen/browser-extension/
+using "Load Unpacked" method
+.IP 2. 3
+The native messaging host is automatically configured at installation
+.IP 3. 3
+Right-click on any download link and select "Download with Mergen"
+.SH EXAMPLES
+.TP
+Start the application:
+.B mergen
+.SH AUTHOR
+Tunahanyrd <tunahanyrd@gmail.com>
+.SH BUGS
+Report bugs at: https://github.com/Tunahanyrd/mergen/issues
+.SH COPYRIGHT
+Copyright \(co 2025 Tunahan Yurd. License GPLv3+: GNU GPL version 3 or later.
+.br
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+.SH SEE ALSO
+Project homepage: https://github.com/Tunahanyrd/mergen
