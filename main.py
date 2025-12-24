@@ -26,9 +26,7 @@ if __name__ == "__main__":
         description="Mergen - Modern download manager with browser integration and stream support",
         epilog="Homepage: https://github.com/Tunahanyrd/mergen",
     )
-    parser.add_argument(
-        "-v", "--version", action="version", version="Mergen 0.9.3", help="Show version information"
-    )
+    parser.add_argument("-v", "--version", action="version", version="Mergen 0.9.3", help="Show version information")
     args = parser.parse_args()
 
     signal.signal(signal.SIGINT, signal.SIG_DFL)
