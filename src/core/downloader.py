@@ -530,6 +530,7 @@ class Downloader:
                 "no_warnings": True,
                 "nocheckcertificate": True,
                 "socket_timeout": 30,  # Prevent infinite hangs
+                "noplaylist": True,  # Don't download playlists, just the single video
                 "extractor_args": {
                     "youtube": {
                         # Skip expensive signature solving that causes hangs
