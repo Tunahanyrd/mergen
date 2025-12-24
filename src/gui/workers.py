@@ -71,12 +71,12 @@ except Exception as e:
                 env["PATH"] = f"{deno_path}:{env.get('PATH', '')}"
                 env["DENO_INSTALL"] = os.path.expanduser("~/.deno")
 
-            # Run subprocess with timeout (increased for slow YouTube videos)
+            # Run subprocess with timeout (increased for YouTube web client)
             result = subprocess.run(
                 [sys.executable, "-c", script],
                 capture_output=True,
                 text=True,
-                timeout=90,  # Increased from 45s - some YouTube videos are slow
+                timeout=120,  # YouTube web client can take 60-90s
                 cwd=".",
                 env=env,  # Pass environment with deno path
             )
