@@ -108,9 +108,7 @@ class Downloader:
         name = Path(url.split("?")[0]).name
         if not name:
             name = "downloaded_file"
-        # If no extension, append .download to prevent category detection issues
-        if not Path(name).suffix:
-            name = f"{name}.download"
+        # yt-dlp will add the correct extension automatically during download
         return name
 
     def update_filenames(self, real_name):
