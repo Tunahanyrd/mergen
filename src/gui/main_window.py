@@ -18,7 +18,6 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QMenu,
     QMessageBox,
-    QProgressDialog,
     QStyle,
     QSystemTrayIcon,
     QTableWidget,
@@ -832,18 +831,18 @@ class MainWindow(QMainWindow):
 
         # Try analysis with yt-dlp (supports 1300+ sites)
         # If it fails or URL isn't supported, fallback to direct download
-        print(f"🔍 Attempting analysis with yt-dlp...")
-        
+        print("🔍 Attempting analysis with yt-dlp...")
+
         # Show non-blocking status message
         self.statusBar().showMessage("🔍 Analyzing formats...", 30000)
-        
+
         worker = AnalysisWorker(url, self.config.get_proxy_config())
 
         # Define callback
         def on_analysis_finished(info):
             print(f"📥 on_analysis_finished called, info={'present' if info else 'None'}")
             self.statusBar().clearMessage()
-            
+
             if not info:
                 print("⚠️ No info, falling back to direct download")
                 self.start_download_final(url, save_dir, queue_name)
@@ -865,20 +864,21 @@ class MainWindow(QMainWindow):
             """Handle errors from AnalysisWorker"""
             print(f"❌ on_analysis_error called: {error_msg}")
             self.statusBar().clearMessage()
-            self.statusBar().showMessage(f"⚠️ Analysis failed, using direct download", 5000)
+            self.statusBar().showMessage("⚠️ Analysis failed, using direct download", 5000)
             self.start_download_final(url, save_dir, queue_name)
 
         # Keep ref BEFORE starting worker (prevent GC)
         self._analysis_worker = worker
-        
+
         # Use Qt.QueuedConnection for thread-safe signal handling
         from PySide6.QtCore import Qt
+
         worker.finished.connect(on_analysis_finished, Qt.QueuedConnection)
         worker.error.connect(on_analysis_error, Qt.QueuedConnection)
 
-        print(f"🔗 Signals connected with QueuedConnection")
+        print("🔗 Signals connected with QueuedConnection")
         worker.start()
-        print(f"🚀 Worker started, waiting for callbacks...")
+        print("🚀 Worker started, waiting for callbacks...")
 
     # Copying remaining methods to ensure file completeness
     def open_settings(self, tab_index=0):
