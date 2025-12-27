@@ -298,41 +298,14 @@ class Downloader:
         # Prepare output filename (without .part extension for yt-dlp)
         output_path = self.filename.replace(".part", "")
 
-        # Platform-specific configuration (must match analysis)
-        is_youtube = "youtube.com" in self.url or "youtu.be" in self.url
-        is_instagram = "instagram.com" in self.url
+        from src.core.ytdlp_config import get_opts_for_url
 
-        if is_youtube:
-            # YouTube: Match analysis config (Android+Web hybrid)
-            ydl_opts = {
-                "outtmpl": output_path,
-                "progress_hooks": [self._ytdlp_progress_hook],
-                "quiet": True,
-                "no_warnings": True,
-                "noplaylist": True,
-                "extractor_args": {
-                    "youtube": {
-                        "player_client": ["android", "web"],
-                        "skip": [],
-                    }
-                },
-            }
-        elif is_instagram:
-            # Instagram: Fast config
-            ydl_opts = {
-                "outtmpl": output_path,
-                "progress_hooks": [self._ytdlp_progress_hook],
-                "quiet": True,
-                "no_warnings": True,
-            }
-        else:
-            # Generic
-            ydl_opts = {
-                "outtmpl": output_path,
-                "progress_hooks": [self._ytdlp_progress_hook],
-                "quiet": True,
-                "no_warnings": True,
-            }
+        # Get base options (YouTube vs Others)
+        ydl_opts = get_opts_for_url(self.url, noplaylist=True)
+        
+        # Add download-specific options
+        ydl_opts["outtmpl"] = output_path
+        ydl_opts["progress_hooks"] = [self._ytdlp_progress_hook]
 
         # Apply specific format if selected (v0.9.0)
         if self.format_info and "format_id" in self.format_info:
@@ -547,42 +520,10 @@ class Downloader:
 
             import yt_dlp
 
-            # Platform-specific configuration for best performance
-            is_youtube = "youtube.com" in self.url or "youtu.be" in self.url
-            is_instagram = "instagram.com" in self.url
+            from src.core.ytdlp_config import get_opts_for_url
 
-            if is_youtube:
-                # YouTube: Android client for reliability + maximum available formats
-                # Note: Web client has format extraction issues
-                ydl_opts = {
-                    "quiet": True,
-                    "no_warnings": True,
-                    "nocheckcertificate": True,
-                    "socket_timeout": 60,
-                    "noplaylist": True,
-                    "extractor_args": {
-                        "youtube": {
-                            "player_client": ["android", "web"],  # Try both for best results
-                            "skip": [],  # Don't skip anything
-                        }
-                    },
-                }
-            elif is_instagram:
-                # Instagram: Fast extraction, already optimized
-                ydl_opts = {
-                    "quiet": True,
-                    "no_warnings": True,
-                    "nocheckcertificate": True,
-                    "socket_timeout": 30,
-                }
-            else:
-                # Generic: Standard configuration
-                ydl_opts = {
-                    "quiet": True,
-                    "no_warnings": True,
-                    "nocheckcertificate": True,
-                    "socket_timeout": 30,
-                }
+            # Get platform-specific options (YouTube vs Others)
+            ydl_opts = get_opts_for_url(self.url, noplaylist=True)
 
             # Add proxy if configured
             proxies = self.get_proxies()
