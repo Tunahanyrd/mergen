@@ -365,36 +365,38 @@ class Downloader:
                 if not line:
                     continue
                 
-                # yt-dlp progress: [download]  45.2% of 12.34MiB at 1.23MiB/s ETA 00:05
+                # Print all yt-dlp output
+                print(f"yt-dlp: {line}")
+                
+                # Parse progress: [download]  45.2% of 12.34MiB
                 if "[download]" in line and "%" in line:
                     try:
-                        # Extract percentage
+                        # Extract percentage (simple regex-free approach)
                         parts = line.split()
                         for i, part in enumerate(parts):
                             if "%" in part:
                                 pct_str = part.replace("%", "")
                                 pct = float(pct_str)
                                 
-                                # Extract size if available
-                                if "of" in parts and i+2 < len(parts):
-                                    size_str = parts[i+2]
-                                    # Convert to bytes (approximate)
-                                    if "MiB" in size_str:
-                                        total_mb = float(size_str.replace("MiB", ""))
-                                        total_bytes = int(total_mb * 1024 * 1024)
-                                        downloaded_bytes = int(total_bytes * pct / 100)
-                                        
-                                        # Call progress callback (downloaded, total)
-                                        if self.progress_callback:
-                                            self.progress_callback(downloaded_bytes, total_bytes)
-                                
+                                # Try to extract size
+                                total_bytes = 0
+                                for j in range(i+1, min(i+5, len(parts))):
+                                    if "MiB" in parts[j] or "MB" in parts[j]:
+                                        size_str = parts[j].replace("MiB", "").replace("MB", "").replace("~", "")
+                                        try:
+                                            total_mb = float(size_str)
+                                            total_bytes = int(total_mb * 1024 * 1024)
+                                            downloaded_bytes = int(total_bytes * pct / 100)
+                                            
+                                            # Update progress
+                                            if self.progress_callback:
+                                                self.progress_callback(downloaded_bytes, total_bytes)
+                                            break
+                                        except ValueError:
+                                            pass
                                 break
-                    except (ValueError, IndexError):
-                        pass
-                elif line.startswith("["):
-                    pass  # Skip yt-dlp info lines
-                else:
-                    print(f"yt-dlp: {line}")  # Print non-progress info
+                    except (ValueError, IndexError) as e:
+                        pass  # Ignore parse errors
 
             process.wait()
 
