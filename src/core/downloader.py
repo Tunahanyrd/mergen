@@ -232,14 +232,9 @@ class Downloader:
         return "direct"
 
     def _check_ytdlp(self):
-        """Check if yt-dlp is available."""
-        try:
-            import yt_dlp  # noqa: F401
-
-            return True
-        except ImportError:
-            self.log("❌ yt-dlp not installed! Install with: pip install yt-dlp")
-            return False
+        """Check if yt-dlp CLI is available."""
+        import shutil
+        return shutil.which("yt-dlp") is not None
 
     def _check_ffmpeg(self):
         """Check if FFmpeg is installed on system."""
@@ -636,21 +631,26 @@ class Downloader:
         self.log("Starting process...")
         self.start_time = time.time()
 
-        # Dynamic check using yt-dlp's 1800+ extractors
+        # Simple platform detection (no Python API)
         is_streaming_site = False
-        try:
-            import yt_dlp.extractor
-
-            # Iterate through all extractors to see if one matches (excluding generic)
-            for ie in yt_dlp.extractor.gen_extractors():
-                if ie.IE_NAME != "generic" and ie.suitable(self.url):
-                    is_streaming_site = True
-                    self.log(f"🌍 Detected supported platform: {ie.IE_NAME}")
-                    break
-        except ImportError:
-            self.log("⚠️ yt-dlp not found, skipping advanced detection")
-        except Exception as e:
-            self.log(f"⚠️ Detection error: {e}")
+        
+        # Check common streaming platforms
+        streaming_patterns = [
+            'youtube.com', 'youtu.be',
+            'instagram.com',
+            'twitter.com', 'x.com',
+            'facebook.com', 'fb.watch',
+            'tiktok.com',
+            'vimeo.com',
+            'dailymotion.com',
+            'twitch.tv',
+        ]
+        
+        for pattern in streaming_patterns:
+            if pattern in self.url.lower():
+                is_streaming_site = True
+                self.log(f"🌍 Detected streaming platform: {pattern}")
+                break
 
         # Use yt-dlp for detected streaming sites OR known stream protocols
         if self.stream_type in ["hls", "dash"] or is_streaming_site:
