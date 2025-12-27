@@ -18,23 +18,47 @@ class AnalysisWorker(QThread):
     def run(self):
         """Fetch video info directly using yt-dlp (no subprocess needed)."""
         try:
-            from src.core.downloader import Downloader
-
-            # Create downloader instance
-            downloader = Downloader(self.url, proxy_config=self.proxy_config)
-
-            # Fetch video info
-            info = downloader.fetch_video_info()
-
-            if info:
-                # Emit the info dict
-                self.finished.emit(info)
+            import subprocess
+            import json
+            import sys
+            
+            # Pure CLI subprocess for analysis (same as download)
+            cmd = ["yt-dlp", "-J", "--no-playlist", self.url]
+            
+            # Run subprocess
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+            
+            if result.returncode == 0 and result.stdout:
+                # Parse JSON
+                info = json.loads(result.stdout)
+                
+                # Extract key metadata
+                result_dict = {
+                    "title": info.get("title", "Unknown Title"),
+                    "thumbnail": info.get("thumbnail"),
+                    "duration": info.get("duration"),
+                    "uploader": info.get("uploader") or info.get("channel"),
+                    "formats": info.get("formats", []),
+                    "playlist_title": info.get("playlist_title"),
+                    "playlist_count": info.get("playlist_count"),
+                    "webpage_url_basename": info.get("webpage_url_basename"),
+                }
+                
+                self.finished.emit(result_dict)
             else:
-                self.error.emit("Could not fetch video information")
+                self.error.emit(f"Analysis failed: {result.stderr[:200]}")
 
+        except subprocess.TimeoutExpired:
+            self.error.emit("Analysis timeout (120s)")
+        except json.JSONDecodeError as e:
+            self.error.emit(f"JSON parse error: {e}")
         except Exception as e:
             import traceback
-
             traceback.print_exc()
             self.error.emit(str(e))
 
