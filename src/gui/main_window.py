@@ -791,7 +791,64 @@ class MainWindow(QMainWindow):
     def start_download_final(self, url, save_dir, queue_name, format_info=None):
         import os
         from pathlib import Path
+        
+        # Check for Playlist Mode
+        if format_info and format_info.get("is_playlist") and format_info.get("entries"):
+            entries = format_info["entries"]
+            format_id = format_info.get("format_id", "bestvideo+bestaudio/best")
+            ext = format_info.get("ext", "mp4")
+            
+            print(f"📚 Playlist Download: Starting {len(entries)} videos with format '{format_id}'")
+            
+            # For playlists, pass the original playlist URL to yt-dlp
+            # yt-dlp will handle downloading all videos in the playlist
+            # We create a SINGLE download item for the entire playlist
+            
+            fname = "playlist"  # Generic name, yt-dlp will create proper names
+            new_item = DownloadItem(
+                url=url, 
+                filename=os.path.join(save_dir, fname), 
+                save_path=save_dir, 
+                queue=queue_name
+            )
+            new_item.status = f"Downloading playlist ({len(entries)} videos)"
+            new_item.size = I18n.get("initializing")
+            
+            self.downloads.append(new_item)
+            self.config.save_history(self.downloads)
+            self.refresh_table()
+            
+            # Start download with playlist URL and format
+            # yt-dlp automatically downloads all videos when URL is a playlist
+            playlist_format_info = {
+                "format_id": format_id,
+                "ext": ext,
+                "is_playlist": True
+            }
+            
+            try:
+                dlg = DownloadDialog(url, self, save_dir=save_dir, format_info=playlist_format_info)
+            except Exception as e:
+                print(f"❌ FAILED to create DownloadDialog for playlist: {e}")
+                import traceback
+                traceback.print_exc()
+                return
+            
+            try:
+                dlg.download_complete.connect(lambda s, f: self.update_download_status(new_item, s, f))
+                dlg.worker.progress_signal.connect(lambda d, t, s, seg: self.update_live_row(new_item, d, t, s))
+                dlg.worker.status_signal.connect(lambda m: self.update_item_status(new_item, m))
+            except AttributeError as e:
+                print(f"⚠️ Worker not ready: {e}")
+            
+            self.active_dialogs.append(dlg)
+            dlg.finished.connect(lambda: self.cleanup_dialog(dlg))
+            dlg.show()
+            dlg.raise_()
+            dlg.activateWindow()
+            return  # Exit after handling playlist
 
+        # Standard Single Video Download
         fname = Path(url.split("?")[0]).name or "file.dat"
         # If we have format info, update extension
         if format_info and format_info.get("ext"):
