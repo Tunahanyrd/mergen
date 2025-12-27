@@ -36,7 +36,7 @@ from src.core.queue_manager import QueueManager
 from src.gui.download_dialog import DownloadDialog
 from src.gui.first_run_dialog import FirstRunDialog
 from src.gui.properties_dialog import PropertiesDialog
-from src.gui.quality_dialog import QualityDialog
+from src.gui.quality_dialog_v2 import QualityDialogV2  # v2.0 with audio-only, playlist, badges
 from src.gui.queue_manager_dialog import QueueManagerDialog
 from src.gui.settings_dialog import SettingsDialog
 from src.gui.styles import MERGEN_THEME, MERGEN_THEME_LIGHT
@@ -809,16 +809,31 @@ class MainWindow(QMainWindow):
         self.config.save_history(self.downloads)
         self.refresh_table()
 
-        # Start download dialog
-        dlg = DownloadDialog(url, self, save_dir=save_dir, format_info=format_info)
+        # Start download dialog (worker auto-starts in __init__)
+        try:
+            dlg = DownloadDialog(url, self, save_dir=save_dir, format_info=format_info)
+        except Exception as e:
+            print(f"❌ FAILED to create DownloadDialog: {e}")
+            import traceback
 
-        dlg.download_complete.connect(lambda s, f: self.update_download_status(new_item, s, f))
-        dlg.worker.progress_signal.connect(lambda d, t, s, seg: self.update_live_row(new_item, d, t, s))
-        dlg.worker.status_signal.connect(lambda m: self.update_item_status(new_item, m))
+            traceback.print_exc()
+            return
+
+        # Connect signals AFTER dialog is fully initialized
+        # CRITICAL: These must be connected after DownloadDialog.__init__ completes
+        # to avoid SIGSEGV from accessing worker before it's ready
+        try:
+            dlg.download_complete.connect(lambda s, f: self.update_download_status(new_item, s, f))
+            dlg.worker.progress_signal.connect(lambda d, t, s, seg: self.update_live_row(new_item, d, t, s))
+            dlg.worker.status_signal.connect(lambda m: self.update_item_status(new_item, m))
+        except AttributeError as e:
+            print(f"⚠️ Worker not ready: {e}")
 
         self.active_dialogs.append(dlg)
         dlg.finished.connect(lambda: self.cleanup_dialog(dlg))
         dlg.show()
+        dlg.raise_()  # Bring to front
+        dlg.activateWindow()  # Give focus
 
     # NEW v0.9.0: Analysis Flow
     def analyze_and_start(self, url, save_dir, queue_name):
@@ -840,7 +855,6 @@ class MainWindow(QMainWindow):
 
         # Define callback
         def on_analysis_finished(info):
-            print(f"📥 on_analysis_finished called, info={'present' if info else 'None'}")
             self.statusBar().clearMessage()
 
             if not info:
@@ -849,13 +863,12 @@ class MainWindow(QMainWindow):
                 return
 
             # Show Quality Dialog
-            print(f"📺 Showing Quality Dialog with {len(info.get('formats', []))} formats")
-            q_dlg = QualityDialog(self, info)
+            q_dlg = QualityDialogV2(self, info)
 
             # Handle selection
             def on_selected(fmt_info):
-                print(f"✅ Format selected: {fmt_info.get('format_id', 'default')}")
                 self.start_download_final(url, save_dir, queue_name, fmt_info)
+                print("📥 start_download_final completed")
 
             q_dlg.quality_selected.connect(on_selected)
             q_dlg.exec()

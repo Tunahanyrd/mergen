@@ -274,7 +274,8 @@ class Downloader:
         self.log(guide)
 
     def _ytdlp_progress_hook(self, d):
-        """Convert yt-dlp progress to our callback format."""
+        """Progress hook for yt-dlp downloads."""
+
         if d["status"] == "downloading":
             downloaded = d.get("downloaded_bytes", 0)
             total = d.get("total_bytes") or d.get("total_bytes_estimate", 0)
@@ -286,8 +287,6 @@ class Downloader:
         """Download stream using yt-dlp."""
         if not self._check_ytdlp():
             return False
-
-        import yt_dlp
 
         # Check FFmpeg
         has_ffmpeg = self._check_ffmpeg()
@@ -302,7 +301,7 @@ class Downloader:
 
         # Get base options (YouTube vs Others)
         ydl_opts = get_opts_for_url(self.url, noplaylist=True)
-        
+
         # Add download-specific options
         ydl_opts["outtmpl"] = output_path
         ydl_opts["progress_hooks"] = [self._ytdlp_progress_hook]
@@ -335,19 +334,109 @@ class Downloader:
             ydl_opts["postprocessors"] = [
                 {
                     "key": "FFmpegVideoConvertor",
-                    "preferedformat": "mp4",
+                    "preferedformat": "mp4",  # NOTE: yt-dlp uses MISSPELLED version!
                 }
             ]
 
-        try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                self.log(f"🎬 Downloading {self.stream_type.upper()} stream...")
-                ydl.download([self.url])
+        # SOLUTION: Use terminal yt-dlp for download (same as extraction)
+        # Python yt-dlp fails signature solving, terminal works
+        import subprocess
 
-            self.log("✅ Stream download complete")
-            return True
+        # Build yt-dlp download command
+        cmd = [
+            "yt-dlp",
+            "--no-playlist",
+            "--progress",  # Show progress
+            "--newline",  # Output each progress line separately (no \r)
+            "--no-colors",  # Disable ANSI colors for clean parsing
+            "-o",
+            output_path,
+        ]
+
+        # Add format selection
+        if self.format_info and "format_id" in self.format_info:
+            fid = self.format_info["format_id"]
+            vcodec = self.format_info.get("vcodec", "none")
+            acodec = self.format_info.get("acodec", "none")
+
+            if vcodec != "none" and acodec != "none":
+                cmd.extend(["-f", fid])
+            elif vcodec != "none":
+                cmd.extend(["-f", f"{fid}+bestaudio/best"])
+            else:
+                cmd.extend(["-f", fid])
+
+            print(f"🎯 Format: {fid}")
+        else:
+            cmd.extend(["-f", "bestvideo+bestaudio/best"])
+
+        # Add merge format if FFmpeg available
+        if has_ffmpeg:
+            cmd.extend(["--merge-output-format", "mp4"])
+
+        cmd.append(self.url)
+
+        try:
+            # Run with progress output
+            process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,
+            )
+
+            # Read output line by line for progress
+            for line in process.stdout:
+                line = line.strip()
+                if not line:
+                    continue
+
+                # Parse progress: [download]  45.2% of ~100.50MiB at  2.34MiB/s ETA 00:24
+                if "[download]" in line and "%" in line:
+                    try:
+                        # Extract percentage
+                        if "%" in line:
+                            parts = line.split()
+                            for i, part in enumerate(parts):
+                                if "%" in part:
+                                    percent_str = part.replace("%", "")
+                                    percent = float(percent_str)
+
+                                    # Update status with progress percentage
+                                    self.log(f"Progress: {percent:.1f}%")
+                                    break
+                    except (ValueError, IndexError):
+                        pass
+                elif "[download] Destination:" in line:
+                    self.log("Download started...")
+                elif "[download] 100%" in line or "has already been downloaded" in line:
+                    self.log("Download complete")
+                # Suppress other output to keep terminal clean
+                elif line.startswith("["):
+                    pass  # Skip yt-dlp info lines
+                else:
+                    print(f"yt-dlp: {line}")  # Print non-progress info
+
+            process.wait()
+
+            if process.returncode == 0:
+                print("✅ Terminal yt-dlp download complete")
+                self.log("✅ Download complete")
+
+                # Call completion callback
+                if self.completion_callback:
+                    self.completion_callback(True, self.filename)
+
+                return True
+            else:
+                self.log("❌ Download failed")
+                return False
 
         except Exception as e:
+            import traceback
+
+            traceback.print_exc()
             self.log(f"❌ yt-dlp error: {e}")
             # Log full traceback only in debug mode
             import logging
@@ -516,31 +605,34 @@ class Downloader:
         """
         # Note: No logging to stdout in subprocess mode - it contaminates JSON output
         try:
+            # SOLUTION: Use terminal yt-dlp instead of Python library
+            # Terminal bypasses signature solving issues and returns all formats
+            import json
+            import subprocess
             import sys
 
-            import yt_dlp
+            # Build yt-dlp command
+            cmd = ["yt-dlp", "-J", "--no-warnings", "--no-playlist", self.url]
 
-            from src.core.ytdlp_config import get_opts_for_url
+            try:
+                result = subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=60,
+                )
 
-            # Get platform-specific options (YouTube vs Others)
-            ydl_opts = get_opts_for_url(self.url, noplaylist=True)
+                if result.returncode == 0 and result.stdout:
+                    info = json.loads(result.stdout)
+                    return info
+                else:
+                    return None
 
-            # Add proxy if configured
-            proxies = self.get_proxies()
-            if proxies:
-                ydl_opts["proxy"] = proxies.get("http") or proxies.get("https")
-
-            # Note: Debug prints removed - they contaminate subprocess JSON output
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(self.url, download=False)
-
-                # Check if it's a playlist
-                if "entries" in info:
-                    # It's a playlist, take the first video for now (or handle differently)
-                    self.log(f"⚠️ Playlist detected: {len(info['entries'])} videos. Using first video for info.")
-                    info = info["entries"][0]
-
-                return info
+            except subprocess.TimeoutExpired:
+                print("⏱️ Terminal yt-dlp timeout")
+                return None
+            except json.JSONDecodeError:
+                return None
 
         except Exception as e:
             self.log(f"❌ Analysis failed: {e}")
@@ -549,7 +641,6 @@ class Downloader:
             import sys
 
             logging.debug(f"Analysis traceback: {traceback.format_exc()}")
-            print(f"❌ Exception in fetch_video_info: {e}")
             sys.stdout.flush()
             import traceback as tb
 
@@ -582,8 +673,10 @@ class Downloader:
         if self.stream_type in ["hls", "dash"] or is_streaming_site:
             if is_streaming_site:
                 self.log("🎥 Detected streaming platform - delegating to yt-dlp")
+                print("🔀 Taking yt-dlp streaming path (is_streaming_site=True)")
             else:
                 self.log(f"🎬 Detected {self.stream_type.upper()} stream protocol")
+                print(f"🔀 Taking yt-dlp stream protocol path (stream_type={self.stream_type})")
 
             success = self._download_with_ytdlp()
 
