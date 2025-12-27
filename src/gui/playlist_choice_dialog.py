@@ -4,7 +4,7 @@ Playlist Choice Dialog
 Asks user if they want to download single video or full playlist.
 """
 
-from core.i18n import I18n
+from src.core.i18n import I18n
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QDialog,
