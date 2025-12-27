@@ -113,7 +113,8 @@ class PlaylistChoiceDialog(QDialog):
         btn_layout.addWidget(self.single_btn)
         
         # Full playlist button
-        playlist_text = f"📚 Full Playlist ({self.video_count} videos)"
+        count_str = f"({self.video_count} videos)" if self.video_count else "(Unknown count)"
+        playlist_text = f"📚 Full Playlist {count_str}"
         self.playlist_btn = QPushButton(playlist_text)
         self.playlist_btn.setMinimumHeight(50)
         self.playlist_btn.setStyleSheet("""

@@ -866,11 +866,19 @@ class MainWindow(QMainWindow):
             playlist_title = info.get('playlist_title')
             playlist_count = info.get('playlist_count')
             
-            if playlist_title and playlist_count and playlist_count > 1:
+            # Fallback for Mix playlists (where --no-playlist hides count)
+            is_playlist_url = 'list=' in url or 'playlist' in url
+            potential_playlist = is_playlist_url and not playlist_count
+            
+            if (playlist_title and playlist_count and playlist_count > 1) or potential_playlist:
                 # Playlist detected! Ask user what they want
                 from src.gui.playlist_choice_dialog import PlaylistChoiceDialog
                 
-                choice_dlg = PlaylistChoiceDialog(playlist_title, playlist_count, self)
+                # If falling back, use a generic title
+                display_title = playlist_title if playlist_title else "Detected Playlist"
+                display_count = playlist_count if playlist_count else None
+                
+                choice_dlg = PlaylistChoiceDialog(display_title, display_count, self)
                 choice_dlg.exec()
                 choice = choice_dlg.get_choice()
                 
