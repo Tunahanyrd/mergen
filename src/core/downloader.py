@@ -652,6 +652,14 @@ class Downloader:
         self.log("Starting process...")
         self.start_time = time.time()
 
+        # PRIORITY: Check if this is a playlist (skip detection)
+        if self.format_info and self.format_info.get("is_playlist"):
+            self.log("📚 Playlist mode detected - using yt-dlp directly")
+            success = self.download_stream_ydl()
+            if self.completion_callback:
+                self.completion_callback(success, self.filename)
+            return
+
         # Test if yt-dlp can handle this URL (subprocess CLI test)
         is_streaming_site = False
         
