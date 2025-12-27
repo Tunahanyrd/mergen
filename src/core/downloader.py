@@ -325,8 +325,16 @@ class Downloader:
             # Default: best quality
             cmd.extend(["-f", "bestvideo+bestaudio/best"])
         
-        # Output template
-        cmd.extend(["-o", output_path])
+        # Output template (different for playlists vs single videos)
+        if self.format_info and self.format_info.get("is_playlist"):
+            # Playlist: Use yt-dlp's template for dynamic naming
+            # This allows yt-dlp to name each video in the playlist
+            output_template = os.path.join(self.save_dir, "%(title)s.%(ext)s")
+            cmd.extend(["-o", output_template])
+            self.log(f"📚 Playlist mode: Files will be saved to {self.save_dir}/")
+        else:
+            # Single video: Use specific filename
+            cmd.extend(["-o", output_path])
         
         # Progress
         cmd.append("--newline")  # Each progress on new line
