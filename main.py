@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on December 20, 2025 19:43:23
-
-@author: tunahan
+Mergen Download Manager
+Main entry point with verbose mode support
 """
 
 import argparse
@@ -16,9 +15,6 @@ from PySide6.QtWidgets import QApplication
 
 from src.core.version import get_version_string
 from src.gui.main_window import MainWindow
-
-# Configure logging before importing Qt modules
-os.environ["QT_LOGGING_RULES"] = "*.debug=false;qt.svg.warning=false;qt.qpa.services=false"
 
 if __name__ == "__main__":
     # Parse command-line arguments
@@ -34,7 +30,17 @@ if __name__ == "__main__":
         version=get_version_string(),
         help="Show version information",
     )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Enable verbose/debug logging",
+    )
     args = parser.parse_args()
+
+    # Set verbose mode
+    if args.verbose:
+        os.environ["MERGEN_VERBOSE"] = "1"
+        print("🔊 Verbose mode enabled")
 
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     app = QApplication(sys.argv)

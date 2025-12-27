@@ -31,7 +31,7 @@ from PySide6.QtWidgets import (
 
 from src.core.config import ConfigManager
 from src.core.i18n import I18n
-from src.core.models import DownloadItem
+from src.core.models import LegacyDownloadItem as DownloadItem
 from src.core.queue_manager import QueueManager
 from src.gui.download_dialog import DownloadDialog
 from src.gui.first_run_dialog import FirstRunDialog
@@ -143,21 +143,20 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event):
         """Handle window close - minimize to tray if enabled."""
-        close_to_tray = self.config.get("close_to_tray", False)
+        close_to_tray = self.config.get("close_to_tray", True)
 
-        if close_to_tray and hasattr(self, "tray_icon") and self.tray_icon.isVisible():
-            # Minimize to tray instead of closing
+        if close_to_tray:
             event.ignore()
             self.hide()
-            if self.tray_icon:
+            if hasattr(self, "tray_icon") and self.tray_icon.isVisible():
                 self.tray_icon.showMessage(
-                    "Mergen",
-                    "Application minimized to tray. Double-click tray icon to restore.",
+                    I18n.get("app_title"),
+                    I18n.get("minimized_to_tray"),
                     QSystemTrayIcon.Information,
                     2000,
                 )
         else:
-            # Actually close
+            # Actually close the app
             self.config.set("geometry", self.saveGeometry().toHex().data().decode())
             self.config.save_history(self.downloads)
             super().closeEvent(event)
@@ -789,6 +788,10 @@ class MainWindow(QMainWindow):
 
     # NEW v0.9.0: Final step of download initiation
     def start_download_final(self, url, save_dir, queue_name, format_info=None):
+        """
+        Start actual download after format selection.
+        Handles both single videos and playlists.
+        """
         import os
         from pathlib import Path
 
@@ -954,7 +957,6 @@ class MainWindow(QMainWindow):
             # Handle selection
             def on_selected(fmt_info):
                 self.start_download_final(url, save_dir, queue_name, fmt_info)
-                print("📥 start_download_final completed")
 
             q_dlg.quality_selected.connect(on_selected)
             q_dlg.exec()
@@ -1311,17 +1313,29 @@ class MainWindow(QMainWindow):
             return
         data = self.downloads[rows[0].row()]
 
-        # Check if already running
+        # Check if already downloading
+        if data.status == "Downloading..." or data.status.startswith("Downloading"):
+            print(f"⚠️ Download already active for {data.url[:50]}...")
+            # Find and activate the dialog
+            for dlg in self.active_dialogs:
+                if dlg.url == data.url:
+                    dlg.show()
+                    dlg.raise_()
+                    dlg.activateWindow()
+            return
+
+        # Check if dialog exists
         for dlg in self.active_dialogs:
             if dlg.url == data.url:
                 dlg.show()
                 dlg.activateWindow()
                 if not dlg.worker.is_running:
-                    dlg.toggle_pause()  # Restart if was paused/stopped
+                    dlg.toggle_pause()  # Resume if paused
                 return
 
-        # Start new
-        self.start_download_item_func(data)
+        # Start new download only if stopped/failed
+        if data.status in ["Stopped", "Failed", "Paused"]:
+            self.start_download_item_func(data)
 
     def stop_all_downloads(self):
         for dlg in list(self.active_dialogs):

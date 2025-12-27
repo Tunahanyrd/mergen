@@ -8,8 +8,6 @@ import subprocess
 
 from PySide6.QtCore import QFileInfo, QUrl
 from PySide6.QtGui import QDesktopServices
-
-from src.core.i18n import I18n
 from PySide6.QtWidgets import (
     QApplication,
     QDialog,
@@ -24,6 +22,8 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+from src.core.i18n import I18n
 
 
 class PropertiesDialog(QDialog):

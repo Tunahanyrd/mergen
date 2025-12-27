@@ -214,6 +214,10 @@ class LegacyDownloadItem:
     """Legacy download item (deprecated - use VideoDownload instead)"""
 
     def __init__(self, url, filename, save_path, queue="Default"):
+        import time
+        import uuid
+
+        self.id = str(uuid.uuid4())[:8]
         self.url = url
         self.filename = filename
         self.save_path = save_path
@@ -222,3 +226,64 @@ class LegacyDownloadItem:
         self.size = "0 MB"
         self.speed = "0 MB/s"
         self.progress = 0
+        self.total_bytes = 0
+        self.downloaded_bytes = 0
+        self.added_at = time.time()
+        self.description = ""
+        self.referer = ""
+        self.queue_position = 0
+        self.username = ""
+        self.password = ""
+
+    @property
+    def date_added(self):
+        from datetime import datetime
+
+        return datetime.fromtimestamp(self.added_at).strftime("%Y-%m-%d %H:%M")
+
+    def to_dict(self):
+        """Serialize to dictionary for JSON storage"""
+        return {
+            "id": self.id,
+            "url": self.url,
+            "filename": self.filename,
+            "save_path": self.save_path,
+            "queue": self.queue,
+            "status": self.status,
+            "size": self.size,
+            "speed": self.speed,
+            "progress": self.progress,
+            "total_bytes": self.total_bytes,
+            "downloaded_bytes": self.downloaded_bytes,
+            "added_at": self.added_at,
+            "description": self.description,
+            "referer": self.referer,
+            "queue_position": self.queue_position,
+            "username": self.username,
+            "password": self.password,
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        """Deserialize from dictionary"""
+        item = cls(
+            url=data.get("url", ""),
+            filename=data.get("filename", ""),
+            save_path=data.get("save_path", ""),
+            queue=data.get("queue", "Default"),
+        )
+        # Restore fields
+        item.id = data.get("id", item.id)
+        item.status = data.get("status", "Pending")
+        item.size = data.get("size", "0 MB")
+        item.speed = data.get("speed", "0 MB/s")
+        item.progress = data.get("progress", 0)
+        item.total_bytes = data.get("total_bytes", 0)
+        item.downloaded_bytes = data.get("downloaded_bytes", 0)
+        item.added_at = data.get("added_at", item.added_at)
+        item.description = data.get("description", "")
+        item.referer = data.get("referer", "")
+        item.queue_position = data.get("queue_position", 0)
+        item.username = data.get("username", "")
+        item.password = data.get("password", "")
+        return item

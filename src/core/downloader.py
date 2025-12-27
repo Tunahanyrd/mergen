@@ -337,6 +337,13 @@ class Downloader:
             # Single video: Use specific filename
             cmd.extend(["-o", output_path])
 
+        # Concurrent fragments for HLS/DASH (parallel download)
+        concurrent_fragments = self.config.get("concurrent_fragments", 32)
+        cmd.extend(["-N", str(concurrent_fragments)])
+
+        # Verbose output for debugging
+        # cmd.append("--verbose")
+
         # Progress
         cmd.append("--newline")  # Each progress on new line
         cmd.append("--no-colors")  # Clean output
@@ -362,11 +369,15 @@ class Downloader:
         is_playlist = self.format_info and self.format_info.get("is_playlist")
 
         try:
+            # Check verbose mode
+            verbose = os.environ.get("MERGEN_VERBOSE", "0") == "1"
+            stderr_dest = None if verbose else subprocess.DEVNULL
+
             # Run subprocess with progress parsing
             process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
+                stderr=stderr_dest,  # Suppress unless verbose
                 text=True,
                 bufsize=1,
             )

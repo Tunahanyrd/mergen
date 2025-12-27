@@ -375,8 +375,55 @@ class QualityDialogV2(QDialog):
             vid_id = entry.get("id", "-")
             self.table.setItem(row, 2, QTableWidgetItem(vid_id))
 
-        # Update download button text
-        self.download_btn.setText(f"Download All ({len(self.playlist_entries)} Videos)")
+        # Update download button text with size estimate
+        total_videos = len(self.playlist_entries)
+
+        # Calculate ACTUAL total duration from playlist entries
+        total_duration_seconds = 0
+        for entry in self.playlist_entries:
+            duration = entry.get("duration", 0)  # duration in seconds from yt-dlp
+            if duration:
+                total_duration_seconds += duration
+
+        # Calculate estimated size based on selected quality and REAL duration
+        def get_size_estimate(quality_idx):
+            """Get estimated size based on quality and actual video durations"""
+            if total_duration_seconds == 0:
+                return "Size unknown"
+
+            # Typical bitrates per quality (kbps for video+audio)
+            bitrate_map = {
+                0: 8000,  # Best (high quality, ~8 Mbps)
+                1: 20000,  # 4K (~20 Mbps)
+                2: 12000,  # 2K (~12 Mbps)
+                3: 8000,  # 1080p (~8 Mbps)
+                4: 4000,  # 720p (~4 Mbps)
+                5: 2000,  # 480p (~2 Mbps)
+                6: 1000,  # 360p (~1 Mbps)
+                7: 256,  # Audio only (~256 kbps)
+            }
+
+            bitrate_kbps = bitrate_map.get(quality_idx, 5000)
+            # Size = bitrate (kbps) * duration (seconds) / 8 / 1024 = MB
+            total_mb = (bitrate_kbps * total_duration_seconds) / 8 / 1024
+
+            if total_mb > 1024:
+                return f"~{total_mb/1024:.1f} GB"
+            return f"~{int(total_mb)} MB"
+
+        # Calculate total duration for display
+        hours = int(total_duration_seconds // 3600)
+        minutes = int((total_duration_seconds % 3600) // 60)
+        duration_str = f"{hours}h {minutes}m" if hours > 0 else f"{minutes}m"
+
+        # Update button when quality changes
+        def update_button_text():
+            idx = self.playlist_quality_combo.currentIndex()
+            size_est = get_size_estimate(idx)
+            self.download_btn.setText(f"Download All ({total_videos} Videos, {duration_str}, {size_est})")
+
+        self.playlist_quality_combo.currentIndexChanged.connect(update_button_text)
+        update_button_text()  # Initial text
 
         # Show banner
         self.playlist_banner.setText(f"📚 Full Playlist Mode: {len(self.playlist_entries)} videos found.")
@@ -566,7 +613,13 @@ class QualityDialogV2(QDialog):
 
         selected_items = self.table.selectedItems()
         if not selected_items:
-            return
+            # Auto-select first row (best quality) if user didn't select anything
+            if self.table.rowCount() > 0:
+                self.table.selectRow(0)
+                print("ℹ️ No format selected, auto-selecting best quality (first row)")
+            else:
+                print("⚠️ No formats available")
+                return
 
         # Get format data from first column
         format_data = self.table.item(self.table.currentRow(), 0).data(Qt.UserRole)

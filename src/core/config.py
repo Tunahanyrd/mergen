@@ -121,7 +121,7 @@ class ConfigManager:
         self.save_config()
 
     def get_history(self):
-        from src.core.models import DownloadItem
+        from src.core.models import LegacyDownloadItem as DownloadItem
 
         history_path = self.config_dir / HISTORY_FILE
         if not os.path.exists(history_path):

@@ -28,15 +28,19 @@ class AnalysisWorker(QThread):
             # Conditional --no-playlist flag
             if self.no_playlist:
                 cmd.append("--no-playlist")
-                print("🔍 AnalysisWorker: Using --no-playlist (Fast Video Analysis)")
+                if os.environ.get("MERGEN_VERBOSE") == "1":
+                    print("🔍 AnalysisWorker: Using --no-playlist (Fast Video Analysis)")
             else:
                 # Use flat-playlist for full playlists to avoid timeout
                 # This fetches only metadata (title, id), not formats for every video
                 cmd.append("--flat-playlist")
-                print("📚 AnalysisWorker: Full Playlist Analysis Mode (Using --flat-playlist)")
+                if os.environ.get("MERGEN_VERBOSE") == "1":
+                    print("📚 AnalysisWorker: Full Playlist Analysis Mode (Using --flat-playlist)")
 
             cmd.append(self.url)
-            print(f"🚀 Running command: {' '.join(cmd)}")
+            cmd.append("--no-cache-dir")  # Always fetch fresh format data
+            if os.environ.get("MERGEN_VERBOSE") == "1":
+                print(f"🚀 Running command: {' '.join(cmd)}")
 
             # Run subprocess
             result = subprocess.run(
@@ -54,7 +58,8 @@ class AnalysisWorker(QThread):
                 if not self.no_playlist and "entries" in info:
                     # Flat playlist structure
                     # We might not get full format info here, which is fine using BEST by default
-                    print(f"📋 Flat playlist analyzed: {len(info.get('entries', []))} entries")
+                    if os.environ.get("MERGEN_VERBOSE") == "1":
+                        print(f"📋 Flat playlist analyzed: {len(info.get('entries', []))} entries")
 
                 # Extract key metadata
                 result_dict = {

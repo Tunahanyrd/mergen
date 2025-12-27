@@ -42,26 +42,84 @@ browser.runtime.onInstalled.addListener(() => {
         contexts: ["link", "video", "audio"]
     });
 
-    // Show Extension ID to user for easy registration
-    const extensionId = browser.runtime.id;
-    browser.notifications.create({
-        type: "basic",
-        iconUrl: browser.runtime.getURL("icons/icon128.png"),
-        title: "🎉 Mergen Extension Installed!",
-        message: `Extension ID: ${extensionId}\n\n📋 Copy this ID and paste it in Mergen Settings → Browser Integration to complete registration.`,
-        priority: 2
-    });
-
-    console.log(`📋 Extension ID: ${extensionId}`);
-    console.log("👉 Register this ID in Mergen app Settings!");
+    // AUTO-REGISTER with Mergen app (zero-config!)
+    autoRegisterExtension();
 
     // Setup declarativeNetRequest rules for media detection
     setupMediaDetectionRules();
-
-    // Test connection
-    console.log("🔍 Testing native messaging connection...");
-    testNativeConnection();
 });
+
+// Auto-register extension with Mergen app
+async function autoRegisterExtension() {
+    const extensionId = browser.runtime.id;
+    const browserType = typeof browser.runtime.getBrowserInfo !== 'undefined' ? 'firefox' : 'chrome';
+
+    console.log(`🚀 Auto-registering ${browserType} extension...`);
+
+    try {
+        const response = await fetch('http://localhost:8765/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.dumps({
+                extension_id: extensionId,
+                browser: browserType,
+                version: '0.9.3'
+            })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            console.log('✅ Auto-registration successful!', data);
+
+            // Store registration status
+            browser.storage.local.set({
+                registered: true,
+                app_version: data.app_version,
+                registered_at: Date.now()
+            });
+
+            // Show success notification
+            browser.notifications.create({
+                type: 'basic',
+                iconUrl: browser.runtime.getURL('icons/icon128.png'),
+                title: '✅ Mergen Connected!',
+                message: `Extension auto-registered with Mergen app v${data.app_version}. Ready to use!`,
+                priority: 2
+            });
+        } else {
+            throw new Error(`Registration failed: ${response.status}`);
+        }
+    } catch (err) {
+        console.error('❌ Auto-registration failed:', err);
+        console.error('Error details:', {
+            message: err.message,
+            name: err.name,
+            stack: err.stack
+        });
+        console.log('💡 Make sure Mergen app is running');
+        console.log('💡 Check if localhost:8765 is accessible');
+
+        // Test if server is reachable
+        fetch('http://localhost:8765/health')
+            .then(r => {
+                console.log('✅ Health check passed, server is running');
+                console.log('⚠️ Registration endpoint might have issues');
+            })
+            .catch(e => {
+                console.error('❌ Cannot reach localhost:8765:', e.message);
+                console.error('🔍 Possible causes: App not running, firewall blocking, or wrong port');
+            });
+
+        // Fallback: Show manual registration instructions
+        browser.notifications.create({
+            type: 'basic',
+            iconUrl: browser.runtime.getURL('icons/icon128.png'),
+            title: '⚠️ Mergen Not Running',
+            message: `Please start Mergen app to complete auto-registration.\n\nExtension ID: ${extensionId}`,
+            priority: 1
+        });
+    }
+}
 
 // Setup declarativeNetRequest rules for media sniffing
 function setupMediaDetectionRules() {
