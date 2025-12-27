@@ -346,6 +346,9 @@ class Downloader:
         if has_ffmpeg:
             cmd.extend(["--merge-output-format", "mp4"])
         
+        # CRITICAL: Disable resume to avoid HTTP 416 errors
+        cmd.append("--no-continue")
+        
         # URL
         cmd.append(self.url)
         
