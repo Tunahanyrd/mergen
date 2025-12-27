@@ -347,10 +347,18 @@ class Downloader:
         # CRITICAL: Disable resume to avoid HTTP 416 errors
         cmd.append("--no-continue")
         
+        # For playlists: Skip unavailable/private videos instead of failing
+        if self.format_info and self.format_info.get("is_playlist"):
+            cmd.append("--ignore-errors")  # Continue on private/deleted videos
+        
         # URL
         cmd.append(self.url)
         
         self.log(f"📦 Running: yt-dlp {' '.join(cmd[1:4])}...")
+        
+        # Track downloaded files for proper completion callback
+        downloaded_files = []
+        is_playlist = self.format_info and self.format_info.get("is_playlist")
         
         try:
             # Run subprocess with progress parsing
@@ -370,6 +378,18 @@ class Downloader:
                 
                 # Print all yt-dlp output
                 print(f"yt-dlp: {line}")
+                
+                # Track downloaded files: [download] Destination: /path/to/file.mp4
+                if "[download] Destination:" in line:
+                    dest_path = line.split("Destination:")[-1].strip()
+                    downloaded_files.append(dest_path)
+                    print(f"📥 File tracked: {dest_path}")
+                
+                # Handle private video errors gracefully
+                if "ERROR:" in line and "Private video" in line:
+                    if self.status_callback:
+                        self.status_callback("⚠️ Skipping private video")
+                    continue  # Don't fail, just skip
                 
                 # Track playlist progress: [download] Downloading item 1 of 4
                 if "[download] Downloading item" in line:
@@ -428,30 +448,45 @@ class Downloader:
                         pass  # Ignore parse errors
 
             process.wait()
-
-            if process.returncode == 0:
+            success = process.returncode == 0
+            
+            if success:
                 print("✅ Terminal yt-dlp download complete")
                 self.log("✅ Download complete")
-
-                # Call completion callback
-                if self.completion_callback:
-                    self.completion_callback(True, self.filename)
-
-                return True
             else:
-                self.log("❌ Download failed")
-                return False
+                self.log("❌ Download failed (non-zero exit code)")
+                # For playlists with --ignore-errors, partial success is OK
+                if is_playlist and downloaded_files:
+                    print(f"⚠️ Playlist partially completed: {len(downloaded_files)} files")
+                    success = True  # Treat as success if some files downloaded
+            
+            return success
 
         except Exception as e:
             import traceback
-
             traceback.print_exc()
             self.log(f"❌ yt-dlp error: {e}")
-            # Log full traceback only in debug mode
             import logging
-
             logging.debug(f"yt-dlp traceback: {traceback.format_exc()}")
             return False
+        
+        finally:
+            # CRITICAL: Always call completion callback to prevent UI desync
+            if self.completion_callback:
+                if is_playlist:
+                    # For playlists: pass directory path, not "playlist" string
+                    callback_path = str(self.save_dir)
+                    print(f"📂 Playlist completion callback: {callback_path}")
+                else:
+                    # For single videos: pass actual filename
+                    if downloaded_files:
+                        callback_path = downloaded_files[0]
+                    else:
+                        callback_path = output_path
+                
+                # Determine success based on downloaded files
+                success_status = len(downloaded_files) > 0
+                self.completion_callback(success_status, callback_path)
 
     # ==================== End Stream Support ====================
 
