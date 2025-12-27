@@ -870,7 +870,10 @@ class MainWindow(QMainWindow):
             is_playlist_url = 'list=' in url or 'playlist' in url
             potential_playlist = is_playlist_url and not playlist_count
             
+            print(f"🔍 Playlist Check: Title='{playlist_title}', Count={playlist_count}, DetectPattern={is_playlist_url}")
+            
             if (playlist_title and playlist_count and playlist_count > 1) or potential_playlist:
+                print("🎵 Playlist detected in MainWindow! Showing dialog...")
                 # Playlist detected! Ask user what they want
                 from src.gui.playlist_choice_dialog import PlaylistChoiceDialog
                 
@@ -881,6 +884,7 @@ class MainWindow(QMainWindow):
                 choice_dlg = PlaylistChoiceDialog(display_title, display_count, self)
                 choice_dlg.exec()
                 choice = choice_dlg.get_choice()
+                print(f"👤 User choice: {choice}")
                 
                 if choice == "playlist":
                     # User wants full playlist - re-analyze without --no-playlist
@@ -928,7 +932,8 @@ class MainWindow(QMainWindow):
         from PySide6.QtCore import Qt
         
         # Show loading dialog
-        progress = QProgressDialog("Analyzing full playlist...\nThis may take 30-120 seconds.", "Cancel", 0, 0, self)
+        from src.core.i18n import I18n
+        progress = QProgressDialog(I18n.get("analyzing_playlist"), "Cancel", 0, 0, self)
         progress.setWindowTitle("Playlist Analysis")
         progress.setWindowModality(Qt.WindowModal)
         progress.setMinimumDuration(0)

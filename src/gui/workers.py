@@ -29,8 +29,12 @@ class AnalysisWorker(QThread):
             # Conditional --no-playlist flag
             if self.no_playlist:
                 cmd.append("--no-playlist")
+                print("🔍 AnalysisWorker: Using --no-playlist (Fast Video Analysis)")
+            else:
+                print("📚 AnalysisWorker: Full Playlist Analysis Mode (No --no-playlist)")
             
             cmd.append(self.url)
+            print(f"🚀 Running command: {' '.join(cmd)}")
             
             # Run subprocess
             result = subprocess.run(

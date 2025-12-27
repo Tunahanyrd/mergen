@@ -188,8 +188,19 @@ TRANS = {
         "queue_name": "Queue Name:",
         "select_download_folder": "Select Download Folder",
         "stream_detected": "Stream Detected",
-        # Browser Integration
-        "browser_integration_header": "🌐 Browser Integration",
+        # Playlist Choice Dialog
+        "playlist_detected": "Playlist Detected",
+        "playlist_title_label": "Title:",
+        "video_count_label": "Videos:",
+        "what_download": "What would you like to download?",
+        "single_video": "🎬 Single Video",
+        "full_playlist": "📚 Full Playlist",
+        "playlist_analysis_warning": "⚠️ Full playlist analysis may take 30-120 seconds",
+        "unknown_count": "(Unknown count)",
+        "analyzing_playlist": "Analyzing full playlist...\nThis may take 30-120 seconds.",
+    },
+    "tr": {
+        "app_title": "MERGEN",
         "browser_status_checking": "Checking...",
         "browser_status_connected": "Connected!",
         "browser_status_connected_firefox": "Connected (Firefox)",
@@ -424,6 +435,16 @@ TRANS = {
         "queue_name": "Kuyruk Adı:",
         "select_download_folder": "İndirme Klasörünü Seç",
         "stream_detected": "Akış Tespit Edildi",
+        # Playlist Choice Dialog
+        "playlist_detected": "Oynatma Listesi Algılandı",
+        "playlist_title_label": "Liste Adı:",
+        "video_count_label": "Video Sayısı:",
+        "what_download": "Ne indirmek istersiniz?",
+        "single_video": "🎬 Tek Video",
+        "full_playlist": "📚 Tüm Liste",
+        "playlist_analysis_warning": "⚠️ Tam liste analizi 30-120 saniye sürebilir.",
+        "unknown_count": "(Bilinmiyor)",
+        "analyzing_playlist": "Liste analiz ediliyor...\nBu işlem 30-120 saniye sürebilir.",
     },
 }
 

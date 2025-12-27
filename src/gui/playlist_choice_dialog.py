@@ -46,7 +46,8 @@ class PlaylistChoiceDialog(QDialog):
         icon_label.setStyleSheet("font-size: 32px;")
         header.addWidget(icon_label)
         
-        title_label = QLabel("Playlist Detected")
+        from src.core.i18n import I18n
+        title_label = QLabel(I18n.get("playlist_detected"))
         title_font = QFont()
         title_font.setPointSize(16)
         title_font.setBold(True)
@@ -68,7 +69,7 @@ class PlaylistChoiceDialog(QDialog):
         
         # Title
         title_row = QHBoxLayout()
-        title_row.addWidget(QLabel("<b>Title:</b>"))
+        title_row.addWidget(QLabel(f"<b>{I18n.get('playlist_title_label')}</b>"))
         playlist_title_label = QLabel(self.playlist_title)
         playlist_title_label.setWordWrap(True)
         title_row.addWidget(playlist_title_label, 1)
@@ -76,7 +77,7 @@ class PlaylistChoiceDialog(QDialog):
         
         # Video count
         count_row = QHBoxLayout()
-        count_row.addWidget(QLabel("<b>Videos:</b>"))
+        count_row.addWidget(QLabel(f"<b>{I18n.get('video_count_label')}</b>"))
         count_row.addWidget(QLabel(str(self.video_count)))
         count_row.addStretch()
         info_layout.addLayout(count_row)
@@ -84,7 +85,7 @@ class PlaylistChoiceDialog(QDialog):
         layout.addLayout(info_layout)
         
         # Question
-        question = QLabel("What would you like to download?")
+        question = QLabel(I18n.get("what_download"))
         question.setStyleSheet("margin-top: 10px; font-size: 13px; color: #888;")
         layout.addWidget(question)
         
@@ -93,7 +94,7 @@ class PlaylistChoiceDialog(QDialog):
         btn_layout.setSpacing(10)
         
         # Single video button
-        self.single_btn = QPushButton("🎬 Single Video")
+        self.single_btn = QPushButton(I18n.get("single_video"))
         self.single_btn.setMinimumHeight(50)
         self.single_btn.setStyleSheet("""
             QPushButton {
@@ -113,8 +114,8 @@ class PlaylistChoiceDialog(QDialog):
         btn_layout.addWidget(self.single_btn)
         
         # Full playlist button
-        count_str = f"({self.video_count} videos)" if self.video_count else "(Unknown count)"
-        playlist_text = f"📚 Full Playlist {count_str}"
+        count_str = f"({self.video_count} videos)" if self.video_count else I18n.get("unknown_count")
+        playlist_text = f"{I18n.get('full_playlist')} {count_str}"
         self.playlist_btn = QPushButton(playlist_text)
         self.playlist_btn.setMinimumHeight(50)
         self.playlist_btn.setStyleSheet("""
@@ -138,7 +139,7 @@ class PlaylistChoiceDialog(QDialog):
         layout.addLayout(btn_layout)
         
         # Warning
-        warning = QLabel("⚠️ Full playlist analysis may take 30-60 seconds")
+        warning = QLabel(I18n.get("playlist_analysis_warning"))
         warning.setStyleSheet("""
             color: #ff9800;
             font-size: 11px;
