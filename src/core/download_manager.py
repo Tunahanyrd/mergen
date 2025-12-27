@@ -28,7 +28,7 @@ from src.core.models import (
 class DownloadManager:
     """Central manager for all downloads with state persistence"""
 
-    def __init__(self, stateFile: Path):
+    def __init__(self, state_file: Path):
         """
         Initialize download manager.
 

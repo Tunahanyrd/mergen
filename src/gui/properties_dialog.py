@@ -8,6 +8,8 @@ import subprocess
 
 from PySide6.QtCore import QFileInfo, QUrl
 from PySide6.QtGui import QDesktopServices
+
+from src.core.i18n import I18n
 from PySide6.QtWidgets import (
     QApplication,
     QDialog,
