@@ -40,7 +40,7 @@ class QueueManagerDialog(QDialog):
         self.downloads = downloads
         self.parent_window = parent
 
-        self.setWindowTitle("Scheduler & Queue Manager")
+        self.setWindowTitle(I18n.get("queue_manager"))
         self.resize(950, 600)
         self.setup_ui()
         self.load_queues()
@@ -410,7 +410,7 @@ class QueueManagerDialog(QDialog):
             if self.queue_manager.create_queue(text):
                 self.load_queues()
             else:
-                QMessageBox.warning(self, "Error", "Queue already exists or invalid name.")
+                QMessageBox.warning(self, I18n.get("error"), I18n.get("queue_exists_or_invalid"))
 
     def on_delete_queue(self):
         """Delete the selected queue."""
@@ -435,9 +435,9 @@ class QueueManagerDialog(QDialog):
                 from src.core.queue_manager import DEFAULT_QUEUE_NAME
 
                 if queue_name == DEFAULT_QUEUE_NAME:
-                    QMessageBox.warning(self, "Error", f"Cannot delete default queue '{DEFAULT_QUEUE_NAME}'.")
+                    QMessageBox.warning(self, I18n.get("error"), I18n.get("cannot_delete_default_queue"))
                 else:
-                    QMessageBox.warning(self, "Error", "Failed to delete queue.")
+                    QMessageBox.warning(self, I18n.get("error"), I18n.get("failed_delete_queue"))
 
     def on_start_queue(self):
         """Start the selected queue."""

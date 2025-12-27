@@ -28,7 +28,7 @@ class PlaylistChoiceDialog(QDialog):
         self.video_count = video_count
         self.choice = None  # "single" or "playlist"
         
-        self.setWindowTitle("Playlist Detected")
+        self.setWindowTitle(I18n.get("playlist_detected"))
         self.setModal(True)
         self.setMinimumWidth(450)
         

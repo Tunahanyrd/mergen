@@ -30,7 +30,7 @@ class PropertiesDialog(QDialog):
     def __init__(self, download_item, parent=None):
         super().__init__(parent)
         self.item = download_item
-        self.setWindowTitle("File Properties")
+        self.setWindowTitle(I18n.get("file_properties"))
         self.resize(600, 550)
         self.setup_ui()
 

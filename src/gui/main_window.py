@@ -991,7 +991,7 @@ class MainWindow(QMainWindow):
         # Show loading dialog
         from src.core.i18n import I18n
         progress = QProgressDialog(I18n.get("analyzing_playlist"), "Cancel", 0, 0, self)
-        progress.setWindowTitle("Playlist Analysis")
+        progress.setWindowTitle(I18n.get("playlist_analysis"))
         progress.setWindowModality(Qt.WindowModal)
         progress.setMinimumDuration(0)
         progress.setValue(0)
@@ -1004,7 +1004,7 @@ class MainWindow(QMainWindow):
             progress.close()
             
             if not info:
-                QMessageBox.warning(self, "Error", "Failed to analyze playlist")
+                QMessageBox.warning(self, I18n.get("error"), I18n.get("failed_analyze_playlist"))
                 return
             
             # Show Quality Dialog with full playlist
@@ -1019,7 +1019,7 @@ class MainWindow(QMainWindow):
         
         def on_playlist_error(error_msg):
             progress.close()
-            QMessageBox.warning(self, "Error", f"Playlist analysis failed: {error_msg}")
+            QMessageBox.warning(self, I18n.get("error"), I18n.get("playlist_analysis_failed") + f": {error_msg}")
         
         # Check if cancelled
         progress.canceled.connect(lambda: worker.terminate())
@@ -1062,7 +1062,7 @@ class MainWindow(QMainWindow):
             q, ok = QInputDialog.getItem(self, "Delete Queue", "Select Queue:", queues, 0, False)
             if ok and q:
                 if q == "Main Queue":
-                    QMessageBox.warning(self, "Error", "Cannot delete Main Queue.")
+                    QMessageBox.warning(self, I18n.get("error"), I18n.get("cannot_delete_main_queue"))
                 else:
                     queues.remove(q)
                     self.config.set("queues", queues)
