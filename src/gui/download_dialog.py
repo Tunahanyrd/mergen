@@ -175,26 +175,31 @@ class DownloadWorker(QThread):
 
         self.downloader.start()
 
-    def emit_progress(self, downloaded, total):
+    def emit_progress(self, downloaded, total, speed=0):
         # Throttle logic integrated
         if self.is_running:
             now = time.time()
             if now - self.last_time < 0.1 and downloaded < total:
                 return
 
-            elapsed = now - self.last_time
-            speed = 0.0
-            if elapsed > 0:
-                diff = downloaded - self.last_bytes
-                instant_speed = diff / elapsed
+            # Use provided speed if available, otherwise calculate
+            if speed == 0:
+                elapsed = now - self.last_time
+                if elapsed > 0:
+                    diff = downloaded - self.last_bytes
+                    instant_speed = diff / elapsed
 
-                # EMA Smoothing (Alpha = 0.1 for smoothness)
-                if not hasattr(self, "avg_speed"):
-                    self.avg_speed = instant_speed
-                else:
-                    self.avg_speed = 0.1 * instant_speed + 0.9 * self.avg_speed
+                    # EMA Smoothing (Alpha = 0.1 for smoothness)
+                    if not hasattr(self, "avg_speed"):
+                        self.avg_speed = instant_speed
+                    else:
+                        self.avg_speed = 0.1 * instant_speed + 0.9 * self.avg_speed
 
-                speed = self.avg_speed
+                    speed = self.avg_speed
+                    self.last_bytes = downloaded
+                    self.last_time = now
+            else:
+                # yt-dlp provided speed directly
                 self.last_bytes = downloaded
                 self.last_time = now
 
