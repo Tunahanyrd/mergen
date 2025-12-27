@@ -265,11 +265,17 @@ class QualityDialogV2(QDialog):
             )
             self.playlist_banner.show()
 
-        # Store ALL formats from yt-dlp (no filtering!)
+        # Store ALL formats from yt-dlp
         self.all_formats = info.get("formats", [])
-
-        # Populate table (filtering in filter_formats if needed)
-        self.filter_formats()
+        self.playlist_entries = info.get("entries", [])
+        
+        # Determine mode
+        if not self.all_formats and self.playlist_entries:
+            # Flat Playlist Mode (Fast analysis result)
+            self.setup_flat_playlist_mode()
+        else:
+            # Normal Video Mode
+            self.populate_table(self.all_formats)
 
     def set_thumbnail(self, data):
         """Set thumbnail from worker (only if dialog still open)"""
@@ -281,6 +287,94 @@ class QualityDialogV2(QDialog):
         if not pixmap.isNull():
             scaled = pixmap.scaled(160, 90, Qt.KeepAspectRatioByExpanding, Qt.SmoothTransformation)
             self.thumb_label.setPixmap(scaled)
+
+    def setup_flat_playlist_mode(self):
+        """Setup UI for flat playlist (list of videos without format info)"""
+        print(f"📋 Entering Flat Playlist Mode: {len(self.playlist_entries)} entries")
+        
+        # Hide format selector logic (existing)
+        for i in range(self.main_layout.count()):
+            item = self.main_layout.itemAt(i)
+            if item and item.layout() and isinstance(item.layout(), QHBoxLayout):
+                if item.layout().count() > 0:
+                     w = item.layout().itemAt(0).widget()
+                     if isinstance(w, QLabel) and "Format Type" in w.text():
+                         for j in range(item.layout().count()):
+                             wdg = item.layout().itemAt(j).widget()
+                             if wdg: wdg.hide()
+        
+        # Add Global Quality Selector
+        quality_layout = QHBoxLayout()
+        quality_layout.setContentsMargins(0, 10, 0, 10)
+        
+        lbl = QLabel("🌍 Global Playlist Quality:")
+        lbl.setStyleSheet("font-weight: bold; font-size: 14px; color: #00bef7;")
+        quality_layout.addWidget(lbl)
+        
+        self.playlist_quality_combo = QComboBox()
+        self.playlist_quality_combo.addItems([
+            "⭐ Best Quality (Auto)",
+            "🎬 4K (2160p)",
+            "📺 2K (1440p)",
+            "📺 Full HD (1080p)",
+            "📱 HD (720p)",
+            "💾 SD (480p)",
+            "📉 Low (360p)",
+            "🎵 Audio Only (Best Audio)"
+        ])
+        self.playlist_quality_combo.setStyleSheet("""
+            QComboBox {
+                padding: 5px;
+                border: 1px solid #555;
+                border-radius: 4px;
+                background: #333;
+                color: white;
+                min-width: 200px;
+            }
+        """)
+        quality_layout.addWidget(self.playlist_quality_combo)
+        quality_layout.addStretch()
+        
+        # Insert before table (index 3 usually, but safer to add to layout)
+        # Finding the layout index for table... simplifying by adding to main_layout before simple table check
+        # But we need it above the table.
+        # Let's insert it before the table widget
+        
+        idx = self.main_layout.indexOf(self.table)
+        if idx != -1:
+            self.main_layout.insertLayout(idx, quality_layout)
+        
+        # Reconfigure table headers
+        self.table.setColumnCount(3)
+        self.table.setHorizontalHeaderLabels(["#", "Video Title", "ID"])
+        
+        header = self.table.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.Fixed)
+        header.setSectionResizeMode(1, QHeaderView.Stretch)
+        header.setSectionResizeMode(2, QHeaderView.Fixed)
+        
+        self.table.setColumnWidth(0, 50)
+        self.table.setColumnWidth(2, 120)
+        
+        # Populate table with playlist entries
+        self.table.setRowCount(len(self.playlist_entries))
+        
+        for row, entry in enumerate(self.playlist_entries):
+            # Index
+            self.table.setItem(row, 0, QTableWidgetItem(str(row + 1)))
+            # Title
+            title = entry.get("title", "Unknown")
+            self.table.setItem(row, 1, QTableWidgetItem(title))
+            # ID
+            vid_id = entry.get("id", "-")
+            self.table.setItem(row, 2, QTableWidgetItem(vid_id))
+        
+        # Update download button text
+        self.download_btn.setText(f"Download All ({len(self.playlist_entries)} Videos)")
+        
+        # Show banner
+        self.playlist_banner.setText(f"📚 Full Playlist Mode: {len(self.playlist_entries)} videos found.")
+        self.playlist_banner.show()
 
     def filter_formats(self):
         """Filter formats based on selected type"""
@@ -439,6 +533,36 @@ class QualityDialogV2(QDialog):
 
     def accept_selection(self):
         """Accept selected format and emit signal"""
+        
+        # Check for Flat Playlist Mode
+        # Check for Flat Playlist Mode
+        if hasattr(self, 'playlist_entries') and self.playlist_entries and not self.all_formats:
+            # Get selected global quality
+            idx = self.playlist_quality_combo.currentIndex()
+            
+            fmt_map = {
+                0: ("bestvideo+bestaudio/best", "mp4"),  # Best (Auto)
+                1: ("bestvideo[height<=2160]+bestaudio/best[height<=2160]", "mp4"), # 4K
+                2: ("bestvideo[height<=1440]+bestaudio/best[height<=1440]", "mp4"), # 2K
+                3: ("bestvideo[height<=1080]+bestaudio/best[height<=1080]", "mp4"), # 1080p
+                4: ("bestvideo[height<=720]+bestaudio/best[height<=720]", "mp4"),   # 720p
+                5: ("bestvideo[height<=480]+bestaudio/best[height<=480]", "mp4"),   # 480p
+                6: ("bestvideo[height<=360]+bestaudio/best[height<=360]", "mp4"),   # 360p
+                7: ("bestaudio/best", "mp3"),                                       # Audio Only
+            }
+            
+            format_id, ext = fmt_map.get(idx, ("bestvideo+bestaudio/best", "mp4"))
+            
+            result = {
+                "format_id": format_id,
+                "ext": ext,
+                "is_playlist": True,
+                "entries": self.playlist_entries
+            }
+            self.quality_selected.emit(result)
+            self.accept()
+            return
+            
         selected_items = self.table.selectedItems()
         if not selected_items:
             return

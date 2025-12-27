@@ -31,7 +31,10 @@ class AnalysisWorker(QThread):
                 cmd.append("--no-playlist")
                 print("🔍 AnalysisWorker: Using --no-playlist (Fast Video Analysis)")
             else:
-                print("📚 AnalysisWorker: Full Playlist Analysis Mode (No --no-playlist)")
+                # Use flat-playlist for full playlists to avoid timeout
+                # This fetches only metadata (title, id), not formats for every video
+                cmd.append("--flat-playlist")
+                print("📚 AnalysisWorker: Full Playlist Analysis Mode (Using --flat-playlist)")
             
             cmd.append(self.url)
             print(f"🚀 Running command: {' '.join(cmd)}")
@@ -48,6 +51,12 @@ class AnalysisWorker(QThread):
                 # Parse JSON
                 info = json.loads(result.stdout)
                 
+                # Check for flat playlist entries
+                if not self.no_playlist and 'entries' in info:
+                    # Flat playlist structure
+                    # We might not get full format info here, which is fine using BEST by default
+                    print(f"📋 Flat playlist analyzed: {len(info.get('entries', []))} entries")
+                
                 # Extract key metadata
                 result_dict = {
                     "title": info.get("title", "Unknown Title"),
@@ -55,7 +64,8 @@ class AnalysisWorker(QThread):
                     "duration": info.get("duration"),
                     "uploader": info.get("uploader") or info.get("channel"),
                     "formats": info.get("formats", []),
-                    "playlist_title": info.get("playlist_title"),
+                    "entries": info.get("entries"), # Add entries for playlist
+                    "playlist_title": info.get("playlist_title") or info.get("title"), # Backup title
                     "playlist_count": info.get("playlist_count"),
                     "webpage_url_basename": info.get("webpage_url_basename"),
                 }
