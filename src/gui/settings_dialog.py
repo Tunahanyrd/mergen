@@ -605,7 +605,40 @@ class SettingsDialog(QDialog):
             return
 
         try:
-            # Update Chrome manifest
+            # 1. Install Native Host Script
+            import shutil
+            import sys
+            import os
+            
+            # Determine source path of native host script
+            if hasattr(sys, "_MEIPASS"):
+                # Frozen/compiled mode
+                base_dir = sys._MEIPASS
+                src_script = Path(base_dir) / "native-host/mergen-native-host.py"
+            else:
+                # Source mode: src/gui/../../native-host/mergen-native-host.py
+                base_dir = Path(__file__).resolve().parent.parent.parent
+                src_script = base_dir / "native-host/mergen-native-host.py"
+            
+            if not src_script.exists():
+                # Fallback check
+                if (Path.cwd() / "native-host/mergen-native-host.py").exists():
+                    src_script = Path.cwd() / "native-host/mergen-native-host.py"
+                else:
+                    raise FileNotFoundError(f"Native host script not found at {src_script}")
+
+            # Install destination
+            bin_dir = Path.home() / "bin"
+            bin_dir.mkdir(parents=True, exist_ok=True)
+            dst_script = bin_dir / "mergen-native-host.py"
+            
+            # Copy and set permissions
+            shutil.copy2(src_script, dst_script)
+            dst_script.chmod(0o755)  # rwxr-xr-x
+            
+            print(f"✅ Installed native host to {dst_script}")
+
+            # 2. Update Chrome manifest
             chrome_dir = Path.home() / ".config/google-chrome/NativeMessagingHosts"
             chrome_dir.mkdir(parents=True, exist_ok=True)
 
@@ -613,7 +646,7 @@ class SettingsDialog(QDialog):
             manifest_data = {
                 "name": "com.tunahanyrd.mergen",
                 "description": "Mergen Download Manager Native Messaging Host",
-                "path": str(Path.home() / "bin/mergen-native-host.py"),
+                "path": str(dst_script),
                 "type": "stdio",
                 "allowed_origins": [f"chrome-extension://{ext_id}/"],
             }
