@@ -631,26 +631,31 @@ class Downloader:
         self.log("Starting process...")
         self.start_time = time.time()
 
-        # Simple platform detection (no Python API)
+        # Test if yt-dlp can handle this URL (subprocess CLI test)
         is_streaming_site = False
         
-        # Check common streaming platforms
-        streaming_patterns = [
-            'youtube.com', 'youtu.be',
-            'instagram.com',
-            'twitter.com', 'x.com',
-            'facebook.com', 'fb.watch',
-            'tiktok.com',
-            'vimeo.com',
-            'dailymotion.com',
-            'twitch.tv',
-        ]
-        
-        for pattern in streaming_patterns:
-            if pattern in self.url.lower():
-                is_streaming_site = True
-                self.log(f"🌍 Detected streaming platform: {pattern}")
-                break
+        try:
+            import subprocess
+            import json
+            
+            # Quick test: Can yt-dlp extract info? (10s timeout)
+            result = subprocess.run(
+                ["yt-dlp", "-J", "--no-playlist", self.url],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+            
+            if result.returncode == 0 and result.stdout:
+                # Parse to check if formats exist
+                info = json.loads(result.stdout)
+                if info.get("formats"):
+                    is_streaming_site = True
+                    self.log(f"🌍 yt-dlp can handle this URL ({len(info.get('formats', []))} formats)")
+        except subprocess.TimeoutExpired:
+            self.log("⚠️ yt-dlp test timeout - using direct download")
+        except Exception as e:
+            self.log(f"⚠️ yt-dlp test failed - using direct download: {e}")
 
         # Use yt-dlp for detected streaming sites OR known stream protocols
         if self.stream_type in ["hls", "dash"] or is_streaming_site:
