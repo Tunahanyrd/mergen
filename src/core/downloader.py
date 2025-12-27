@@ -371,7 +371,13 @@ class Downloader:
                 # Print all yt-dlp output
                 print(f"yt-dlp: {line}")
                 
+                # Track playlist progress: [download] Downloading item 1 of 4
+                if "[download] Downloading item" in line:
+                    if self.status_callback:
+                        self.status_callback(line.replace("[download] ", ""))
+                
                 # Parse progress: [download]   0.5% of  105.37MiB at    1.06MiB/s ETA 01:39
+                # Also handles GiB: [download]   0.6% of    1.74GiB at    1.02MiB/s ETA 28:49
                 if "[download]" in line and "%" in line:
                     try:
                         parts = line.split()
@@ -385,13 +391,17 @@ class Downloader:
                                 pct_str = part.replace("%", "")
                                 pct = float(pct_str)
                         
-                        # Extract total size (look for "of XXXMiB")
+                        # Extract total size (look for "of XXXMiB" or "of XXXGiB")
                         for i, part in enumerate(parts):
                             if part == "of" and i+1 < len(parts):
-                                size_str = parts[i+1].replace("MiB", "").replace("MB", "").replace("~", "")
+                                size_str = parts[i+1]
                                 try:
-                                    total_mb = float(size_str)
-                                    total_bytes = int(total_mb * 1024 * 1024)
+                                    if "GiB" in size_str:
+                                        total_gb = float(size_str.replace("GiB", "").replace("~", ""))
+                                        total_bytes = int(total_gb * 1024 * 1024 * 1024)
+                                    elif "MiB" in size_str or "MB" in size_str:
+                                        total_mb = float(size_str.replace("MiB", "").replace("MB", "").replace("~", ""))
+                                        total_bytes = int(total_mb * 1024 * 1024)
                                 except ValueError:
                                     pass
                         
