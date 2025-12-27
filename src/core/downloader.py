@@ -368,33 +368,49 @@ class Downloader:
                 # Print all yt-dlp output
                 print(f"yt-dlp: {line}")
                 
-                # Parse progress: [download]  45.2% of 12.34MiB
+                # Parse progress: [download]   0.5% of  105.37MiB at    1.06MiB/s ETA 01:39
                 if "[download]" in line and "%" in line:
                     try:
-                        # Extract percentage (simple regex-free approach)
                         parts = line.split()
+                        pct = 0
+                        total_bytes = 0
+                        speed_bytes = 0
+                        
+                        # Extract percentage
                         for i, part in enumerate(parts):
                             if "%" in part:
                                 pct_str = part.replace("%", "")
                                 pct = float(pct_str)
-                                
-                                # Try to extract size
-                                total_bytes = 0
-                                for j in range(i+1, min(i+5, len(parts))):
-                                    if "MiB" in parts[j] or "MB" in parts[j]:
-                                        size_str = parts[j].replace("MiB", "").replace("MB", "").replace("~", "")
-                                        try:
-                                            total_mb = float(size_str)
-                                            total_bytes = int(total_mb * 1024 * 1024)
-                                            downloaded_bytes = int(total_bytes * pct / 100)
-                                            
-                                            # Update progress
-                                            if self.progress_callback:
-                                                self.progress_callback(downloaded_bytes, total_bytes)
-                                            break
-                                        except ValueError:
-                                            pass
-                                break
+                        
+                        # Extract total size (look for "of XXXMiB")
+                        for i, part in enumerate(parts):
+                            if part == "of" and i+1 < len(parts):
+                                size_str = parts[i+1].replace("MiB", "").replace("MB", "").replace("~", "")
+                                try:
+                                    total_mb = float(size_str)
+                                    total_bytes = int(total_mb * 1024 * 1024)
+                                except ValueError:
+                                    pass
+                        
+                        # Extract speed (look for "at XXXMiB/s" or "XXXKiB/s")
+                        for i, part in enumerate(parts):
+                            if part == "at" and i+1 < len(parts):
+                                speed_str = parts[i+1]
+                                if "MiB/s" in speed_str:
+                                    speed_mb = float(speed_str.replace("MiB/s", ""))
+                                    speed_bytes = int(speed_mb * 1024 * 1024)
+                                elif "KiB/s" in speed_str:
+                                    speed_kb = float(speed_str.replace("KiB/s", ""))
+                                    speed_bytes = int(speed_kb * 1024)
+                        
+                        # Calculate downloaded bytes from percentage
+                        if total_bytes > 0:
+                            downloaded_bytes = int(total_bytes * pct / 100)
+                            
+                            # Call progress callback with 3 params
+                            if self.progress_callback:
+                                self.progress_callback(downloaded_bytes, total_bytes, speed_bytes)
+                            
                     except (ValueError, IndexError) as e:
                         pass  # Ignore parse errors
 
