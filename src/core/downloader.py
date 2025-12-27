@@ -624,14 +624,8 @@ class Downloader:
 
         # Use yt-dlp for detected streaming sites OR known stream protocols
         if self.stream_type in ["hls", "dash"] or is_streaming_site:
-           # Determine streaming site and use appropriate method
-            is_streaming_site = self._is_streaming_site()
-            if is_streaming_site:
-                print("🔀 Taking yt-dlp streaming path (is_streaming_site=True)")
-                success = self.download_stream_ydl()
-            else:
-                # HTTP download path
-                success = self.download_http()
+            print("🔀 Taking yt-dlp streaming path (is_streaming_site=True)")
+            success = self.download_stream_ydl()
             
             if success:
                 print("✅ Download completed successfully")
