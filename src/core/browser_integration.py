@@ -7,6 +7,8 @@ import json
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
+from src.core.version import __version__
+
 
 class MergenHTTPHandler(BaseHTTPRequestHandler):
     """HTTP request handler for browser extension integration."""
@@ -66,7 +68,7 @@ class MergenHTTPHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         """Handle GET requests (health check)."""
         if self.path == "/health" or self.path == "/":
-            response = {"status": "ok", "app": "Mergen", "version": "0.9.3"}
+            response = {"status": "ok", "app": "Mergen", "version": __version__}
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.send_header("Access-Control-Allow-Origin", "*")

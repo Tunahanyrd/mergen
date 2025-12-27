@@ -14,6 +14,7 @@ import sys
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
+from src.core.version import get_version_string
 from src.gui.main_window import MainWindow
 
 # Configure logging before importing Qt modules
@@ -26,7 +27,13 @@ if __name__ == "__main__":
         description="Mergen - Modern download manager with browser integration and stream support",
         epilog="Homepage: https://github.com/Tunahanyrd/mergen",
     )
-    parser.add_argument("-v", "--version", action="version", version="Mergen 0.9.3", help="Show version information")
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="version",
+        version=get_version_string(),
+        help="Show version information",
+    )
     args = parser.parse_args()
 
     signal.signal(signal.SIGINT, signal.SIG_DFL)
@@ -50,7 +57,7 @@ if __name__ == "__main__":
     from src.core.i18n import I18n
 
     config = ConfigManager()
-    lang = config.get("language", "tr")  # Default to Turkish
+    lang = config.get("language", I18n.detect_os_lang())  # Respect system locale
     I18n.set_language(lang)
 
     # Now create main window with correct language

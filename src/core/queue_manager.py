@@ -281,9 +281,10 @@ class QueueManager(QObject):
 
         # Check if within window
         if start_time.hour == now.hour and start_time.minute == now.minute:
-            if name not in self.active_queues:
-                # Would need downloads and callback here - store them during start_queue?
-                pass  # TODO: Store callback reference
+            if name not in self.active_queues and name in self.queue_callbacks:
+                # Retrieve stored callback and start queue
+                downloads, callback = self.queue_callbacks[name]
+                self.start_queue(name, downloads, callback)
 
         if stop_time and stop_time.hour == now.hour and stop_time.minute == now.minute:
             self.stop_queue(name)
