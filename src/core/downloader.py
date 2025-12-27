@@ -389,9 +389,9 @@ class Downloader:
                                         total_bytes = int(total_mb * 1024 * 1024)
                                         downloaded_bytes = int(total_bytes * pct / 100)
                                         
-                                        # Call progress callback
+                                        # Call progress callback (downloaded, total)
                                         if self.progress_callback:
-                                            self.progress_callback(downloaded_bytes, total_bytes, 0)
+                                            self.progress_callback(downloaded_bytes, total_bytes)
                                 
                                 break
                     except (ValueError, IndexError):
