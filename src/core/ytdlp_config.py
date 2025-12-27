@@ -7,7 +7,7 @@ Separates YouTube-specific settings from generic extraction.
 def get_youtube_opts(noplaylist=True):
     """
     YouTube-specific yt-dlp options.
-    Uses web client for maximum format availability.
+    Extracts all available formats (video + audio).
     
     Args:
         noplaylist (bool): If True, download only single video from playlist URLs
@@ -21,8 +21,8 @@ def get_youtube_opts(noplaylist=True):
         "nocheckcertificate": True,
         "socket_timeout": 60,
         "noplaylist": noplaylist,
-        # No extractor_args - let yt-dlp use default extraction
-        # This gives us all available formats
+        # Note: yt-dlp automatically extracts all available formats
+        # No need to specify "format": "all" - it may filter results
     }
 
 
