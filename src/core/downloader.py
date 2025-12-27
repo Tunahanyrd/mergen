@@ -283,93 +283,46 @@ class Downloader:
             if self.progress_callback:
                 self.progress_callback(downloaded, total)
 
-    def _download_with_ytdlp(self):
-        """Download stream using yt-dlp."""
-        if not self._check_ytdlp():
-            return False
-
-        # Check FFmpeg
-        has_ffmpeg = self._check_ffmpeg()
-        if not has_ffmpeg:
-            self._show_ffmpeg_guide()
-            self.log("⚠️ Continuing without FFmpeg (may fail for some streams)")
-
-        # Prepare output filename (without .part extension for yt-dlp)
-        output_path = self.filename.replace(".part", "")
-
-        from src.core.ytdlp_config import get_opts_for_url
-
-        # Get base options (YouTube vs Others)
-        ydl_opts = get_opts_for_url(self.url, noplaylist=True)
-
-        # Add download-specific options
-        ydl_opts["outtmpl"] = output_path
-        ydl_opts["progress_hooks"] = [self._ytdlp_progress_hook]
-
-        # Apply specific format if selected (v0.9.0)
-        if self.format_info and "format_id" in self.format_info:
-            fid = self.format_info["format_id"]
-            # Determine logic based on codecs
-            vcodec = self.format_info.get("vcodec", "none")
-            acodec = self.format_info.get("acodec", "none")
-
-            if vcodec != "none" and acodec != "none":
-                # Container with both, assume standalone
-                ydl_opts["format"] = fid
-            elif vcodec != "none":
-                # Video only, needs audio merge
-                ydl_opts["format"] = f"{fid}+bestaudio/best"
-            else:
-                # Audio only
-                ydl_opts["format"] = fid
-
-            self.log(f"🎯 Using selected format: {fid}")
-        else:
-            # Default auto-best behavior
-            ydl_opts["format"] = "bestvideo+bestaudio/best"
-
-        # Only add FFmpeg opts if available
-        if has_ffmpeg:
-            ydl_opts["merge_output_format"] = "mp4"
-            ydl_opts["postprocessors"] = [
-                {
-                    "key": "FFmpegVideoConvertor",
-                    "preferedformat": "mp4",  # NOTE: yt-dlp uses MISSPELLED version!
-                }
-            ]
-
-        # SOLUTION: Use terminal yt-dlp for download (same as extraction)
-        # Python yt-dlp fails signature solving, terminal works
+    def download_stream_ydl(self):
+        """
+        Download streaming content using yt-dlp CLI (subprocess).
+        
+        CRITICAL: Uses subprocess instead of Python API to avoid:
+        - HTTP 416 errors
+        - Range request issues
+        - GIL blocking
+        """
         import subprocess
-
-        # Build yt-dlp download command
-        cmd = [
-            "yt-dlp",
-            "--no-playlist",
-            "--progress",  # Show progress
-            "--newline",  # Output each progress line separately (no \r)
-            "--no-colors",  # Disable ANSI colors for clean parsing
-            "-o",
-            output_path,
-        ]
-
-        # Add format selection
+        import sys
+        
+        self.log("🔀 Using yt-dlp CLI subprocess for reliable download")
+        
+        # Prepare output file
+        output_path = self.filename.replace(".part", "")
+        
+        # Build yt-dlp CLI command
+        cmd = ["yt-dlp"]
+        
+        # Format selection (from Quality Dialog)
         if self.format_info and "format_id" in self.format_info:
             fid = self.format_info["format_id"]
             vcodec = self.format_info.get("vcodec", "none")
             acodec = self.format_info.get("acodec", "none")
-
+            
             if vcodec != "none" and acodec != "none":
+                # Combined format
                 cmd.extend(["-f", fid])
             elif vcodec != "none":
+                # Video only - merge with best audio
                 cmd.extend(["-f", f"{fid}+bestaudio/best"])
             else:
+                # Audio only
                 cmd.extend(["-f", fid])
-
-            print(f"🎯 Format: {fid}")
+            
+            self.log(f"🎯 Format: {fid}")
         else:
+            # Default: best quality
             cmd.extend(["-f", "bestvideo+bestaudio/best"])
-
         # Add merge format if FFmpeg available
         if has_ffmpeg:
             cmd.extend(["--merge-output-format", "mp4"])
