@@ -234,6 +234,7 @@ class Downloader:
     def _check_ytdlp(self):
         """Check if yt-dlp CLI is available."""
         import shutil
+
         return shutil.which("yt-dlp") is not None
 
     def _check_ffmpeg(self):
@@ -281,35 +282,35 @@ class Downloader:
     def download_stream_ydl(self):
         """
         Download streaming content using yt-dlp CLI (subprocess).
-        
+
         CRITICAL: Uses subprocess instead of Python API to avoid:
         - HTTP 416 errors
-        - Range request issues  
+        - Range request issues
         - GIL blocking
         """
-        import subprocess
         import shutil
-        
+        import subprocess
+
         self.log("🔀 Using yt-dlp CLI subprocess for reliable download")
-        
+
         # Check ffmpeg
         has_ffmpeg = shutil.which("ffmpeg") is not None
         if not has_ffmpeg:
             self._show_ffmpeg_guide()
             self.log("⚠️ Continuing without FFmpeg (may fail for some streams)")
-        
+
         # Prepare output file
         output_path = self.filename.replace(".part", "")
-        
+
         # Build yt-dlp CLI command
         cmd = ["yt-dlp"]
-        
+
         # Format selection (from Quality Dialog)
         if self.format_info and "format_id" in self.format_info:
             fid = self.format_info["format_id"]
             vcodec = self.format_info.get("vcodec", "none")
             acodec = self.format_info.get("acodec", "none")
-            
+
             if vcodec != "none" and acodec != "none":
                 # Combined format
                 cmd.extend(["-f", fid])
@@ -319,12 +320,12 @@ class Downloader:
             else:
                 # Audio only
                 cmd.extend(["-f", fid])
-            
+
             self.log(f"🎯 Format: {fid}")
         else:
             # Default: best quality
             cmd.extend(["-f", "bestvideo+bestaudio/best"])
-        
+
         # Output template (different for playlists vs single videos)
         if self.format_info and self.format_info.get("is_playlist"):
             # Playlist: Use yt-dlp's template for dynamic naming
@@ -335,31 +336,31 @@ class Downloader:
         else:
             # Single video: Use specific filename
             cmd.extend(["-o", output_path])
-        
+
         # Progress
         cmd.append("--newline")  # Each progress on new line
         cmd.append("--no-colors")  # Clean output
-        
+
         # Merge format if FFmpeg available
         if has_ffmpeg:
             cmd.extend(["--merge-output-format", "mp4"])
-        
+
         # CRITICAL: Disable resume to avoid HTTP 416 errors
         cmd.append("--no-continue")
-        
+
         # For playlists: Skip unavailable/private videos instead of failing
         if self.format_info and self.format_info.get("is_playlist"):
             cmd.append("--ignore-errors")  # Continue on private/deleted videos
-        
+
         # URL
         cmd.append(self.url)
-        
+
         self.log(f"📦 Running: yt-dlp {' '.join(cmd[1:4])}...")
-        
+
         # Track downloaded files for proper completion callback
         downloaded_files = []
         is_playlist = self.format_info and self.format_info.get("is_playlist")
-        
+
         try:
             # Run subprocess with progress parsing
             process = subprocess.Popen(
@@ -369,33 +370,33 @@ class Downloader:
                 text=True,
                 bufsize=1,
             )
-            
+
             # Parse progress
             for line in process.stdout:
                 line = line.strip()
                 if not line:
                     continue
-                
+
                 # Print all yt-dlp output
                 print(f"yt-dlp: {line}")
-                
+
                 # Track downloaded files: [download] Destination: /path/to/file.mp4
                 if "[download] Destination:" in line:
                     dest_path = line.split("Destination:")[-1].strip()
                     downloaded_files.append(dest_path)
                     print(f"📥 File tracked: {dest_path}")
-                
+
                 # Handle private video errors gracefully
                 if "ERROR:" in line and "Private video" in line:
                     if self.status_callback:
                         self.status_callback("⚠️ Skipping private video")
                     continue  # Don't fail, just skip
-                
+
                 # Track playlist progress: [download] Downloading item 1 of 4
                 if "[download] Downloading item" in line:
                     if self.status_callback:
                         self.status_callback(line.replace("[download] ", ""))
-                
+
                 # Parse progress: [download]   0.5% of  105.37MiB at    1.06MiB/s ETA 01:39
                 # Also handles GiB: [download]   0.6% of    1.74GiB at    1.02MiB/s ETA 28:49
                 if "[download]" in line and "%" in line:
@@ -404,17 +405,17 @@ class Downloader:
                         pct = 0
                         total_bytes = 0
                         speed_bytes = 0
-                        
+
                         # Extract percentage
                         for i, part in enumerate(parts):
                             if "%" in part:
                                 pct_str = part.replace("%", "")
                                 pct = float(pct_str)
-                        
+
                         # Extract total size (look for "of XXXMiB" or "of XXXGiB")
                         for i, part in enumerate(parts):
-                            if part == "of" and i+1 < len(parts):
-                                size_str = parts[i+1]
+                            if part == "of" and i + 1 < len(parts):
+                                size_str = parts[i + 1]
                                 try:
                                     if "GiB" in size_str:
                                         total_gb = float(size_str.replace("GiB", "").replace("~", ""))
@@ -424,32 +425,32 @@ class Downloader:
                                         total_bytes = int(total_mb * 1024 * 1024)
                                 except ValueError:
                                     pass
-                        
+
                         # Extract speed (look for "at XXXMiB/s" or "XXXKiB/s")
                         for i, part in enumerate(parts):
-                            if part == "at" and i+1 < len(parts):
-                                speed_str = parts[i+1]
+                            if part == "at" and i + 1 < len(parts):
+                                speed_str = parts[i + 1]
                                 if "MiB/s" in speed_str:
                                     speed_mb = float(speed_str.replace("MiB/s", ""))
                                     speed_bytes = int(speed_mb * 1024 * 1024)
                                 elif "KiB/s" in speed_str:
                                     speed_kb = float(speed_str.replace("KiB/s", ""))
                                     speed_bytes = int(speed_kb * 1024)
-                        
+
                         # Calculate downloaded bytes from percentage
                         if total_bytes > 0:
                             downloaded_bytes = int(total_bytes * pct / 100)
-                            
+
                             # Call progress callback with 3 params
                             if self.progress_callback:
                                 self.progress_callback(downloaded_bytes, total_bytes, speed_bytes)
-                            
-                    except (ValueError, IndexError) as e:
+
+                    except (ValueError, IndexError):
                         pass  # Ignore parse errors
 
             process.wait()
             success = process.returncode == 0
-            
+
             if success:
                 print("✅ Terminal yt-dlp download complete")
                 self.log("✅ Download complete")
@@ -459,17 +460,19 @@ class Downloader:
                 if is_playlist and downloaded_files:
                     print(f"⚠️ Playlist partially completed: {len(downloaded_files)} files")
                     success = True  # Treat as success if some files downloaded
-            
+
             return success
 
         except Exception as e:
             import traceback
+
             traceback.print_exc()
             self.log(f"❌ yt-dlp error: {e}")
             import logging
+
             logging.debug(f"yt-dlp traceback: {traceback.format_exc()}")
             return False
-        
+
         finally:
             # CRITICAL: Always call completion callback to prevent UI desync
             if self.completion_callback:
@@ -483,7 +486,7 @@ class Downloader:
                         callback_path = downloaded_files[0]
                     else:
                         callback_path = output_path
-                
+
                 # Determine success based on downloaded files
                 success_status = len(downloaded_files) > 0
                 self.completion_callback(success_status, callback_path)
@@ -707,11 +710,11 @@ class Downloader:
 
         # Test if yt-dlp can handle this URL (subprocess CLI test)
         is_streaming_site = False
-        
+
         try:
-            import subprocess
             import json
-            
+            import subprocess
+
             # Quick test: Can yt-dlp extract info? (10s timeout)
             result = subprocess.run(
                 ["yt-dlp", "-J", self.url],
@@ -719,7 +722,7 @@ class Downloader:
                 text=True,
                 timeout=10,
             )
-            
+
             if result.returncode == 0 and result.stdout:
                 # Parse to check if formats exist
                 info = json.loads(result.stdout)
@@ -734,7 +737,7 @@ class Downloader:
         # Use yt-dlp for detected streaming sites OR known stream protocols
         if self.stream_type in ["hls", "dash"] or is_streaming_site:
             success = self.download_stream_ydl()
-            
+
             if self.completion_callback:
                 self.completion_callback(success, self.filename)
             return

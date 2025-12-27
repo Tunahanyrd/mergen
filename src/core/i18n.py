@@ -198,21 +198,6 @@ TRANS = {
         "playlist_analysis_warning": "⚠️ Full playlist analysis may take 30-120 seconds",
         "unknown_count": "(Unknown count)",
         "analyzing_playlist": "Analyzing full playlist...\nThis may take 30-120 seconds.",
-        
-        # Playlist-related
-        "playlist_detected": "Playlist Detected",
-        "playlist_analysis": "Playlist Analysis",
-        "failed_analyze_playlist": "Failed to analyze playlist",
-        "playlist_analysis_failed": "Playlist analysis failed",
-        
-        # Queue-related
-        "queue_manager": "Scheduler & Queue Manager",
-        "queue_exists_or_invalid": "Queue already exists or invalid name.",
-        "cannot_delete_default_queue": "Cannot delete default queue.",
-        "failed_delete_queue": "Failed to delete queue.",
-        "cannot_delete_main_queue": "Cannot delete Main Queue.",
-        
-        # Properties
         "file_properties": "File Properties",
     },
     "tr": {
@@ -461,19 +446,16 @@ TRANS = {
         "playlist_analysis_warning": "⚠️ Tam liste analizi 30-120 saniye sürebilir.",
         "unknown_count": "(Bilinmiyor)",
         "analyzing_playlist": "Liste analiz ediliyor...\nBu işlem 30-120 saniye sürebilir.",
-        
         # Playlist-related
         "playlist_analysis": "Liste Analizi",
         "failed_analyze_playlist": "Liste analizi başarısız",
         "playlist_analysis_failed": "Liste analizi başarısız oldu",
-        
         # Queue-related
         "queue_manager": "Zamanlayıcı ve Kuyruk Yöneticisi",
         "queue_exists_or_invalid": "Kuyruk zaten var veya geçersiz isim.",
         "cannot_delete_default_queue": "Varsayılan kuyruk silinemiyor.",
         "failed_delete_queue": "Kuyruk silinemedi.",
         "cannot_delete_main_queue": "Ana Kuyruk silinemiyor.",
-        
         # Properties
         "file_properties": "Dosya Özellikleri",
     },

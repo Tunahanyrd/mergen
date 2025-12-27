@@ -19,13 +19,12 @@ class AnalysisWorker(QThread):
     def run(self):
         """Fetch video info directly using yt-dlp (no subprocess needed)."""
         try:
-            import subprocess
             import json
-            import sys
-            
+            import subprocess
+
             # Pure CLI subprocess for analysis
             cmd = ["yt-dlp", "-J"]
-            
+
             # Conditional --no-playlist flag
             if self.no_playlist:
                 cmd.append("--no-playlist")
@@ -35,10 +34,10 @@ class AnalysisWorker(QThread):
                 # This fetches only metadata (title, id), not formats for every video
                 cmd.append("--flat-playlist")
                 print("📚 AnalysisWorker: Full Playlist Analysis Mode (Using --flat-playlist)")
-            
+
             cmd.append(self.url)
             print(f"🚀 Running command: {' '.join(cmd)}")
-            
+
             # Run subprocess
             result = subprocess.run(
                 cmd,
@@ -46,17 +45,17 @@ class AnalysisWorker(QThread):
                 text=True,
                 timeout=120,
             )
-            
+
             if result.returncode == 0 and result.stdout:
                 # Parse JSON
                 info = json.loads(result.stdout)
-                
+
                 # Check for flat playlist entries
-                if not self.no_playlist and 'entries' in info:
+                if not self.no_playlist and "entries" in info:
                     # Flat playlist structure
                     # We might not get full format info here, which is fine using BEST by default
                     print(f"📋 Flat playlist analyzed: {len(info.get('entries', []))} entries")
-                
+
                 # Extract key metadata
                 result_dict = {
                     "title": info.get("title", "Unknown Title"),
@@ -64,12 +63,12 @@ class AnalysisWorker(QThread):
                     "duration": info.get("duration"),
                     "uploader": info.get("uploader") or info.get("channel"),
                     "formats": info.get("formats", []),
-                    "entries": info.get("entries"), # Add entries for playlist
-                    "playlist_title": info.get("playlist_title") or info.get("title"), # Backup title
+                    "entries": info.get("entries"),  # Add entries for playlist
+                    "playlist_title": info.get("playlist_title") or info.get("title"),  # Backup title
                     "playlist_count": info.get("playlist_count"),
                     "webpage_url_basename": info.get("webpage_url_basename"),
                 }
-                
+
                 self.finished.emit(result_dict)
             else:
                 self.error.emit(f"Analysis failed: {result.stderr[:200]}")
@@ -80,6 +79,7 @@ class AnalysisWorker(QThread):
             self.error.emit(f"JSON parse error: {e}")
         except Exception as e:
             import traceback
+
             traceback.print_exc()
             self.error.emit(str(e))
 

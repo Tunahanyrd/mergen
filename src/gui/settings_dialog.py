@@ -608,8 +608,7 @@ class SettingsDialog(QDialog):
             # 1. Install Native Host Script
             import shutil
             import sys
-            import os
-            
+
             # Determine source path of native host script
             if hasattr(sys, "_MEIPASS"):
                 # Frozen/compiled mode
@@ -619,7 +618,7 @@ class SettingsDialog(QDialog):
                 # Source mode: src/gui/../../native-host/mergen-native-host.py
                 base_dir = Path(__file__).resolve().parent.parent.parent
                 src_script = base_dir / "native-host/mergen-native-host.py"
-            
+
             if not src_script.exists():
                 # Fallback check
                 if (Path.cwd() / "native-host/mergen-native-host.py").exists():
@@ -631,11 +630,11 @@ class SettingsDialog(QDialog):
             bin_dir = Path.home() / "bin"
             bin_dir.mkdir(parents=True, exist_ok=True)
             dst_script = bin_dir / "mergen-native-host.py"
-            
+
             # Copy and set permissions
             shutil.copy2(src_script, dst_script)
             dst_script.chmod(0o755)  # rwxr-xr-x
-            
+
             print(f"✅ Installed native host to {dst_script}")
 
             # 2. Update Chrome manifest

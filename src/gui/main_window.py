@@ -791,56 +791,50 @@ class MainWindow(QMainWindow):
     def start_download_final(self, url, save_dir, queue_name, format_info=None):
         import os
         from pathlib import Path
-        
+
         # Check for Playlist Mode
         if format_info and format_info.get("is_playlist") and format_info.get("entries"):
             entries = format_info["entries"]
             format_id = format_info.get("format_id", "bestvideo+bestaudio/best")
             ext = format_info.get("ext", "mp4")
-            
+
             print(f"📚 Playlist Download: Starting {len(entries)} videos with format '{format_id}'")
-            
+
             # For playlists, pass the original playlist URL to yt-dlp
             # yt-dlp will handle downloading all videos in the playlist
             # We create a SINGLE download item for the entire playlist
-            
+
             fname = "playlist"  # Generic name, yt-dlp will create proper names
             new_item = DownloadItem(
-                url=url, 
-                filename=os.path.join(save_dir, fname), 
-                save_path=save_dir, 
-                queue=queue_name
+                url=url, filename=os.path.join(save_dir, fname), save_path=save_dir, queue=queue_name
             )
             new_item.status = f"Downloading playlist ({len(entries)} videos)"
             new_item.size = I18n.get("initializing")
-            
+
             self.downloads.append(new_item)
             self.config.save_history(self.downloads)
             self.refresh_table()
-            
+
             # Start download with playlist URL and format
             # yt-dlp automatically downloads all videos when URL is a playlist
-            playlist_format_info = {
-                "format_id": format_id,
-                "ext": ext,
-                "is_playlist": True
-            }
-            
+            playlist_format_info = {"format_id": format_id, "ext": ext, "is_playlist": True}
+
             try:
                 dlg = DownloadDialog(url, self, save_dir=save_dir, format_info=playlist_format_info)
             except Exception as e:
                 print(f"❌ FAILED to create DownloadDialog for playlist: {e}")
                 import traceback
+
                 traceback.print_exc()
                 return
-            
+
             try:
                 dlg.download_complete.connect(lambda s, f: self.update_download_status(new_item, s, f))
                 dlg.worker.progress_signal.connect(lambda d, t, s, seg: self.update_live_row(new_item, d, t, s))
                 dlg.worker.status_signal.connect(lambda m: self.update_item_status(new_item, m))
             except AttributeError as e:
                 print(f"⚠️ Worker not ready: {e}")
-            
+
             self.active_dialogs.append(dlg)
             dlg.finished.connect(lambda: self.cleanup_dialog(dlg))
             dlg.show()
@@ -920,29 +914,31 @@ class MainWindow(QMainWindow):
                 return
 
             # Check if playlist detected
-            playlist_title = info.get('playlist_title')
-            playlist_count = info.get('playlist_count')
-            
+            playlist_title = info.get("playlist_title")
+            playlist_count = info.get("playlist_count")
+
             # Fallback for Mix playlists (where --no-playlist hides count)
-            is_playlist_url = 'list=' in url or 'playlist' in url
+            is_playlist_url = "list=" in url or "playlist" in url
             potential_playlist = is_playlist_url and not playlist_count
-            
-            print(f"🔍 Playlist Check: Title='{playlist_title}', Count={playlist_count}, DetectPattern={is_playlist_url}")
-            
+
+            print(
+                f"🔍 Playlist Check: Title='{playlist_title}', Count={playlist_count}, DetectPattern={is_playlist_url}"
+            )
+
             if (playlist_title and playlist_count and playlist_count > 1) or potential_playlist:
                 print("🎵 Playlist detected in MainWindow! Showing dialog...")
                 # Playlist detected! Ask user what they want
                 from src.gui.playlist_choice_dialog import PlaylistChoiceDialog
-                
+
                 # If falling back, use a generic title
                 display_title = playlist_title if playlist_title else "Detected Playlist"
                 display_count = playlist_count if playlist_count else None
-                
+
                 choice_dlg = PlaylistChoiceDialog(display_title, display_count, self)
                 choice_dlg.exec()
                 choice = choice_dlg.get_choice()
                 print(f"👤 User choice: {choice}")
-                
+
                 if choice == "playlist":
                     # User wants full playlist - re-analyze without --no-playlist
                     self.analyze_full_playlist(url, save_dir, queue_name)
@@ -951,7 +947,7 @@ class MainWindow(QMainWindow):
                     # User cancelled
                     return
                 # else: choice == "single", continue with current info
-            
+
             # Show Quality Dialog (single video or user chose single from playlist)
             q_dlg = QualityDialogV2(self, info)
 
@@ -982,52 +978,53 @@ class MainWindow(QMainWindow):
         print("🔗 Signals connected with QueuedConnection")
         worker.start()
         print("🚀 Worker started, waiting for callbacks...")
-    
+
     def analyze_full_playlist(self, url, save_dir, queue_name):
         """Re-analyze URL without --no-playlist flag for full playlist."""
-        from PySide6.QtWidgets import QProgressDialog
         from PySide6.QtCore import Qt
-        
+        from PySide6.QtWidgets import QProgressDialog
+
         # Show loading dialog
         from src.core.i18n import I18n
+
         progress = QProgressDialog(I18n.get("analyzing_playlist"), "Cancel", 0, 0, self)
         progress.setWindowTitle(I18n.get("playlist_analysis"))
         progress.setWindowModality(Qt.WindowModal)
         progress.setMinimumDuration(0)
         progress.setValue(0)
         progress.show()
-        
+
         # Create worker WITHOUT --no-playlist flag
         worker = AnalysisWorker(url, self.config.get_proxy_config(), no_playlist=False)
-        
+
         def on_playlist_finished(info):
             progress.close()
-            
+
             if not info:
                 QMessageBox.warning(self, I18n.get("error"), I18n.get("failed_analyze_playlist"))
                 return
-            
+
             # Show Quality Dialog with full playlist
             q_dlg = QualityDialogV2(self, info)
-            
+
             def on_selected(fmt_info):
                 self.start_download_final(url, save_dir, queue_name, fmt_info)
                 print("📥 start_download_final completed (playlist)")
-            
+
             q_dlg.quality_selected.connect(on_selected)
             q_dlg.exec()
-        
+
         def on_playlist_error(error_msg):
             progress.close()
             QMessageBox.warning(self, I18n.get("error"), I18n.get("playlist_analysis_failed") + f": {error_msg}")
-        
+
         # Check if cancelled
         progress.canceled.connect(lambda: worker.terminate())
-        
+
         # Connect signals
         worker.finished.connect(on_playlist_finished, Qt.QueuedConnection)
         worker.error.connect(on_playlist_error, Qt.QueuedConnection)
-        
+
         # Keep reference
         self._playlist_worker = worker
         worker.start()
