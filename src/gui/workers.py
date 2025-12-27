@@ -10,10 +10,11 @@ class AnalysisWorker(QThread):
     finished = Signal(object)  # Returns info dict or None
     error = Signal(str)  # Returns error message
 
-    def __init__(self, url, proxy_config=None):
+    def __init__(self, url, proxy_config=None, no_playlist=True):
         super().__init__()
         self.url = url
         self.proxy_config = proxy_config
+        self.no_playlist = no_playlist  # NEW: Control playlist analysis
 
     def run(self):
         """Fetch video info directly using yt-dlp (no subprocess needed)."""
@@ -23,9 +24,13 @@ class AnalysisWorker(QThread):
             import sys
             
             # Pure CLI subprocess for analysis
-            # Use --no-playlist for fast analysis (single video info)
-            # User can still download full playlist if they want
-            cmd = ["yt-dlp", "-J", "--no-playlist", self.url]
+            cmd = ["yt-dlp", "-J"]
+            
+            # Conditional --no-playlist flag
+            if self.no_playlist:
+                cmd.append("--no-playlist")
+            
+            cmd.append(self.url)
             
             # Run subprocess
             result = subprocess.run(

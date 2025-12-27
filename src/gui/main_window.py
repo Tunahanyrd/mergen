@@ -862,7 +862,28 @@ class MainWindow(QMainWindow):
                 self.start_download_final(url, save_dir, queue_name)
                 return
 
-            # Show Quality Dialog
+            # Check if playlist detected
+            playlist_title = info.get('playlist_title')
+            playlist_count = info.get('playlist_count')
+            
+            if playlist_title and playlist_count and playlist_count > 1:
+                # Playlist detected! Ask user what they want
+                from src.gui.playlist_choice_dialog import PlaylistChoiceDialog
+                
+                choice_dlg = PlaylistChoiceDialog(playlist_title, playlist_count, self)
+                choice_dlg.exec()
+                choice = choice_dlg.get_choice()
+                
+                if choice == "playlist":
+                    # User wants full playlist - re-analyze without --no-playlist
+                    self.analyze_full_playlist(url, save_dir, queue_name)
+                    return
+                elif choice is None:
+                    # User cancelled
+                    return
+                # else: choice == "single", continue with current info
+            
+            # Show Quality Dialog (single video or user chose single from playlist)
             q_dlg = QualityDialogV2(self, info)
 
             # Handle selection
@@ -892,6 +913,54 @@ class MainWindow(QMainWindow):
         print("🔗 Signals connected with QueuedConnection")
         worker.start()
         print("🚀 Worker started, waiting for callbacks...")
+    
+    def analyze_full_playlist(self, url, save_dir, queue_name):
+        """Re-analyze URL without --no-playlist flag for full playlist."""
+        from PySide6.QtWidgets import QProgressDialog
+        from PySide6.QtCore import Qt
+        
+        # Show loading dialog
+        progress = QProgressDialog("Analyzing full playlist...\nThis may take 30-120 seconds.", "Cancel", 0, 0, self)
+        progress.setWindowTitle("Playlist Analysis")
+        progress.setWindowModality(Qt.WindowModal)
+        progress.setMinimumDuration(0)
+        progress.setValue(0)
+        progress.show()
+        
+        # Create worker WITHOUT --no-playlist flag
+        worker = AnalysisWorker(url, self.config.get_proxy_config(), no_playlist=False)
+        
+        def on_playlist_finished(info):
+            progress.close()
+            
+            if not info:
+                QMessageBox.warning(self, "Error", "Failed to analyze playlist")
+                return
+            
+            # Show Quality Dialog with full playlist
+            q_dlg = QualityDialogV2(self, info)
+            
+            def on_selected(fmt_info):
+                self.start_download_final(url, save_dir, queue_name, fmt_info)
+                print("📥 start_download_final completed (playlist)")
+            
+            q_dlg.quality_selected.connect(on_selected)
+            q_dlg.exec()
+        
+        def on_playlist_error(error_msg):
+            progress.close()
+            QMessageBox.warning(self, "Error", f"Playlist analysis failed: {error_msg}")
+        
+        # Check if cancelled
+        progress.canceled.connect(lambda: worker.terminate())
+        
+        # Connect signals
+        worker.finished.connect(on_playlist_finished, Qt.QueuedConnection)
+        worker.error.connect(on_playlist_error, Qt.QueuedConnection)
+        
+        # Keep reference
+        self._playlist_worker = worker
+        worker.start()
 
     # Copying remaining methods to ensure file completeness
     def open_settings(self, tab_index=0):
