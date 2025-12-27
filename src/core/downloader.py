@@ -289,13 +289,19 @@ class Downloader:
         
         CRITICAL: Uses subprocess instead of Python API to avoid:
         - HTTP 416 errors
-        - Range request issues
+        - Range request issues  
         - GIL blocking
         """
         import subprocess
-        import sys
+        import shutil
         
         self.log("🔀 Using yt-dlp CLI subprocess for reliable download")
+        
+        # Check ffmpeg
+        has_ffmpeg = shutil.which("ffmpeg") is not None
+        if not has_ffmpeg:
+            self._show_ffmpeg_guide()
+            self.log("⚠️ Continuing without FFmpeg (may fail for some streams)")
         
         # Prepare output file
         output_path = self.filename.replace(".part", "")
@@ -323,14 +329,30 @@ class Downloader:
         else:
             # Default: best quality
             cmd.extend(["-f", "bestvideo+bestaudio/best"])
-        # Add merge format if FFmpeg available
+        
+        # Output template
+        cmd.extend(["-o", output_path])
+        
+        # Progress
+        cmd.append("--newline")  # Each progress on new line
+        cmd.append("--no-colors")  # Clean output
+        
+        # YouTube-specific (if needed)
+        from src.core.ytdlp_config import is_youtube
+        if is_youtube(self.url):
+            cmd.append("--no-playlist")
+        
+        # Merge format if FFmpeg available
         if has_ffmpeg:
             cmd.extend(["--merge-output-format", "mp4"])
-
+        
+        # URL
         cmd.append(self.url)
-
+        
+        self.log(f"📦 Running: yt-dlp {' '.join(cmd[1:4])}...")
+        
         try:
-            # Run with progress output
+            # Run subprocess with progress parsing
             process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
@@ -338,34 +360,39 @@ class Downloader:
                 text=True,
                 bufsize=1,
             )
-
-            # Read output line by line for progress
+            
+            # Parse progress
             for line in process.stdout:
                 line = line.strip()
                 if not line:
                     continue
-
-                # Parse progress: [download]  45.2% of ~100.50MiB at  2.34MiB/s ETA 00:24
+                
+                # yt-dlp progress: [download]  45.2% of 12.34MiB at 1.23MiB/s ETA 00:05
                 if "[download]" in line and "%" in line:
                     try:
                         # Extract percentage
-                        if "%" in line:
-                            parts = line.split()
-                            for i, part in enumerate(parts):
-                                if "%" in part:
-                                    percent_str = part.replace("%", "")
-                                    percent = float(percent_str)
-
-                                    # Update status with progress percentage
-                                    self.log(f"Progress: {percent:.1f}%")
-                                    break
+                        parts = line.split()
+                        for i, part in enumerate(parts):
+                            if "%" in part:
+                                pct_str = part.replace("%", "")
+                                pct = float(pct_str)
+                                
+                                # Extract size if available
+                                if "of" in parts and i+2 < len(parts):
+                                    size_str = parts[i+2]
+                                    # Convert to bytes (approximate)
+                                    if "MiB" in size_str:
+                                        total_mb = float(size_str.replace("MiB", ""))
+                                        total_bytes = int(total_mb * 1024 * 1024)
+                                        downloaded_bytes = int(total_bytes * pct / 100)
+                                        
+                                        # Call progress callback
+                                        if self.progress_callback:
+                                            self.progress_callback(downloaded_bytes, total_bytes, 0)
+                                
+                                break
                     except (ValueError, IndexError):
                         pass
-                elif "[download] Destination:" in line:
-                    self.log("Download started...")
-                elif "[download] 100%" in line or "has already been downloaded" in line:
-                    self.log("Download complete")
-                # Suppress other output to keep terminal clean
                 elif line.startswith("["):
                     pass  # Skip yt-dlp info lines
                 else:
