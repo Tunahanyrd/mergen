@@ -22,8 +22,8 @@ class AnalysisWorker(QThread):
             import json
             import sys
             
-            # Pure CLI subprocess for analysis (same as download)
-            cmd = ["yt-dlp", "-J", "--no-playlist", self.url]
+            # Pure CLI subprocess for analysis (supports playlists)
+            cmd = ["yt-dlp", "-J", self.url]
             
             # Run subprocess
             result = subprocess.run(

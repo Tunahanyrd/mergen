@@ -332,11 +332,6 @@ class Downloader:
         cmd.append("--newline")  # Each progress on new line
         cmd.append("--no-colors")  # Clean output
         
-        # YouTube-specific (if needed)
-        from src.core.ytdlp_config import is_youtube
-        if is_youtube(self.url):
-            cmd.append("--no-playlist")
-        
         # Merge format if FFmpeg available
         if has_ffmpeg:
             cmd.extend(["--merge-output-format", "mp4"])
@@ -658,7 +653,7 @@ class Downloader:
             
             # Quick test: Can yt-dlp extract info? (10s timeout)
             result = subprocess.run(
-                ["yt-dlp", "-J", "--no-playlist", self.url],
+                ["yt-dlp", "-J", self.url],
                 capture_output=True,
                 text=True,
                 timeout=10,
