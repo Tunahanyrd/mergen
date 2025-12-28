@@ -1,6 +1,6 @@
 [project]
 name = "mergen"
-version = "0.9.4"
+version = "0.9.5"
 description = "A modern, high-performance download manager with browser integration, network resilience, and Python 3.13+ support."
 authors = [{name = "Tunahanyrd", email = "tunahanyrd@gmail.com"}]
 requires-python = ">=3.13"

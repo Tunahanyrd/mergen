@@ -199,7 +199,6 @@ class MainWindow(QMainWindow):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
-        self.create_menubar()
 
         self.toolbar_ref = self.create_toolbar()
         # Initial style, apply_theme will override
@@ -273,27 +272,6 @@ class MainWindow(QMainWindow):
         self.speed_timer.start(1000)
 
     # Removed update_sidebar_counts logic (Column 2 removed)
-
-    def create_menubar(self):
-        menu_bar = self.menuBar()
-
-        file_menu = menu_bar.addMenu(I18n.get("file"))
-
-        add_url_act = QAction(I18n.get("add_url"), self)
-        add_url_act.setShortcut("Ctrl+N")
-        add_url_act.triggered.connect(self.add_url)
-        file_menu.addAction(add_url_act)
-
-        exit_act = QAction(I18n.get("exit"), self)
-        exit_act.setShortcut("Ctrl+Q")
-        exit_act.triggered.connect(self.close)
-        file_menu.addAction(exit_act)
-
-        help_menu = menu_bar.addMenu(I18n.get("help"))
-
-        about_act = QAction(I18n.get("about"), self)
-        about_act.triggered.connect(self.show_about_dialog)
-        help_menu.addAction(about_act)
 
     def toggle_toolbar(self, checked):
         if hasattr(self, "toolbar_ref"):
@@ -1422,24 +1400,6 @@ class MainWindow(QMainWindow):
         self.tray_icon.setContextMenu(tray_menu)
         self.tray_icon.show()
         self.tray_icon.activated.connect(self.on_tray_activated)
-
-    def show_about_dialog(self):
-        """Show About dialog with app information."""
-        from PySide6.QtWidgets import QMessageBox
-
-        about_text = """
-        <h2>MERGEN</h2>
-        <p><b>Version:</b> 1.0.0</p>
-        <p><b>Multi-threaded Download Manager</b></p>
-        <br>
-        <p>Built with PySide6 & Python</p>
-        """
-
-        msg = QMessageBox(self)
-        msg.setWindowTitle(I18n.get("about"))
-        msg.setText(about_text)
-        msg.setIcon(QMessageBox.Information)
-        msg.exec()
 
     def on_tray_activated(self, reason):
         if reason == QSystemTrayIcon.DoubleClick:
