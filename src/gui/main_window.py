@@ -199,7 +199,6 @@ class MainWindow(QMainWindow):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
-
         self.toolbar_ref = self.create_toolbar()
         # Initial style, apply_theme will override
         main_layout.addWidget(self.toolbar_ref)
