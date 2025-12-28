@@ -12,12 +12,10 @@ from concurrent.futures import ThreadPoolExecutor
 # No GIL = 64 truly parallel threads!
 _global_executor = None
 
+
 def get_executor() -> ThreadPoolExecutor:
     """Get or create global thread pool executor for downloads."""
     global _global_executor
     if _global_executor is None:
-        _global_executor = ThreadPoolExecutor(
-            max_workers=64,
-            thread_name_prefix="mergen-dl"
-        )
+        _global_executor = ThreadPoolExecutor(max_workers=64, thread_name_prefix="mergen-dl")
     return _global_executor

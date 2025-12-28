@@ -416,17 +416,14 @@ class DownloadDialog(QDialog):
         else:
             # For failures, use simple message box
             from PySide6.QtWidgets import QMessageBox
+
             from src.core.i18n import I18n
-            QMessageBox.warning(
-                self,
-                I18n.get("download_failed"),
-                I18n.get("download_failed_msg")
-            )
-        
+
+            QMessageBox.warning(self, I18n.get("download_failed"), I18n.get("download_failed_msg"))
+
         # Close the download dialog
         self.accept()
 
-    
     def toggle_pause(self):
         if self.worker.is_running:
             self.worker.stop()

@@ -19,11 +19,9 @@ from pathlib import Path
 from typing import Callable, List, Optional
 
 from src.core.logger import get_logger
+from src.core.models import DownloadProgress
 
 logger = get_logger(__name__)
-
-# Import models for type hints
-from src.core.models import DownloadProgress
 
 
 class ProcessState(Enum):

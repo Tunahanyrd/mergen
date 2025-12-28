@@ -408,7 +408,7 @@ class QualityDialogV2(QDialog):
             total_mb = (bitrate_kbps * total_duration_seconds) / 8 / 1024
 
             if total_mb > 1024:
-                return f"~{total_mb/1024:.1f} GB"
+                return f"~{total_mb / 1024:.1f} GB"
             return f"~{int(total_mb)} MB"
 
         # Calculate total duration for display
