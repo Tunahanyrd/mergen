@@ -1,79 +1,99 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Mergen Download Manager
-Main entry point with verbose mode support
+Mergen - High-performance download manager.
+
+Python 3.13 optimization enabled:
+- JIT compiler support
+- 64-thread concurrent downloads
+- Network resilience
 """
 
 import argparse
+import difflib
 import os
 import signal
 import sys
 
-from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
-from src.core.version import get_version_string
-from src.gui.main_window import MainWindow
+# Fix Qt portal warning by setting proper app ID
+os.environ.setdefault("QT_QPA_PLATFORMTHEME", "qt6ct")
+os.environ.setdefault("DESKTOP_STARTUP_ID", "mergen.desktop")
 
-if __name__ == "__main__":
-    # Parse command-line arguments
-    parser = argparse.ArgumentParser(
-        prog="mergen",
-        description="Mergen - Modern download manager with browser integration and stream support",
-        epilog="Homepage: https://github.com/Tunahanyrd/mergen",
-    )
-    parser.add_argument(
-        "-v",
-        "--version",
-        action="version",
-        version=get_version_string(),
-        help="Show version information",
-    )
-    parser.add_argument(
-        "--verbose",
-        action="store_true",
-        help="Enable verbose/debug logging",
-    )
-    args = parser.parse_args()
+# Enable JIT compiler for Python 3.13+ (experimental)
+if sys.version_info >= (3, 13):
+    os.environ.setdefault("PYTHON_JIT", "1")
 
-    # Set verbose mode
+
+class MergenParser(argparse.ArgumentParser):
+    """Custom parser to provide suggestions for typos."""
+
+    def error(self, message):
+        # Look for the last argument if it seems like a flag
+        invalid_arg = sys.argv[-1] if sys.argv[-1].startswith("-") else None
+
+        if invalid_arg:
+            valid_options = [opt for action in self._actions for opt in action.option_strings]
+            suggestion = difflib.get_close_matches(invalid_arg, valid_options, n=1, cutoff=0.6)
+
+            if suggestion:
+                message = f"{message}\n💡 Did you mean: '{suggestion[0]}'?"
+
+        super().error(message)
+
+
+def setup_environment(args):
+    """Handle Python optimizations and logging levels."""
+    if args.no_jit:
+        os.environ.pop("PYTHON_JIT", None)
+
     if args.verbose:
         os.environ["MERGEN_VERBOSE"] = "1"
         print("🔊 Verbose mode enabled")
 
-    signal.signal(signal.SIGINT, signal.SIG_DFL)
+        if sys.version_info >= (3, 13):
+            jit_enabled = os.environ.get("PYTHON_JIT") == "1"
+            print(f"⚡ Python 3.{sys.version_info.minor}.{sys.version_info.micro}")
+            print(f"   JIT: {'Enabled' if jit_enabled else 'Disabled'}")
+
+
+def main():
+    """Main entry point with Python 3.13 optimizations."""
+    from src.core.version import get_version_string
+    from src.gui.main_window import MainWindow
+
+    parser = MergenParser(description="Mergen Download Manager")
+    parser.add_argument(
+        "--verbose", "-v", action="store_true", help="Enable verbose logging (yt-dlp output, debug messages)"
+    )
+    parser.add_argument("--version", action="store_true", help="Show version and exit")
+    parser.add_argument("--no-jit", action="store_true", help="Disable JIT compiler (Python 3.13+)")
+
+    args = parser.parse_args()
+
+    if args.version:
+        print(f"Mergen {get_version_string()}")
+        return
+
+    # Apply optimizations and environment settings
+    setup_environment(args)
+
+    # Qt Application
     app = QApplication(sys.argv)
+    app.setApplicationName("Mergen")
+    app.setOrganizationName("Tunahanyrd")
+    app.setDesktopFileName("mergen")
 
-    # Set application-wide icon (all windows inherit this)
-    icon_path = "data/mergen.png"
-    if hasattr(sys, "_MEIPASS"):
-        # Nuitka/PyInstaller compiled mode
-        icon_path = os.path.join(sys._MEIPASS, "data", "mergen.png")
-    if os.path.exists(icon_path):
-        app.setWindowIcon(QIcon(icon_path))
-
-    # Apply theme
-    from src.gui.styles import MERGEN_THEME
-
-    app.setStyleSheet(MERGEN_THEME)
-
-    # Initialize language BEFORE creating UI
-    from src.core.config import ConfigManager
-    from src.core.i18n import I18n
-
-    config = ConfigManager()
-    lang = config.get("language", I18n.detect_os_lang())  # Respect system locale
-    I18n.set_language(lang)
-
-    # Now create main window with correct language
+    # Main Window
     window = MainWindow()
-
-    # Start browser integration server
-    from src.core.browser_integration import start_http_server
-
-    start_http_server(window, port=8765)
-
     window.show()
 
+    # Cleanup on exit
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+
     sys.exit(app.exec())
+
+
+if __name__ == "__main__":
+    main()

@@ -7,7 +7,10 @@ import json
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
+from src.core.logger import get_logger
 from src.core.version import __version__
+
+logger = get_logger(__name__)
 
 
 class MergenHTTPHandler(BaseHTTPRequestHandler):
@@ -43,7 +46,7 @@ class MergenHTTPHandler(BaseHTTPRequestHandler):
                 self.send_error(400, "Missing extension_id")
                 return
 
-            print(f"📥 Auto-register request: {browser} extension {ext_id[:16]}...")
+            logger.info(f"Auto-register request: {browser} extension {ext_id[:16]}...")
 
             # Create native messaging manifests
             import shutil
@@ -106,10 +109,10 @@ class MergenHTTPHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps(response).encode())
 
-            print(f"✅ Extension registered: {browser}")
+            logger.info(f"Extension registered: {browser}")
 
         except Exception as e:
-            print(f"❌ Registration failed: {e}")
+            logger.error(f"Registration failed: {e}")
             self.send_response(500)
             self.send_header("Content-Type", "application/json")
             self.end_headers()
@@ -131,7 +134,7 @@ class MergenHTTPHandler(BaseHTTPRequestHandler):
             if self.main_window and hasattr(self.main_window, "browser_download_signal"):
                 # Auto-wake: Show window if hidden/minimized
                 if self.main_window.isHidden() or self.main_window.isMinimized():
-                    print("📱 Auto-wake: Restoring window for incoming download")
+                    logger.debug("Auto-wake: Restoring window for incoming download")
                     self.main_window.show()
                     self.main_window.raise_()
                     self.main_window.activateWindow()
@@ -140,7 +143,7 @@ class MergenHTTPHandler(BaseHTTPRequestHandler):
 
                 # Log stream type for debugging
                 if stream_type in ["hls", "dash"]:
-                    print(f"🎬 Detected {stream_type.upper()} stream: {url[:80]}...")
+                    logger.info(f"Detected {stream_type.upper()} stream: {url[:80]}...")
 
             # Send success response
             response = {"status": "success", "message": "Download added", "stream_type": stream_type}
@@ -151,7 +154,7 @@ class MergenHTTPHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(response).encode())
 
         except Exception as e:
-            print(f"❌ Browser integration error: {e}")
+            logger.error(f"Browser integration error: {e}")
             self.send_response(500)
             self.send_header("Content-Type", "application/json")
             self.end_headers()
@@ -185,9 +188,9 @@ def start_http_server(main_window, port=8765):
         server_thread = threading.Thread(target=server.serve_forever, daemon=True, name="BrowserIntegrationServer")
         server_thread.start()
 
-        print(f"✅ Browser integration server started on http://localhost:{port}")
+        logger.info(f"Browser integration server started on http://localhost:{port}")
         return server
 
     except Exception as e:
-        print(f"❌ Failed to start browser integration server: {e}")
+        logger.error(f"Failed to start browser integration server: {e}")
         return None

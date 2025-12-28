@@ -1,159 +1,164 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="UTF-8">
-  <title>Mergen Download Manager</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    body {
-      width: 350px;
-      padding: 16px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-      background: linear-gradient(135deg, #1a1f3a 0%, #2d1b4e 100%);
-      color: #e5e7eb;
-    }
-    
-    h2 {
-      font-size: 18px;
-      margin-bottom: 16px;
-      color: #fff;
-    }
-    
-    .status {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 8px;
-      margin-bottom: 16px;
-    }
-    
-    .status-icon {
-      font-size: 20px;
-    }
-    
-    .status-text {
-      flex: 1;
-      font-size: 14px;
-    }
-    
-    .connected { color: #22c55e; }
-    .disconnected { color: #ef4444; }
-    .checking { color: #f59e0b; }
-    
-    .setup-section {
-      background: rgba(255, 255, 255, 0.05);
-      padding: 16px;
-      border-radius: 8px;
-      margin-bottom: 12px;
-    }
-    
-    .setup-section h3 {
-      font-size: 14px;
-      margin-bottom: 12px;
-      color: #a78bfa;
-    }
-    
-    .setup-section ol {
-      margin-left: 20px;
-      font-size: 13px;
-      line-height: 1.6;
-    }
-    
-    .extension-id-box {
-      display: flex;
-      gap: 8px;
-      margin-top: 12px;
-    }
-    
-    #extension-id {
-      flex: 1;
-      padding: 8px;
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 6px;
-      color: #fff;
-      font-size: 12px;
-      font-family: 'Courier New', monospace;
-    }
-    
-    button {
-      padding: 8px 16px;
-      background: #6366f1;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 500;
-      transition: background 0.2s;
-    }
-    
-    button:hover {
-      background: #4f46e5;
-    }
-    
-    button:active {
-      transform: scale(0.98);
-    }
-    
-    #copy-btn {
-      background: #22c55e;
-    }
-    
-    #copy-btn:hover {
-      background: #16a34a;
-    }
-    
-    .copied {
-      background: #16a34a !important;
-    }
-    
-    .footer {
-      margin-top: 16px;
-      padding-top: 12px;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-      text-align: center;
-      font-size: 12px;
-      color: #9ca3af;
-    }
-  </style>
-</head>
-<body>
-  <h2>🔽 Mergen Download Manager</h2>
-  
-  <div class="status">
-    <span class="status-icon" id="status-icon">⚫</span>
-    <span class="status-text" id="status-text">Checking connection...</span>
-  </div>
-  
-  <div class="setup-section">
-    <h3>📋 Setup Instructions</h3>
-    <ol>
-      <li>Install Mergen app from package manager</li>
-      <li>Copy your Extension ID below</li>
-      <li>Open Mergen → Settings → Browser Integration</li>
-      <li>Paste ID and click "Register"</li>
-    </ol>
-    
-    <div class="extension-id-box">
-      <input type="text" id="extension-id" readonly>
-      <button id="copy-btn">📋 Copy</button>
+  <head>
+    <meta charset="utf-8" />
+    <title>Mergen Download Manager</title>
+    <style>
+      body {
+        width: 400px;
+        padding: 16px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        margin: 0;
+      }
+      
+      .header {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      
+      h1 {
+        font-size: 24px;
+        margin: 0 0 8px 0;
+      }
+      
+      .subtitle {
+        opacity: 0.9;
+        font-size: 14px;
+      }
+      
+      .section {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 12px;
+        backdrop-filter: blur(10px);
+      }
+      
+      .section-title {
+        font-weight: 600;
+        margin-bottom: 8px;
+        font-size: 14px;
+      }
+      
+      button {
+        width: 100%;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s;
+      }
+      
+      button:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-1px);
+      }
+      
+      .media-list {
+        max-height: 300px;
+        overflow-y: auto;
+      }
+      
+      .media-item {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 6px;
+        padding: 10px;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      
+      .media-icon {
+        font-size: 24px;
+      }
+      
+      .media-info {
+        flex: 1;
+        min-width: 0;
+      }
+      
+      .media-name {
+        font-weight: 500;
+        font-size: 13px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      
+      .media-type {
+        font-size: 11px;
+        opacity: 0.8;
+        text-transform: uppercase;
+      }
+      
+      .download-btn {
+        padding: 6px 12px;
+        font-size: 12px;
+        width: auto;
+        min-width: 70px;
+      }
+      
+      .empty-state {
+        text-align: center;
+        padding: 30px 20px;
+        opacity: 0.7;
+      }
+      
+      .status {
+        text-align: center;
+        padding: 8px;
+        background: rgba(0, 200, 83, 0.2);
+        border-radius: 6px;
+        font-size: 13px;
+        margin-top: 12px;
+      }
+
+      .error {
+        background: rgba(244, 67, 54, 0.2);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>🚀 Mergen</h1>
+      <div class="subtitle">Download Manager</div>
     </div>
-  </div>
-  
-  <button id="test-btn" style="width: 100%;">🧪 Test Connection</button>
-  
-  <div class="footer">
-    v0.9.3 | Made with ❤️ by Tunahanyrd
-  </div>
-  
-  <script src="popup.js"></script>
-</body>
+
+    <!-- Detected Media Section -->
+    <div class="section">
+      <div class="section-title">🎬 Detected Media (<span id="media-count">0</span>)</div>
+      <div class="media-list" id="media-list">
+        <div class="empty-state">
+          <div style="font-size: 48px; margin-bottom: 12px;">🔍</div>
+          <div>No media detected yet</div>
+          <div style="font-size: 12px; margin-top: 8px; opacity: 0.7;">
+            Browse any site with videos
+          </div>
+        </div>
+      </div>
+      <button id="download-all" style="margin-top: 10px; display: none;">
+        📥 Download All Media
+      </button>
+      <button id="clear-media" style="margin-top: 8px; display: none;">
+        🗑️ Clear List
+      </button>
+    </div>
+
+    <!-- Manual URL Section -->
+    <div class="section">
+      <div class="section-title">📎 Manual Add</div>
+      <button id="add-current">Add Current Page</button>
+    </div>
+
+    <div id="status-message" style="display: none;"></div>
+
+    <script src="popup.js"></script>
+  </body>
 </html>

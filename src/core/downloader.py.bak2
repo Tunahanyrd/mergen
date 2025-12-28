@@ -342,9 +342,7 @@ class Downloader:
             self.log(f"📚 Playlist mode: Files will be saved to {self.save_dir}/")
         else:
             # Single video: Use specific filename
-            # Single video: Use title template
-            output_template = os.path.join(self.save_dir, "%(title)s.%(ext)s")
-            cmd.extend(["-o", output_template])
+            cmd.extend(["-o", output_path])
 
         # Concurrent fragments optimized for Python 3.14
         # Even with GIL, modern scheduler handles 64 threads better

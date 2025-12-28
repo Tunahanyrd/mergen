@@ -658,8 +658,7 @@ class MainWindow(QMainWindow):
 
             # Populate Columns
             # Col 0: File Name
-            # Show full path instead of just filename
-            self.table.setItem(row, 0, QTableWidgetItem(d.filename))
+            self.table.setItem(row, 0, QTableWidgetItem(os.path.basename(d.filename)))
             # Col 1: Size (Show Known Size)
             size_str = d.size
             if d.total_bytes > 0:
@@ -688,8 +687,9 @@ class MainWindow(QMainWindow):
     def add_table_row(self, data):
         row = self.table.rowCount()
         self.table.insertRow(row)
-        # Show full path instead of basename
-        self.table.setItem(row, 0, QTableWidgetItem(data.filename))
+
+        fname = os.path.basename(data.filename)
+        self.table.setItem(row, 0, QTableWidgetItem(fname))
         self.table.setItem(row, 1, QTableWidgetItem(str(data.size)))
         self.table.setItem(row, 2, QTableWidgetItem(data.status))
         self.table.setItem(row, 3, QTableWidgetItem(""))

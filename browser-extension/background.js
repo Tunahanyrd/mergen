@@ -1,3 +1,8 @@
+// Import MV3 utilities
+importScripts("utils/rule-manager.js");
+// Import media detector (MV3 version)
+importScripts("media-detector.js");
+
 // Mergen Download Manager - Browser Extension v0.9.3
 // Captures downloads AND streaming media (HLS/DASH) via Manifest V3
 

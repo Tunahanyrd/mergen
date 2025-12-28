@@ -1,4 +1,8 @@
+import os
+
 from PySide6.QtCore import QThread, Signal
+
+from src.core.network import get_network_manager
 
 
 class AnalysisWorker(QThread):
@@ -18,6 +22,12 @@ class AnalysisWorker(QThread):
 
     def run(self):
         """Fetch video info directly using yt-dlp (no subprocess needed)."""
+        # Check network connectivity first
+        net_mgr = get_network_manager()
+        if not net_mgr.is_online():
+            self.error.emit("No internet connection. Please check your network.")
+            return
+
         try:
             import json
             import subprocess

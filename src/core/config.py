@@ -4,6 +4,10 @@ from pathlib import Path
 
 from PySide6.QtCore import QStandardPaths
 
+from src.core.logger import get_logger
+
+logger = get_logger(__name__)
+
 CONFIG_FILE = "config.json"
 HISTORY_FILE = "history.json"
 
@@ -110,8 +114,8 @@ class ConfigManager:
         try:
             with open(config_path, "w") as f:
                 json.dump(self.config, f, indent=4)
-        except Exception as e:
-            print(f"Error saving config: {e}")
+        except (IOError, OSError) as e:
+            logger.error(f"Error saving config: {e}")
 
     def get(self, key, default=None):
         return self.config.get(key, default if default is not None else self.defaults.get(key))
@@ -131,8 +135,8 @@ class ConfigManager:
                 data = json.load(f)
                 # Convert list of dicts to list of objects
                 return [DownloadItem.from_dict(d) for d in data]
-        except Exception as e:
-            print(f"Error loading history: {e}")
+        except (IOError, OSError, json.JSONDecodeError) as e:
+            logger.error(f"Error loading history: {e}")
             return []
 
     def save_history(self, downloads):
@@ -142,8 +146,8 @@ class ConfigManager:
             data = [d.to_dict() for d in downloads]
             with open(history_path, "w") as f:
                 json.dump(data, f, indent=4)
-        except Exception as e:
-            print(f"Error saving history: {e}")
+        except (IOError, OSError) as e:
+            logger.error(f"Error saving history: {e}")
 
     def get_proxy_config(self):
         """

@@ -2,7 +2,7 @@
 # Build .rpm package for Fedora/RHEL/CentOS
 set -e
 
-VERSION="0.9.3"
+VERSION="0.9.5"
 RELEASE="1"
 
 mkdir -p rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}

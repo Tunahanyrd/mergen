@@ -406,17 +406,17 @@ class DownloadDialog(QDialog):
 
     def on_download_finished(self, success, filename):
         """Handle download completion - show dialog and close."""
+        from PySide6.QtWidgets import QMessageBox
+
+        from src.core.i18n import I18n
+        
         self.download_complete.emit(success, filename)
         self.finished.emit()
 
         if success:
-            # Show the nice custom completion dialog
+            # Use CompleteDialog instead
             complete_dlg = CompleteDialog(filename, self)
             complete_dlg.exec()
-        else:
-            # For failures, use simple message box
-            from PySide6.QtWidgets import QMessageBox
-            from src.core.i18n import I18n
             QMessageBox.warning(
                 self,
                 I18n.get("download_failed"),
@@ -426,7 +426,6 @@ class DownloadDialog(QDialog):
         # Close the download dialog
         self.accept()
 
-    
     def toggle_pause(self):
         if self.worker.is_running:
             self.worker.stop()

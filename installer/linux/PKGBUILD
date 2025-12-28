@@ -1,6 +1,6 @@
 # Maintainer: Tunahanyrd <tunahanyrd@gmail.com>
 pkgname=mergen
-pkgver=0.9.3
+pkgver=0.9.5
 pkgrel=1
 pkgdesc="Multi-threaded download manager with browser integration and stream support (HLS/DASH)"
 arch=('x86_64')

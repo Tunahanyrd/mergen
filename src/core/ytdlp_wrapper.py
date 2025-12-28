@@ -18,6 +18,10 @@ from enum import Enum
 from pathlib import Path
 from typing import Callable, List, Optional
 
+from src.core.logger import get_logger
+
+logger = get_logger(__name__)
+
 # Import models for type hints
 from src.core.models import DownloadProgress
 
@@ -102,7 +106,7 @@ class YtDlpProcess:
         while self.retry_count < self.max_retries:
             try:
                 cmd = self.config.build_command(self.url, self.output_dir)
-                print(f"🚀 Running: {' '.join(cmd[:4])}...")
+                logger.debug(f"Running: {' '.join(cmd[:4])}...")
 
                 self.process = subprocess.Popen(
                     cmd,
@@ -123,7 +127,7 @@ class YtDlpProcess:
                     if "[download] Destination:" in line:
                         filename = line.split("Destination:")[-1].strip()
                         self.downloaded_files.append(Path(filename))
-                        print(f"📥 File tracked: {filename}")
+                        logger.debug(f"File tracked: {filename}")
 
                     # Handle private video errors (skip and continue)
                     if "ERROR: [youtube]" in line and "Private video" in line:
@@ -133,7 +137,7 @@ class YtDlpProcess:
 
                     # Handle connection errors (retry)
                     if any(err in line for err in ["HTTP Error", "Connection reset", "Network unreachable"]):
-                        print(f"⚠️ Connection error, retrying ({self.retry_count + 1}/{self.max_retries})")
+                        logger.warning(f"Connection error, retrying ({self.retry_count + 1}/{self.max_retries})")
                         self.retry_count += 1
                         self.terminate()
                         break
@@ -158,7 +162,7 @@ class YtDlpProcess:
                     return True
 
             except Exception as e:
-                print(f"❌ yt-dlp error: {e}")
+                logger.error(f"yt-dlp error: {e}")
                 self.retry_count += 1
 
         # Failed after all retries
@@ -173,10 +177,10 @@ class YtDlpProcess:
             try:
                 os.killpg(os.getpgid(self.process.pid), signal.SIGSTOP)
                 self.state = ProcessState.PAUSED
-                print("⏸️ Download paused")
+                logger.info("Download paused")
                 return True
             except Exception as e:
-                print(f"❌ Failed to pause: {e}")
+                logger.error(f"Failed to pause: {e}")
                 return False
         return False
 
@@ -186,10 +190,10 @@ class YtDlpProcess:
             try:
                 os.killpg(os.getpgid(self.process.pid), signal.SIGCONT)
                 self.state = ProcessState.RUNNING
-                print("▶️ Download resumed")
+                logger.info("Download resumed")
                 return True
             except Exception as e:
-                print(f"❌ Failed to resume: {e}")
+                logger.error(f"Failed to resume: {e}")
                 return False
         return False
 
@@ -199,10 +203,10 @@ class YtDlpProcess:
             try:
                 os.killpg(os.getpgid(self.process.pid), signal.SIGTERM)
                 self.state = ProcessState.STOPPED
-                print("🛑 Download stopped")
+                logger.info("Download stopped")
                 return True
             except Exception as e:
-                print(f"❌ Failed to terminate: {e}")
+                logger.error(f"Failed to terminate: {e}")
                 return False
         return False
 

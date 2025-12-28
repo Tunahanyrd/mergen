@@ -1,16 +1,27 @@
 [project]
 name = "mergen"
-version = "0.9.3"
-description = "A modern, high-performance download manager."
+version = "0.9.4"
+description = "A modern, high-performance download manager with browser integration, network resilience, and Python 3.13+ support."
 authors = [{name = "Tunahanyrd", email = "tunahanyrd@gmail.com"}]
-requires-python = ">=3.9"
+requires-python = ">=3.13"
+dependencies = [
+    "PySide6>=6.10.0",
+    "requests>=2.31.0",
+    "httpx>=0.28.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.8.0",
+    "pre-commit>=3.0.0",
+    "pytest>=7.0.0",
+    "pytest-qt>=4.0.0",
+    "pytest-mock>=3.0.0",
+]
 
 [tool.ruff]
 line-length = 120
 lint.select = ["E", "F", "I"]
-
-[tool.black]
-line-length = 120
 
 [tool.pytest.ini_options]
 minversion = "6.0"

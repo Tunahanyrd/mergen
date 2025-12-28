@@ -1,0 +1,108 @@
+[
+    {
+        "id": 1,
+        "priority": 1,
+        "action": {
+            "type": "allow"
+        },
+        "condition": {
+            "urlFilter": "*googlevideo.com*videoplayback*",
+            "resourceTypes": [
+                "media",
+                "xmlhttprequest"
+            ]
+        }
+    },
+    {
+        "id": 2,
+        "priority": 1,
+        "action": {
+            "type": "allow"
+        },
+        "condition": {
+            "urlFilter": "*googlevideo.com*",
+            "resourceTypes": [
+                "media"
+            ]
+        }
+    },
+    {
+        "id": 3,
+        "priority": 1,
+        "action": {
+            "type": "allow"
+        },
+        "condition": {
+            "urlFilter": "*twimg.com*/ext_tw_video/*.mp4*",
+            "resourceTypes": [
+                "media"
+            ]
+        }
+    },
+    {
+        "id": 4,
+        "priority": 1,
+        "action": {
+            "type": "allow"
+        },
+        "condition": {
+            "urlFilter": "*video.twimg.com/*.m3u8*",
+            "resourceTypes": [
+                "media",
+                "xmlhttprequest"
+            ]
+        }
+    },
+    {
+        "id": 5,
+        "priority": 1,
+        "action": {
+            "type": "allow"
+        },
+        "condition": {
+            "urlFilter": "*cdninstagram.com*/*.mp4*",
+            "resourceTypes": [
+                "media"
+            ]
+        }
+    },
+    {
+        "id": 6,
+        "priority": 1,
+        "action": {
+            "type": "allow"
+        },
+        "condition": {
+            "urlFilter": "*.m3u8*",
+            "resourceTypes": [
+                "xmlhttprequest"
+            ]
+        }
+    },
+    {
+        "id": 7,
+        "priority": 1,
+        "action": {
+            "type": "allow"
+        },
+        "condition": {
+            "urlFilter": "*.mpd*",
+            "resourceTypes": [
+                "xmlhttprequest"
+            ]
+        }
+    },
+    {
+        "id": 8,
+        "priority": 1,
+        "action": {
+            "type": "allow"
+        },
+        "condition": {
+            "urlFilter": "*.mp4*",
+            "resourceTypes": [
+                "media"
+            ]
+        }
+    }
+]
