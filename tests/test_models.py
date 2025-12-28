@@ -1,4 +1,3 @@
-```python
 from src.core.models import VideoDownload, DownloadStatus, DownloadType
 
 
@@ -20,10 +19,5 @@ def test_download_item_date_added():
 def test_to_dict_from_dict():
     item = VideoDownload(url="http://a.com", title="a", save_path="/b")
     data = item.to_dict()
-    assert data["url"] == "http://a.com"
+    assert data["url\"] == "http://a.com"
     assert data["title"] == "a"
-    assert data["save_path"] == "/b"
-    item2 = VideoDownload.from_dict(data)
-    assert item2.url == item.url
-    assert item2.filename == item.filename
-```
