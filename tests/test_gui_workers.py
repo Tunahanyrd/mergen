@@ -5,31 +5,43 @@ from src.gui.workers import AnalysisWorker, ThumbnailWorker
 def test_analysis_worker_success(mocker, qtbot):
     worker = AnalysisWorker("http://example.com/video")
 
-    # Mock Downloader class used in workers.py
-    mock_downloader_cls = mocker.patch("src.gui.workers.Downloader")
-    mock_instance = mock_downloader_cls.return_value
-    mock_instance.fetch_video_info.return_value = {
-        "title": "Test Video",
-        "formats": [{"format_id": "18", "ext": "mp4"}],
-    }
+    # Mock fetch_video_info function
+    mock_fetch = mocker.patch("src.gui.workers.fetch_video_info")
+    mock_fetch.return_value = {"title": "Test Video", "formats": []}
 
-    with qtbot.waitSignal(worker.finished, timeout=5000) as blocker:
-        worker.run()
+    # Signals
+    result = None
 
-    assert blocker.args[0]["title"] == "Test Video"
+    def capture_result(r):
+        nonlocal result
+        result = r
+
+    worker.result_signal.connect(capture_result)
+    worker.run()
+
+    assert result is not None
+    assert result["title"] == "Test Video"
 
 
 def test_analysis_worker_failure(mocker, qtbot):
     worker = AnalysisWorker("http://invalid.url")
 
-    mock_downloader_cls = mocker.patch("src.gui.workers.Downloader")
-    mock_instance = mock_downloader_cls.return_value
-    mock_instance.fetch_video_info.side_effect = Exception("Download Error")
+    # Mock fetch_video_info to raise exception
+    mock_fetch = mocker.patch("src.gui.workers.fetch_video_info")
+    mock_fetch.side_effect = Exception("Failed to fetch")
 
-    with qtbot.waitSignal(worker.error, timeout=5000) as blocker:
-        worker.run()
+    # Signals
+    error = None
 
-    assert "Download Error" in blocker.args[0]
+    def capture_error(e):
+        nonlocal error
+        error = e
+
+    worker.error_signal.connect(capture_error)
+    worker.run()
+
+    assert error is not None
+    assert "Failed to fetch" in str(error)
 
 
 def test_thumbnail_worker(mocker, qtbot):

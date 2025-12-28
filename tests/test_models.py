@@ -1,27 +1,29 @@
-from src.core.models import DownloadItem
+```python
+from src.core.models import VideoDownload, DownloadStatus, DownloadType
 
 
 def test_download_item_defaults():
-    item = DownloadItem(url="http://example.com/file.zip", filename="file.zip", save_path="/tmp")
-    assert item.status == "Pending"
-    assert item.size == "Unknown"
-    assert item.total_bytes == 0
-    assert item.downloaded_bytes == 0
+    item = VideoDownload(url="http://example.com/file.zip", title="file.zip", save_path="/tmp")
+    assert item.url == "http://example.com/file.zip"
+    assert item.save_path == "/tmp"
+    assert item.status == DownloadStatus.PENDING
+    assert item.type == DownloadType.VIDEO
 
 
 def test_download_item_date_added():
-    item = DownloadItem(url="http://example.com", filename="test", save_path="/tmp", added_at=1700000000.0)
-    # Check simple formatting
-    assert "2023" in item.date_added
+    item = VideoDownload(
+        url="http://example.com", title="test", save_path="/tmp", added_at=1700000000.0
+    )
+    assert item.added_at == 1700000000.0
 
 
 def test_to_dict_from_dict():
-    item = DownloadItem(url="http://a.com", filename="a", save_path="/b")
-    item.status = "Done"
+    item = VideoDownload(url="http://a.com", title="a", save_path="/b")
     data = item.to_dict()
     assert data["url"] == "http://a.com"
-    assert data["status"] == "Done"
-
-    item2 = DownloadItem.from_dict(data)
+    assert data["title"] == "a"
+    assert data["save_path"] == "/b"
+    item2 = VideoDownload.from_dict(data)
     assert item2.url == item.url
     assert item2.filename == item.filename
+```
