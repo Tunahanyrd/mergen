@@ -29,9 +29,14 @@ PYTHON_VERSION=$(python3 --version | cut -d' ' -f2)
 echo -e "${GREEN}✓${NC} Python ${PYTHON_VERSION}"
 
 # Install PyInstaller if needed
-if ! pip show pyinstaller &> /dev/null; then
-    echo "Installing PyInstaller..."
-    pip install pyinstaller
+if ! command -v uv &> /dev/null; then
+    echo "⚠️ uv not found. Installing uv..."
+    pip install uv
+fi
+
+if ! uv pip show --system pyinstaller &> /dev/null; then
+    echo "📦 Installing PyInstaller via uv..."
+    uv pip install --system pyinstaller
 fi
 
 echo -e "${GREEN}✓${NC} PyInstaller installed"

@@ -1,17 +1,22 @@
 from src.core.models import DownloadStatus, DownloadType, VideoDownload
 
 
+from datetime import datetime
+
 def test_download_item_defaults():
     item = VideoDownload(url="http://example.com/file.zip", title="file.zip", save_path="/tmp")
     assert item.url == "http://example.com/file.zip"
     assert item.save_path == "/tmp"
     assert item.status == DownloadStatus.PENDING
-    assert item.type == DownloadType.VIDEO
+    assert item.download_type == DownloadType.STREAMING_VIDEO
 
 
 def test_download_item_date_added():
-    item = VideoDownload(url="http://example.com", title="test", save_path="/tmp", added_at=1700000000.0)
-    assert item.added_at == 1700000000.0
+    now = datetime.fromtimestamp(1700000000.0)
+    item = VideoDownload(
+        url="http://example.com", title="test", save_path="/tmp", created_at=now
+    )
+    assert item.created_at == now
 
 
 def test_to_dict_from_dict():

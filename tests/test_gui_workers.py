@@ -5,43 +5,30 @@ from src.gui.workers import AnalysisWorker, ThumbnailWorker
 def test_analysis_worker_success(mocker, qtbot):
     worker = AnalysisWorker("http://example.com/video")
 
-    # Mock fetch_video_info function
-    mock_fetch = mocker.patch("src.gui.workers.fetch_video_info")
-    mock_fetch.return_value = {"title": "Test Video", "formats": []}
+    # Mock subprocess.run
+    mock_run = mocker.patch("subprocess.run")
+    mock_run.return_value.returncode = 0
+    mock_run.return_value.stdout = '{"title": "Test Video", "formats": []}'
 
-    # Signals
-    result = None
+    with qtbot.waitSignal(worker.finished, timeout=5000) as blocker:
+        worker.run()
 
-    def capture_result(r):
-        nonlocal result
-        result = r
-
-    worker.result_signal.connect(capture_result)
-    worker.run()
-
-    assert result is not None
+    result = blocker.args[0]
     assert result["title"] == "Test Video"
 
 
 def test_analysis_worker_failure(mocker, qtbot):
     worker = AnalysisWorker("http://invalid.url")
 
-    # Mock fetch_video_info to raise exception
-    mock_fetch = mocker.patch("src.gui.workers.fetch_video_info")
-    mock_fetch.side_effect = Exception("Failed to fetch")
+    # Mock subprocess.run to verify error handling
+    mock_run = mocker.patch("subprocess.run")
+    mock_run.return_value.returncode = 1
+    mock_run.return_value.stderr = "Download Failure"
 
-    # Signals
-    error = None
+    with qtbot.waitSignal(worker.error, timeout=5000) as blocker:
+        worker.run()
 
-    def capture_error(e):
-        nonlocal error
-        error = e
-
-    worker.error_signal.connect(capture_error)
-    worker.run()
-
-    assert error is not None
-    assert "Failed to fetch" in str(error)
+    assert "Download Failure" in blocker.args[0]
 
 
 def test_thumbnail_worker(mocker, qtbot):
