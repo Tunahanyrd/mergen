@@ -1,4 +1,4 @@
-from src.core.models import VideoDownload, DownloadStatus, DownloadType
+from src.core.models import DownloadStatus, DownloadType, VideoDownload
 
 
 def test_download_item_defaults():
@@ -10,14 +10,12 @@ def test_download_item_defaults():
 
 
 def test_download_item_date_added():
-    item = VideoDownload(
-        url="http://example.com", title="test", save_path="/tmp", added_at=1700000000.0
-    )
+    item = VideoDownload(url="http://example.com", title="test", save_path="/tmp", added_at=1700000000.0)
     assert item.added_at == 1700000000.0
 
 
 def test_to_dict_from_dict():
     item = VideoDownload(url="http://a.com", title="a", save_path="/b")
     data = item.to_dict()
-    assert data["url\"] == "http://a.com"
+    assert data["url"] == "http://a.com"
     assert data["title"] == "a"
