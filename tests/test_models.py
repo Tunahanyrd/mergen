@@ -1,7 +1,7 @@
+from datetime import datetime
+
 from src.core.models import DownloadStatus, DownloadType, VideoDownload
 
-
-from datetime import datetime
 
 def test_download_item_defaults():
     item = VideoDownload(url="http://example.com/file.zip", title="file.zip", save_path="/tmp")
@@ -13,9 +13,7 @@ def test_download_item_defaults():
 
 def test_download_item_date_added():
     now = datetime.fromtimestamp(1700000000.0)
-    item = VideoDownload(
-        url="http://example.com", title="test", save_path="/tmp", created_at=now
-    )
+    item = VideoDownload(url="http://example.com", title="test", save_path="/tmp", created_at=now)
     assert item.created_at == now
 
 
