@@ -28,6 +28,10 @@ sed -i "s/pkgver=.*/pkgver=${NEW_VERSION}/" installer/linux/PKGBUILD
 sed -i "s/pkgrel=.*/pkgrel=1/" installer/linux/PKGBUILD
 echo "✅ PKGBUILD updated"
 
+# Update dmg
+sed -i "s/pkgver=.*/pkgver=${NEW_VERSION}/" installer/macos/build-dmg.sh
+echo "✅ build-dmg.sh updated"
+
 # Update Inno Setup
 sed -i "s/#define MyAppVersion \".*\"/#define MyAppVersion \"${NEW_VERSION}\"/" installer/windows/mergen.iss
 echo "✅ mergen.iss updated"

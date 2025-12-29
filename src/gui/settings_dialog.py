@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import os
+
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QApplication,
@@ -340,7 +342,9 @@ class SettingsDialog(QDialog):
         title.setAlignment(Qt.AlignCenter)
         layout.addWidget(title)
 
-        version = QLabel("Version 1.0")
+        from src.core.version import __version__
+
+        version = QLabel(f"Version {__version__}")
         version.setStyleSheet("font-size: 14px; color: #aaa; margin-bottom: 20px;")
         version.setAlignment(Qt.AlignCenter)
         layout.addWidget(version)
@@ -460,9 +464,6 @@ class SettingsDialog(QDialog):
         i18n_key = name_map.get(cat_name)
         return I18n.get(i18n_key) if i18n_key else cat_name
 
-    def create_browser_tab(self):
-        """Create Browser Integration tab."""
-
         widget = QWidget()
         layout = QVBoxLayout()
 
@@ -484,44 +485,47 @@ class SettingsDialog(QDialog):
 
         layout.addSpacing(10)
 
-        # Installation guide
+        # Installation Guide
         guide_group = QGroupBox(I18n.get("browser_installation_header"))
         guide_layout = QVBoxLayout()
 
-        # Download links
-        download_label = QLabel(
-            f"<b>{I18n.get('browser_download_extension')}</b><br>"
-            '<a href="https://github.com/Tunahanyrd/mergen/releases/latest/download/mergen-browser-extension.zip" '
-            'style="color: #89b4fa; text-decoration: none;">'
-            f"{I18n.get('browser_chrome_extension')}</a><br>"
-            '<a href="https://github.com/Tunahanyrd/mergen/releases/latest/download/mergen-firefox-amo.zip" '
-            'style="color: #89b4fa; text-decoration: none;">'
-            f"{I18n.get('browser_firefox_extension')}</a>"
-        )
-        download_label.setOpenExternalLinks(True)
-        download_label.setWordWrap(True)
-        guide_layout.addWidget(download_label)
+        # Easy Install Button (New Feature)
+        easy_install_frame = QFrame()
+        easy_install_frame.setStyleSheet("background-color: #333; border-radius: 6px; padding: 10px;")
+        eil = QVBoxLayout(easy_install_frame)
 
-        # Chrome instructions
-        chrome_label = QLabel(
-            f"<b>{I18n.get('browser_chrome_install')}</b><br>"
-            f"{I18n.get('browser_chrome_step1')}<br>"
-            f"{I18n.get('browser_chrome_step2')}<br>"
-            f"{I18n.get('browser_chrome_step3')}<br>"
-            f"{I18n.get('browser_chrome_step4')}"
-        )
-        chrome_label.setWordWrap(True)
-        guide_layout.addWidget(chrome_label)
+        ei_label = QLabel("✨ " + I18n.get("browser_easy_install_title", "Easy Installation"))
+        ei_label.setStyleSheet("font-weight: bold; color: #00f2ff;")
+        eil.addWidget(ei_label)
 
-        # Firefox instructions
-        firefox_label = QLabel(
-            f"<b>{I18n.get('browser_firefox_install')}</b><br>"
-            f"{I18n.get('browser_firefox_step1')}<br>"
-            f"{I18n.get('browser_firefox_step2')}<br>"
-            f"{I18n.get('browser_firefox_step3')}"
+        ei_desc = QLabel(
+            I18n.get("browser_easy_install_desc", "Automatically open extension folder and browser setup page.")
         )
-        firefox_label.setWordWrap(True)
-        guide_layout.addWidget(firefox_label)
+        ei_desc.setWordWrap(True)
+        eil.addWidget(ei_desc)
+
+        self.easy_install_btn = QPushButton(I18n.get("browser_easy_install_btn", "Launch Installation Helper"))
+        self.easy_install_btn.setStyleSheet("background-color: #007acc; font-weight: bold; padding: 8px;")
+        self.easy_install_btn.clicked.connect(self.launch_extension_helper)
+        eil.addWidget(self.easy_install_btn)
+
+        guide_layout.addWidget(easy_install_frame)
+
+        # Manual Instructions (Collapsible/Secondary)
+        guide_layout.addSpacing(10)
+        manual_lbl = QLabel(I18n.get("browser_manual_install", "Manual Installation:"))
+        manual_lbl.setStyleSheet("font-weight: bold; color: #aaa;")
+        guide_layout.addWidget(manual_lbl)
+
+        manual_text = QLabel(
+            f"1. {I18n.get('browser_chrome_step1')}<br>"
+            f"2. {I18n.get('browser_chrome_step2')}<br>"
+            f"3. {I18n.get('browser_chrome_step3')}<br>"
+            f"4. {I18n.get('browser_chrome_step4')}"
+        )
+        manual_text.setWordWrap(True)
+        manual_text.setStyleSheet("color: #888; margin-left: 10px;")
+        guide_layout.addWidget(manual_text)
 
         guide_group.setLayout(guide_layout)
         layout.addWidget(guide_group)
@@ -535,6 +539,7 @@ class SettingsDialog(QDialog):
         id_layout.addWidget(QLabel(I18n.get("browser_ext_id_label")))
         self.ext_id_input = QLineEdit()
         self.ext_id_input.setPlaceholderText(I18n.get("ext_id_placeholder"))
+        self.ext_id_input.setToolTip(I18n.get("ext_id_help"))
         id_layout.addWidget(self.ext_id_input)
         reg_layout.addLayout(id_layout)
 
@@ -542,11 +547,6 @@ class SettingsDialog(QDialog):
         register_btn = QPushButton(I18n.get("browser_register_btn"))
         register_btn.clicked.connect(self.register_extension)
         reg_layout.addWidget(register_btn)
-
-        # Help text
-        help_text = QLabel(f"<i>{I18n.get('browser_ext_id_help')}</i>")
-        help_text.setWordWrap(True)
-        reg_layout.addWidget(help_text)
 
         reg_group.setLayout(reg_layout)
         layout.addWidget(reg_group)
@@ -558,6 +558,37 @@ class SettingsDialog(QDialog):
         self.check_browser_integration_status()
 
         return widget
+
+    def launch_extension_helper(self):
+        """Run the helper script to make installation easy."""
+        import subprocess
+        import sys
+        from pathlib import Path
+
+        script_name = "install_extension.sh"
+        if sys.platform == "win32":
+            # On Windows we might not have the shell script, but we can open the folder
+            # TODO: A batch file would be better, but for now open folder
+            folder = Path.cwd() / "browser-extension"
+            os.startfile(folder)
+            # Also try to open chrome extensions
+            import webbrowser
+
+            webbrowser.open("chrome://extensions")
+            return
+
+        # Linux/Mac
+        script_path = Path.cwd() / script_name
+        if not script_path.exists():
+            # Try looking up
+            script_path = Path.cwd().parent / script_name
+
+        if script_path.exists():
+            subprocess.Popen(["bash", str(script_path)])
+        else:
+            # Fallback: just open the folder
+            folder = Path.cwd() / "browser-extension"
+            subprocess.Popen(["xdg-open", str(folder)])
 
     def check_browser_integration_status(self):
         """Check if browser integration is registered."""
