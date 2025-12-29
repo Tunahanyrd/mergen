@@ -4,7 +4,7 @@
  */
 
 // Import rule manager
-importScripts('utils/rule-manager.js');
+// Import removed: utils/rule-manager.js not needed
 
 // Configuration
 const CONFIG = {
