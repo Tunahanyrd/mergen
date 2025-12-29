@@ -147,7 +147,7 @@ begin
   AppPath := ExpandConstant('{app}\{#MyAppExeName}');
   
   // Escape backslashes for JSON
-  AppPath := StringChangeEx(AppPath, '\', '\\', True);
+  StringChangeEx(AppPath, '\', '\\', True);
   
   ManifestContent := '{' + #13#10 +
     '  "name": "com.mergen.native",' + #13#10 +
