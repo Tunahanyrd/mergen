@@ -43,7 +43,7 @@ cp -r %{_sourcedir}/browser-extension %{buildroot}/usr/share/mergen/
 cp -r %{_sourcedir}/native-host %{buildroot}/usr/share/mergen/
 
 # Install man page
-gzip -c %{_sourcedir}/../../installer/linux/mergen.1 > %{buildroot}/usr/share/man/man1/mergen.1.gz
+gzip -c %{_sourcedir}/../../mergen.1 > %{buildroot}/usr/share/man/man1/mergen.1.gz
 
 # Note: Browser extension included as source in /usr/share/mergen/browser-extension/
 # Users install via "Load Unpacked" or download ZIP from GitHub releases
