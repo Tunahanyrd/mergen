@@ -389,8 +389,10 @@ class Downloader:
 
         net_mgr = get_network_manager()
         if not net_mgr.is_online():
-            self.status_signal.emit("❌ No internet connection")
-            self.complete_signal.emit(False, "")
+            if self.status_callback:
+                self.status_callback("❌ No internet connection")
+            if self.completion_callback:
+                self.completion_callback(False, "")
             return
 
         try:

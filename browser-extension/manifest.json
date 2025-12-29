@@ -43,5 +43,12 @@
       "id": "mergen@tunahanyrd.com",
       "strict_min_version": "109.0"
     }
+  },
+  "declarative_net_request": {
+    "rule_resources": [{
+      "id": "media_rules",
+      "enabled": true,
+      "path": "rules/media-rules.json"
+    }]
   }
 }

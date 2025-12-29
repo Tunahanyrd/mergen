@@ -225,7 +225,7 @@ class DownloadWorker(QThread):
         self.is_running = False
         if self.downloader:
             self.downloader.stop()
-        self.terminate()
+        self.wait()  # Wait for thread to finish gracefully
 
 
 class DownloadDialog(QDialog):
