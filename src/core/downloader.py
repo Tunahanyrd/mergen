@@ -19,6 +19,7 @@ from pathlib import Path
 
 import httpx
 
+from src.core.i18n import I18n
 from src.core.logger import get_logger
 
 logger = get_logger(__name__)
@@ -491,9 +492,9 @@ class Downloader:
 
             if success:
                 print("✅ Terminal yt-dlp download complete")
-                self.log("✅ Download complete")
+                self.log(I18n.get("status_download_complete"))
             else:
-                self.log("❌ Download failed (non-zero exit code)")
+                self.log(I18n.get("status_download_failed"))
                 # For playlists with --ignore-errors, partial success is OK
                 if is_playlist and downloaded_files:
                     print(f"⚠️ Playlist partially completed: {len(downloaded_files)} files")
@@ -542,11 +543,11 @@ class Downloader:
         # 3. Request metadata (HEAD/GET range 0-0)
         # Validate URL protocol
         if self.url.startswith(("chrome://", "about://", "file://", "chrome-extension://", "moz-extension://")):
-            self.log(f"❌ Cannot download browser-internal URL: {self.url[:50]}")
+            self.log(I18n.get("status_internal_url").format(self.url[:50]))
             raise ValueError(f"Browser-internal URLs are not downloadable: {self.url}")
 
         if not self.url.startswith(("http://", "https://", "ftp://")):
-            self.log(f"⚠️ URL missing protocol, adding https://: {self.url[:50]}")
+            self.log(I18n.get("status_missing_protocol").format(self.url[:50]))
             self.url = "https://" + self.url
 
         req_headers = {**self.headers, "Range": "bytes=0-0"}
@@ -564,7 +565,7 @@ class Downloader:
 
                     # Prevent overwriting if file exists under the NEW name
                     if os.path.exists(clean_name):
-                        self.log(f"INFO: The actual file name ‘{clean_name}’ already exists. Skipping.")
+                        self.log(I18n.get("status_file_exists").format(clean_name))
                         return False
 
                     self.update_filenames(clean_name)
@@ -589,8 +590,9 @@ class Downloader:
                         f.truncate(self.total_size)
 
             except OSError as e:
-                if e.errno == 28:  # POSIX "No space left on device"
-                    self.log(f"ERROR: Disk full! Required: {self.total_size}")
+                # POSIX "No space left on device"
+                if e.errno == 28:
+                    self.log(I18n.get("status_disk_full").format(self.total_size))
                 else:
                     self.log(f"A system error occurred: {e.strerror} (Error code: {e.errno})")
 
@@ -783,7 +785,7 @@ class Downloader:
 
                 if os.path.exists(self.state_file):
                     os.remove(self.state_file)
-                self.log(f"Success: {self.filename}")
+                self.log(I18n.get("status_success").format(self.filename))
 
                 if self.completion_callback:
                     self.completion_callback(True, self.filename)
@@ -793,6 +795,6 @@ class Downloader:
                     self.completion_callback(False, self.filename)
 
         except KeyboardInterrupt:
-            self.log("\n\nDownload stopped by user. Progress saved, can be resumed.")
+            self.log(I18n.get("status_stopped"))
             self.save_state()
             sys.exit(0)

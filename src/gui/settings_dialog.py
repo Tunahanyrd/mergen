@@ -384,7 +384,7 @@ class SettingsDialog(QDialog):
         add_row(I18n.get("support"), "tunahanyrd@gmail.com")
         add_row(I18n.get("license"), "MIT License")
         il.addStretch()
-        l_copy = QLabel("© 2024 Tunahanyrd. All rights reserved.")
+        l_copy = QLabel(I18n.get("copyright"))
         l_copy.setAlignment(Qt.AlignCenter)
         l_copy.setStyleSheet("color: #555; margin-top: 10px; font-size: 12px;")
         il.addWidget(l_copy)

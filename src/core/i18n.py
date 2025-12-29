@@ -232,6 +232,17 @@ TRANS = {
         "unknown_count": "(Unknown count)",
         "analyzing_playlist": "Analyzing full playlist...\nThis may take 30-120 seconds.",
         "file_properties": "File Properties",
+        "copyright": "© 2024 Tunahanyrd. All rights reserved.",
+        # Downloader status
+        "status_download_complete": "✅ Download complete",
+        "status_download_failed": "❌ Download failed",
+        "status_download_incomplete": "Download incomplete (missing segments). Please try again.",
+        "status_disk_full": "ERROR: Disk full! Required: {}",
+        "status_file_exists": "INFO: The actual file name ‘{}’ already exists. Skipping.",
+        "status_internal_url": "❌ Cannot download browser-internal URL: {}",
+        "status_missing_protocol": "⚠️ URL missing protocol, adding https://: {}",
+        "status_success": "Success: {}",
+        "status_stopped": "Download stopped by user.",
     },
     "tr": {
         "app_title": "MERGEN",
@@ -493,6 +504,17 @@ TRANS = {
         "cannot_delete_main_queue": "Ana Kuyruk silinemiyor.",
         # Properties
         "file_properties": "Dosya Özellikleri",
+        "copyright": "© 2024 Tunahanyrd. Tüm hakları saklıdır.",
+        # Downloader status
+        "status_download_complete": "✅ İndirme tamamlandı",
+        "status_download_failed": "❌ İndirme başarısız",
+        "status_download_incomplete": "İndirme tamamlanamadı (eksik parçalar). Lütfen tekrar deneyin.",
+        "status_disk_full": "HATA: Disk dolu! Gereken: {}",
+        "status_file_exists": "BİLGİ: ‘{}’ dosyası zaten var. Atlanıyor.",
+        "status_internal_url": "❌ Tarayıcı dahili URL'si indirilemez: {}",
+        "status_missing_protocol": "⚠️ URL protokolü eksik, https:// ekleniyor: {}",
+        "status_success": "Başarılı: {}",
+        "status_stopped": "İndirme kullanıcı tarafından durduruldu.",
     },
 }
 

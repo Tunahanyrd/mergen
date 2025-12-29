@@ -537,7 +537,7 @@ class MainWindow(QMainWindow):
 
     def start_download_item(self, download_item):
         """Starts a download item (callback for queue manager)."""
-        download_item.status = "Downloading..."
+        download_item.status = I18n.get("downloading")
         self.refresh_table()
         # This is called by queue manager; actual download handled by DownloadDialog
 
@@ -698,7 +698,7 @@ class MainWindow(QMainWindow):
         else:
             s_str = f"{total_speed / (1024 * 1024):.1f} MB/s"
 
-        self.total_speed_lbl.setText(f"Total Speed: {s_str}")
+        self.total_speed_lbl.setText(f"{I18n.get('total_speed')}: {s_str}")
 
     def add_url(self):
         # Triggered by toolbar/menu
