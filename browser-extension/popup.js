@@ -33,7 +33,9 @@ function formatDuration(seconds) {
 
 // Create media item element
 function createMediaItem(stream) {
-    const { metadata, type, platform } = stream;
+    const metadata = stream.metadata || {};
+    const type = stream.type || 'video';
+    const platform = stream.platform || metadata.platform;
 
     const item = document.createElement('div');
     item.className = 'media-item';
@@ -49,9 +51,12 @@ function createMediaItem(stream) {
 
     const title = document.createElement('div');
     title.className = 'media-title';
-    title.textContent = metadata.platformData?.title ||
+
+    // Get title from various sources (with safe navigation)
+    const titleText = (metadata.platformData && metadata.platformData.title) ||
         metadata.pageTitle ||
-        new URL(metadata.pageUrl).hostname;
+        (metadata.pageUrl ? new URL(metadata.pageUrl).hostname : 'Video');
+    title.textContent = titleText;
 
     const meta = document.createElement('div');
     meta.className = 'media-meta';
