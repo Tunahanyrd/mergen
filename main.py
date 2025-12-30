@@ -19,7 +19,7 @@ from PySide6.QtWidgets import QApplication
 
 # Fix Qt portal warning by setting proper app ID
 os.environ.setdefault("QT_QPA_PLATFORMTHEME", "qt6ct")
-os.environ.setdefault("DESKTOP_STARTUP_ID", "mergen.desktop")
+os.environ["DESKTOP_STARTUP_ID"] = "mergen"
 
 # Enable JIT compiler for Python 3.13+ (experimental)
 if sys.version_info >= (3, 13):
