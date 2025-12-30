@@ -7,18 +7,35 @@
   "homepage_url": "https://github.com/Tunahanyrd/mergen",
   "permissions": [
     "downloads",
+    "downloads.ui",
+    "downloads.shelf",
     "nativeMessaging",
     "contextMenus",
     "declarativeNetRequest",
     "declarativeNetRequestFeedback",
     "storage",
     "webRequest",
-    "notifications"
+    "notifications",
+    "scripting",
+    "cookies",
+    "tabs"
   ],
   "host_permissions": [
     "<all_urls>",
     "http://localhost/*",
     "http://127.0.0.1/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": true
+    }
   ],
   "background": {
     "service_worker": "background.js"

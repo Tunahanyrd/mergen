@@ -55,8 +55,67 @@ browser.runtime.onInstalled.addListener(() => {
     // Setup declarativeNetRequest rules for media detection
     setupMediaDetectionRules();
 
+    // Setup webRequest API listeners (more powerful than declarativeNetRequest)
+    setupWebRequestListeners();
+
     console.log("🎬 Extension initialization complete - listening for media...");
 });
+
+// Listen for messages from content scripts
+browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    console.log('📨 Message from content script:', message.type, sender.tab?.id);
+
+    if (message.type === 'media_detected') {
+        handleMediaDetection(message.metadata, sender.tab);
+        sendResponse({ received: true });
+    }
+
+    return true; // Keep channel open for async response
+});
+
+/**
+ * Handle media detected by content script
+ */
+function handleMediaDetection(metadata, tab) {
+    console.log('🎬 Media detected by content script:', metadata);
+
+    const url = metadata.url;
+    const streamType = detectStreamType(url);
+
+    // Store in detected streams
+    if (streamType !== 'direct') {
+        const streamKey = `${url}_${Date.now()}`;
+        detectedStreams.set(streamKey, {
+            url: url,
+            type: streamType,
+            metadata: metadata,
+            tabId: tab?.id,
+            timestamp: Date.now()
+        });
+
+        console.log(`✅ Stored ${streamType} stream from content script:`, url.substring(0, 100));
+
+        // Update badge
+        updateBadgeCount();
+
+        // Clean old detections
+        if (detectedStreams.size > 50) {
+            const oldestKey = detectedStreams.keys().next().value;
+            detectedStreams.delete(oldestKey);
+        }
+    }
+
+    // If it's a large enough video, notify user
+    if (metadata.tagName === 'video' && metadata.width >= 400 && metadata.height >= 300) {
+        console.log('📺 Large video detected:', metadata.pageTitle);
+
+        // Could show notification here
+        if (metadata.platform === 'youtube' && metadata.platformData?.title) {
+            console.log('🎥 YouTube:', metadata.platformData.title);
+        }
+    }
+}
+
 
 // Auto-register extension with Mergen app
 async function autoRegisterExtension() {
