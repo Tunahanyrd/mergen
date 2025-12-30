@@ -41,4 +41,4 @@ echo "2. Drag and drop the 'browser-extension' folder (opened) into the browser 
 echo "   OR use 'Load Unpacked' button."
 echo "3. Copy the Extension ID and paste it into Mergen Settings > Browser Integration."
 echo ""
-read -p "Press Enter to exit..."
+echo ""; echo "Press Enter to exit..."; read -r
