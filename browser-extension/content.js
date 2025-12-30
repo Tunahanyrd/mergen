@@ -189,15 +189,15 @@
 
         // Get media URL
         const url = element.src || element.currentSrc || element.data;
-        if (!url || url.startsWith('blob:') || url.startsWith('data:')) {
-            // For blob/data URLs, we still want to track the element
-            // but we'll need to get the actual URL later
-        }
+
+        // Note: YouTube uses blob: URLs, so we need to handle them
+        const isBlob = url && (url.startsWith('blob:') || url.startsWith('data:'));
 
         // Extract metadata
         const metadata = {
             tagName: element.tagName.toLowerCase(),
-            url: url,
+            url: url || '(no URL)',
+            isBlob: isBlob,
             poster: element.poster,
             width: info.width,
             height: info.height,
@@ -233,9 +233,10 @@
         element.__mergen_detected__ = true;
         element.__mergen_id__ = metadata.timestamp;
 
-        // Store in state
-        if (url) {
-            state.detectedMedia.set(url, { element, metadata });
+        // Store in state (use pageUrl+timestamp as key for blob URLs)
+        const storeKey = isBlob ? `${location.href}_${metadata.timestamp}` : url;
+        if (storeKey) {
+            state.detectedMedia.set(storeKey, { element, metadata });
         }
 
         // Send to background
@@ -244,7 +245,7 @@
             metadata: metadata
         });
 
-        log('✅ Detected:', metadata.tagName, url || '(no URL)', metadata);
+        log('✅ Detected:', metadata.tagName, url || '(blob/data URL)', metadata);
     }
 
     /**
