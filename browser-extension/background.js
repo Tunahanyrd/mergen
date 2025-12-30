@@ -569,3 +569,72 @@ setInterval(() => {
 
     updateBadgeCount();
 }, 60000);  // Check every minute
+
+/**
+ * Setup webRequest API listeners for comprehensive media detection
+ */
+function setupWebRequestListeners() {
+    console.log('🔌 Setting up webRequest API listeners...');
+
+    // Listen for ALL network requests
+    browser.webRequest.onBeforeRequest.addListener(
+        (details) => {
+            const url = details.url;
+
+            // Skip localhost
+            if (url.includes('localhost:8765') || url.includes('127.0.0.1:8765')) {
+                return;
+            }
+
+            const streamType = detectStreamType(url);
+
+            if (streamType !== 'direct') {
+                console.log(`🎯 webRequest detected ${streamType}: ${url.substring(0, 80)}`);
+
+                const streamKey = `${url}_${Date.now()}`;
+                detectedStreams.set(streamKey, {
+                    url: url,
+                    type: streamType,
+                    requestType: details.type,
+                    tabId: details.tabId,
+                    timestamp: Date.now()
+                });
+
+                updateBadgeCount();
+            }
+        },
+        { urls: ['<all_urls>'] }
+    );
+
+    // Check response headers for Content-Type
+    browser.webRequest.onHeadersReceived.addListener(
+        (details) => {
+            const headers = details.responseHeaders || [];
+            const contentType = headers.find(h => h.name.toLowerCase() === 'content-type')?.value?.toLowerCase();
+
+            if (contentType && (
+                contentType.includes('video/') ||
+                contentType.includes('audio/') ||
+                contentType.includes('mpegurl') ||
+                contentType.includes('dash')
+            )) {
+                console.log(`🎬 Media Content-Type detected: ${contentType} - ${details.url.substring(0, 60)}`);
+
+                const streamKey = `${details.url}_${Date.now()}`;
+                detectedStreams.set(streamKey, {
+                    url: details.url,
+                    type: detectStreamType(details.url) || 'mp4',
+                    contentType: contentType,
+                    tabId: details.tabId,
+                    timestamp: Date.now()
+                });
+
+                updateBadgeCount();
+            }
+        },
+        { urls: ['<all_urls>'] },
+        ['responseHeaders']
+    );
+
+    console.log('✅ webRequest API listeners active');
+}
