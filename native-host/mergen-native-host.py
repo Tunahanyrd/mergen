@@ -134,38 +134,27 @@ def try_start_mergen():
 
 
 def main():
-    """Main loop."""
-    logging.info("=" * 50)
-    logging.info("Mergen Native Host Started")
-    logging.info("=" * 50)
+    """Main loop for native messaging host."""
+    logging.info("=" * 60)
+    logging.info("🚀 Mergen Native Messaging Host started")
+    logging.info("=" * 60)
 
-    try:
-        while True:
+    while True:
+        try:
             message = read_message()
             if not message:
                 continue
 
-            action = message.get("action")
+            # Handle the message and get response
+            response = handle_message(message)
+            
+            # Send response back to extension
+            if response:
+                send_message(response)
 
-            if action == "add_download":
-                url = message.get("url", "")
-                filename = message.get("filename", "")
-                stream_type = message.get("stream_type", "direct")  # NEW
-                result = send_to_mergen(url, filename, stream_type)
-                send_message(result)
-
-            elif action in ["ping", "test_connection"]:
-                # Do NOT send to Mergen, just reply to extension
-                send_message({"status": "success", "message": "Pong"})
-
-            else:
-                send_message({"status": "error", "message": "Unknown action"})
-
-    except KeyboardInterrupt:
-        logging.info("Interrupted")
-    except Exception as e:
-        logging.error(f"Fatal: {e}")
-        sys.exit(1)
+        except Exception as e:
+            logging.error(f"❌ Error in main loop: {e}")
+            send_message({"status": "error", "success": False, "error": str(e)})
 
 
 if __name__ == "__main__":

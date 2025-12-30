@@ -122,31 +122,68 @@ class MergenHTTPHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode())
 
     def handle_add_download(self):
-        """Handle download requests from extension."""
+        """Handle download request from browser extension or native host."""
         try:
-            # Read request body
             content_length = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(content_length)
             data = json.loads(body.decode("utf-8"))
 
-            url = data.get("url", "")
-            filename = data.get("filename", "")
+            request_type = data.get("type", "add_download")  # NEW: support both formats
+            
+            # NEW: Handle URL download (simplified approach)
+            if request_type == "download_url":
+                url = data.get("url", "")
+                filename = data.get("pageTitle", "") # Use pageTitle as filename for download_url
+                # page_url = data.get("pageUrl", "") # Not used currently
+            else: # Original add_download logic
+                url = data.get("url", "")
+                filename = data.get("filename", "")
             stream_type = data.get("stream_type", "direct")
+            
+            # NEW: Support simplified download_url format
+            if request_type == "download_url":
+                # For URL downloads, use page title as suggested name
+                if filename:
+                    # Clean up page title
+                    for suffix in [" - YouTube", " • Instagram", " on Twitter", " / X"]:
+                        filename = filename.replace(suffix, "")
+                    filename = filename.strip()
 
-            # Emit signal to main window (thread-safe)
-            if self.main_window and hasattr(self.main_window, "browser_download_signal"):
-                # Auto-wake: Show window if hidden/minimized
-                if self.main_window.isHidden() or self.main_window.isMinimized():
-                    logger.debug("Auto-wake: Restoring window for incoming download")
-                    self.main_window.show()
-                    self.main_window.raise_()
-                    self.main_window.activateWindow()
+            if not url:
+                self.send_error(400, "Missing url parameter")
+                return
 
-                self.main_window.browser_download_signal.emit(url, filename)
+            logger.info(f"{'URL' if request_type == 'download_url' else 'Direct'} download: {url}")
 
-                # Log stream type for debugging
-                if stream_type in ["hls", "dash"]:
-                    logger.info(f"Detected {stream_type.upper()} stream: {url[:80]}...")
+            # Wake main window if minimized
+            if self.main_window:
+                from PyQt6.QtCore import QMetaObject, Qt
+
+                QMetaObject.invokeMethod(
+                    self.main_window,
+                    "show",
+                    Qt.ConnectionType.QueuedConnection
+                )
+                QMetaObject.invokeMethod(
+                    self.main_window,
+                    "raise_",
+                    Qt.ConnectionType.QueuedConnection
+                )
+                QMetaObject.invokeMethod(
+                    self.main_window,
+                    "activateWindow",
+                    Qt.ConnectionType.QueuedConnection
+                )
+
+                # Add download (yt-dlp will handle format detection for URLs)
+                QMetaObject.invokeMethod(
+                    self.main_window.download_manager,
+                    "add_download",
+                    Qt.ConnectionType.QueuedConnection,
+                    url,
+                    filename or ""
+                )
+                logger.info(f"✅ Download added: {url}")
 
             # Send success response
             response = {"status": "success", "message": "Download added", "stream_type": stream_type}
@@ -158,7 +195,6 @@ class MergenHTTPHandler(BaseHTTPRequestHandler):
 
         except Exception as e:
             logger.error(f"Browser integration error: {e}")
-            self.send_response(500)
             self.send_header("Content-Type", "application/json")
             self.end_headers()
             self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode())
@@ -235,7 +271,7 @@ async def handle_websocket(websocket, path):
                     )
 
                 elif action == "add_download":
-                    # Download request
+                    # Download request (legacy path, direct file download)
                     url = data.get("url", "")
                     filename = data.get("filename", "")
                     stream_type = data.get("stream_type", "direct")

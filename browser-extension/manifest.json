@@ -1,72 +1,26 @@
 {
   "manifest_version": 3,
-  "name": "Mergen Download Manager",
-  "version": "0.9.5",
-  "description": "Capture downloads and streams (HLS/DASH) with Mergen. Multi-threaded downloads with browser integration.",
-  "author": "Tunahanyrd",
-  "homepage_url": "https://github.com/Tunahanyrd/mergen",
+  "name": "Mergen Browser Integration",
+  "version": "0.9.6",
+  "description": "Send web videos to Mergen download manager",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
   "permissions": [
-    "downloads",
-    "downloads.ui",
-    "downloads.shelf",
-    "nativeMessaging",
     "contextMenus",
-    "declarativeNetRequest",
-    "declarativeNetRequestFeedback",
-    "storage",
-    "webRequest",
-    "notifications",
-    "scripting",
-    "cookies",
-    "tabs"
-  ],
-  "host_permissions": [
-    "<all_urls>",
-    "http://localhost/*",
-    "http://127.0.0.1/*"
-  ],
-  "content_scripts": [
-    {
-      "matches": [
-        "<all_urls>"
-      ],
-      "js": [
-        "content.js"
-      ],
-      "run_at": "document_start",
-      "all_frames": true
-    }
+    "activeTab",
+    "nativeMessaging"
   ],
   "background": {
     "service_worker": "background.js"
   },
   "action": {
-    "default_popup": "popup.html",
     "default_icon": {
-      "16": "icons/icon16.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
+      "16": "icons/icon-16.png",
+      "48": "icons/icon-48.png"
     },
-    "default_title": "Mergen Download Manager"
-  },
-  "icons": {
-    "16": "icons/icon16.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
-  },
-  "browser_specific_settings": {
-    "gecko": {
-      "id": "mergen@tunahanyrd.com",
-      "strict_min_version": "109.0"
-    }
-  },
-  "declarative_net_request": {
-    "rule_resources": [
-      {
-        "id": "media_rules",
-        "enabled": true,
-        "path": "rules/media-rules.json"
-      }
-    ]
+    "default_title": "Download with Mergen"
   }
 }
