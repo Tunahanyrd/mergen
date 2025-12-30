@@ -496,17 +496,17 @@ class SettingsDialog(QDialog):
         easy_install_frame.setStyleSheet("background-color: #333; border-radius: 6px; padding: 10px;")
         eil = QVBoxLayout(easy_install_frame)
 
-        ei_label = QLabel("✨ " + I18n.get("browser_easy_install_title", "Easy Installation"))
+        ei_label = QLabel("✨ " + (I18n.get("browser_easy_install_title") or "Easy Installation"))
         ei_label.setStyleSheet("font-weight: bold; color: #00f2ff;")
         eil.addWidget(ei_label)
 
         ei_desc = QLabel(
-            I18n.get("browser_easy_install_desc", "Automatically open extension folder and browser setup page.")
+            I18n.get("browser_easy_install_desc") or "Automatically open extension folder and browser setup page."
         )
         ei_desc.setWordWrap(True)
         eil.addWidget(ei_desc)
 
-        self.easy_install_btn = QPushButton(I18n.get("browser_easy_install_btn", "Launch Installation Helper"))
+        self.easy_install_btn = QPushButton(I18n.get("browser_easy_install_btn") or "Launch Installation Helper")
         self.easy_install_btn.setStyleSheet("background-color: #007acc; font-weight: bold; padding: 8px;")
         self.easy_install_btn.clicked.connect(self.launch_extension_helper)
         eil.addWidget(self.easy_install_btn)
@@ -515,7 +515,7 @@ class SettingsDialog(QDialog):
 
         # Manual Instructions (Collapsible/Secondary)
         guide_layout.addSpacing(10)
-        manual_lbl = QLabel(I18n.get("browser_manual_install", "Manual Installation:"))
+        manual_lbl = QLabel(I18n.get("browser_manual_install") or "Manual Installation:")
         manual_lbl.setStyleSheet("font-weight: bold; color: #aaa;")
         guide_layout.addWidget(manual_lbl)
 
