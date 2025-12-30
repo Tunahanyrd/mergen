@@ -82,36 +82,37 @@ function handleMediaDetection(metadata, tab) {
     const url = metadata.url;
     const streamType = detectStreamType(url);
 
-    // Store in detected streams
-    if (streamType !== 'direct') {
-        const streamKey = `${url}_${Date.now()}`;
-        detectedStreams.set(streamKey, {
-            url: url,
-            type: streamType,
-            metadata: metadata,
-            tabId: tab?.id,
-            timestamp: Date.now()
-        });
+    // Store ALL detected media (including blob URLs from YouTube/Instagram)
+    const streamKey = `${url}_${Date.now()}`;
+    detectedStreams.set(streamKey, {
+        url: url,
+        type: metadata.isBlob ? 'blob' : streamType,
+        metadata: metadata,
+        tabId: tab?.id,
+        timestamp: Date.now(),
+        platform: metadata.platform
+    });
 
-        console.log(`✅ Stored ${streamType} stream from content script:`, url.substring(0, 100));
+    console.log(`✅ Stored ${metadata.isBlob ? 'blob' : streamType} media:`, url.substring(0, 80));
 
-        // Update badge
-        updateBadgeCount();
+    // Update badge
+    updateBadgeCount();
 
-        // Clean old detections
-        if (detectedStreams.size > 50) {
-            const oldestKey = detectedStreams.keys().next().value;
-            detectedStreams.delete(oldestKey);
-        }
+    // Clean old detections
+    if (detectedStreams.size > 50) {
+        const oldestKey = detectedStreams.keys().next().value;
+        detectedStreams.delete(oldestKey);
     }
 
     // If it's a large enough video, notify user
     if (metadata.tagName === 'video' && metadata.width >= 400 && metadata.height >= 300) {
-        console.log('📺 Large video detected:', metadata.pageTitle);
+        console.log('📺 Large video detected:', metadata.pageTitle || metadata.pageUrl);
 
-        // Could show notification here
+        // Log platform-specific info
         if (metadata.platform === 'youtube' && metadata.platformData?.title) {
             console.log('🎥 YouTube:', metadata.platformData.title);
+        } else if (metadata.platform === 'instagram') {
+            console.log('📸 Instagram video detected');
         }
     }
 }
