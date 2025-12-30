@@ -117,7 +117,26 @@ async function autoRegisterExtension() {
             message: `Please start Mergen from your applications menu.\n\nExtension ID: ${extensionId}\n\nThe extension will auto-register when Mergen starts.`,
             priority: 1
         });
+
+        // Retry registration every 30 seconds
+        scheduleAutoRegisterRetry();
     }
+}
+
+// Retry auto-registration periodically if not registered
+function scheduleAutoRegisterRetry() {
+    // Check if already registered
+    browser.storage.local.get(['registered'], (result) => {
+        if (result.registered) {
+            console.log('✅ Already registered, stopping retry');
+            return;
+        }
+
+        console.log('🔄 Will retry auto-registration in 30 seconds...');
+        setTimeout(() => {
+            autoRegisterExtension();
+        }, 30000); // 30 seconds
+    });
 }
 
 // Setup declarativeNetRequest rules for media sniffing
