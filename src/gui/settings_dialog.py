@@ -464,6 +464,8 @@ class SettingsDialog(QDialog):
         i18n_key = name_map.get(cat_name)
         return I18n.get(i18n_key) if i18n_key else cat_name
 
+    def create_browser_tab(self):
+        """Create browser integration tab."""
         widget = QWidget()
         layout = QVBoxLayout()
 
