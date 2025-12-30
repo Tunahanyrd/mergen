@@ -131,6 +131,8 @@ async function downloadMedia(stream) {
 
 // Load detected media
 async function loadDetectedMedia() {
+    console.log('🔍 Loading detected media...');
+
     const loadingState = document.getElementById('loadingState');
     const emptyState = document.getElementById('emptyState');
     const mediaList = document.getElementById('mediaList');
@@ -138,19 +140,26 @@ async function loadDetectedMedia() {
 
     try {
         // Get detected streams from background
+        console.log('📤 Sending get_detected_media request...');
         const response = await browser.runtime.sendMessage({
             type: 'get_detected_media'
         });
 
+        console.log('📥 Response from background:', response);
+
         const streams = response.streams || [];
+
+        console.log(`✅ Received ${streams.length} streams`);
 
         mediaCount.textContent = streams.length;
 
         if (streams.length === 0) {
+            console.log('📭 No media detected - showing empty state');
             loadingState.style.display = 'none';
             emptyState.style.display = 'block';
             mediaList.style.display = 'none';
         } else {
+            console.log(`📺 Displaying ${streams.length} media items`);
             loadingState.style.display = 'none';
             emptyState.style.display = 'none';
             mediaList.style.display = 'block';
@@ -159,15 +168,18 @@ async function loadDetectedMedia() {
             mediaList.innerHTML = '';
 
             // Add media items
-            streams.forEach(stream => {
+            streams.forEach((stream, index) => {
+                console.log(`  ${index + 1}. ${stream.metadata?.pageTitle || stream.url?.substring(0, 50)}`);
                 const item = createMediaItem(stream);
                 mediaList.appendChild(item);
             });
+
+            console.log('✅ Media list rendered');
         }
 
     } catch (error) {
-        console.error('Error loading media:', error);
-        loadingState.textContent = 'Error loading media';
+        console.error('❌ Error loading media:', error);
+        loadingState.textContent = 'Error loading media: ' + error.message;
     }
 }
 
