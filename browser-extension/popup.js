@@ -1,199 +1,178 @@
 /**
- * Popup Script - Media Detection UI
+ * Mergen Extension Popup
+ * Shows detected media with download buttons
  */
 
-// Load detected media on popup open
-document.addEventListener('DOMContentLoaded', () => {
-    loadDetectedMedia();
+const browser = chrome || browser;
 
-    // Add current page button
-    document.getElementById('add-current').addEventListener('click', addCurrentPage);
-
-    // Download all media button
-    document.getElementById('download-all').addEventListener('click', downloadAllMedia);
-
-    // Clear media list button
-    document.getElementById('clear-media').addEventListener('click', clearMediaList);
-});
-
-/**
- * Load and display detected media
- */
-function loadDetectedMedia() {
-    chrome.runtime.sendMessage({ action: 'getDetectedMedia' }, (response) => {
-        if (response && response.media) {
-            displayMediaList(response.media);
-        }
-    });
+// Get platform emoji
+function getPlatformEmoji(platform) {
+    const emojis = {
+        'youtube': '▶️',
+        'instagram': '📸',
+        'twitter': '🐦',
+        'vimeo': '🎬',
+        'default': '🎥'
+    };
+    return emojis[platform] || emojis.default;
 }
 
-/**
- * Display media list in popup
- */
-function displayMediaList(mediaArray) {
-    const mediaList = document.getElementById('media-list');
-    const mediaCount = document.getElementById('media-count');
-    const downloadAll = document.getElementById('download-all');
-    const clearBtn = document.getElementById('clear-media');
+// Format size
+function formatSize(width, height) {
+    if (!width || !height) return '';
+    return `${width}×${height}`;
+}
 
-    mediaCount.textContent = mediaArray.length;
+// Format duration
+function formatDuration(seconds) {
+    if (!seconds) return '';
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
 
-    if (mediaArray.length === 0) {
-        mediaList.innerHTML = `
-            <div class="empty-state">
-                <div style="font-size: 48px; margin-bottom: 12px;">🔍</div>
-                <div>No media detected yet</div>
-                <div style="font-size: 12px; margin-top: 8px; opacity: 0.7;">
-                    Browse any site with videos
-                </div>
-            </div>
-        `;
-        downloadAll.style.display = 'none';
-        clearBtn.style.display = 'none';
-        return;
+// Create media item element
+function createMediaItem(stream) {
+    const { metadata, type, platform } = stream;
+
+    const item = document.createElement('div');
+    item.className = 'media-item';
+
+    // Icon
+    const icon = document.createElement('div');
+    icon.className = 'media-icon';
+    icon.textContent = getPlatformEmoji(platform);
+
+    // Info
+    const info = document.createElement('div');
+    info.className = 'media-info';
+
+    const title = document.createElement('div');
+    title.className = 'media-title';
+    title.textContent = metadata.platformData?.title ||
+        metadata.pageTitle ||
+        new URL(metadata.pageUrl).hostname;
+
+    const meta = document.createElement('div');
+    meta.className = 'media-meta';
+
+    if (platform) {
+        const platformBadge = document.createElement('span');
+        platformBadge.className = 'platform-badge';
+        platformBadge.textContent = platform;
+        meta.appendChild(platformBadge);
     }
 
-    // Show buttons
-    downloadAll.style.display = 'block';
-    clearBtn.style.display = 'block';
+    const size = formatSize(metadata.width, metadata.height);
+    if (size) {
+        const sizeText = document.createElement('span');
+        sizeText.textContent = size;
+        meta.appendChild(sizeText);
+    }
 
-    // Build media list
-    mediaList.innerHTML = mediaArray.map(media => {
-        const icon = getMediaIcon(media.type);
-        return `
-            <div class="media-item">
-                <div class="media-icon">${icon}</div>
-                <div class="media-info">
-                    <div class="media-name" title="${media.filename}">${media.filename}</div>
-                    <div class="media-type">${media.type}</div>
-                </div>
-                <button class="download-btn" data-url="${escapeHtml(media.url)}">
-                    📥 Download
-                </button>
-            </div>
-        `;
-    }).join('');
+    const typeText = document.createElement('span');
+    typeText.textContent = type === 'blob' ? 'video' : type;
+    meta.appendChild(typeText);
 
-    // Add click listeners to download buttons
-    mediaList.querySelectorAll('.download-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const url = btn.getAttribute('data-url');
-            downloadMedia(url);
-        });
-    });
-}
+    info.appendChild(title);
+    info.appendChild(meta);
 
-/**
- * Get icon for media type
- */
-function getMediaIcon(type) {
-    const icons = {
-        'video': '🎥',
-        'audio': '🎵',
-        'stream': '📡',
-        'playlist': '📋',
-        'unknown': '📄'
+    // Download button
+    const downloadBtn = document.createElement('button');
+    downloadBtn.className = 'download-btn';
+    downloadBtn.textContent = '⬇ Download';
+    downloadBtn.onclick = (e) => {
+        e.stopPropagation();
+        downloadMedia(stream);
     };
-    return icons[type] || icons['unknown'];
+
+    item.appendChild(icon);
+    item.appendChild(info);
+    item.appendChild(downloadBtn);
+
+    return item;
 }
 
-/**
- * Download single media file
- */
-function downloadMedia(url) {
-    showStatus('Sending to Mergen...', false);
+// Download media
+async function downloadMedia(stream) {
+    console.log('📥 Downloading:', stream);
 
-    chrome.runtime.sendMessage({
-        action: 'downloadMedia',
-        url: url
-    }, (response) => {
-        if (response && response.status === 'ok') {
-            showStatus('✅ Added to Mergen!', false);
+    const { metadata, url } = stream;
+
+    // For blob URLs (YouTube/Instagram), use pageUrl for yt-dlp
+    const downloadUrl = metadata.isBlob ? metadata.pageUrl : metadata.url;
+
+    // Send to background to forward to Mergen
+    try {
+        const response = await browser.runtime.sendMessage({
+            type: 'download_media',
+            url: downloadUrl,
+            metadata: metadata
+        });
+
+        console.log('✅ Download request sent:', response);
+
+        // Show feedback
+        const btn = event.target;
+        const originalText = btn.textContent;
+        btn.textContent = '✓ Sent to Mergen';
+        btn.style.background = '#2196F3';
+
+        setTimeout(() => {
+            btn.textContent = originalText;
+            btn.style.background = '';
+        }, 2000);
+
+    } catch (error) {
+        console.error('❌ Download failed:', error);
+        alert('Failed to send to Mergen. Make sure the app is running!');
+    }
+}
+
+// Load detected media
+async function loadDetectedMedia() {
+    const loadingState = document.getElementById('loadingState');
+    const emptyState = document.getElementById('emptyState');
+    const mediaList = document.getElementById('mediaList');
+    const mediaCount = document.getElementById('mediaCount');
+
+    try {
+        // Get detected streams from background
+        const response = await browser.runtime.sendMessage({
+            type: 'get_detected_media'
+        });
+
+        const streams = response.streams || [];
+
+        mediaCount.textContent = streams.length;
+
+        if (streams.length === 0) {
+            loadingState.style.display = 'none';
+            emptyState.style.display = 'block';
+            mediaList.style.display = 'none';
         } else {
-            showStatus('❌ Failed to send to Mergen', true);
-        }
-    });
-}
+            loadingState.style.display = 'none';
+            emptyState.style.display = 'none';
+            mediaList.style.display = 'block';
 
-/**
- * Download all detected media
- */
-function downloadAllMedia() {
-    chrome.runtime.sendMessage({ action: 'getDetectedMedia' }, (response) => {
-        if (response && response.media) {
-            const count = response.media.length;
-            showStatus(`📥 Sending ${count} files to Mergen...`, false);
+            // Clear existing items
+            mediaList.innerHTML = '';
 
-            response.media.forEach((media, index) => {
-                setTimeout(() => {
-                    downloadMedia(media.url);
-                }, index * 100); // Stagger requests
+            // Add media items
+            streams.forEach(stream => {
+                const item = createMediaItem(stream);
+                mediaList.appendChild(item);
             });
         }
-    });
-}
 
-/**
- * Clear media list
- */
-function clearMediaList() {
-    chrome.runtime.sendMessage({ action: 'clearDetectedMedia' }, () => {
-        loadDetectedMedia();
-        showStatus('🗑️ Media list cleared', false);
-    });
-}
-
-/**
- * Add current page URL
- */
-function addCurrentPage() {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        if (tabs[0]) {
-            const url = tabs[0].url;
-            showStatus('Sending current page...', false);
-
-            fetch('http://localhost:8765/add_download', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: url })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    showStatus('✅ Added to Mergen!', false);
-                })
-                .catch(error => {
-                    showStatus('❌ Mergen not running?', true);
-                });
-        }
-    });
-}
-
-/**
- * Show status message
- */
-function showStatus(message, isError) {
-    const statusDiv = document.getElementById('status-message');
-    statusDiv.textContent = message;
-    statusDiv.className = 'status' + (isError ? ' error' : '');
-    statusDiv.style.display = 'block';
-
-    setTimeout(() => {
-        statusDiv.style.display = 'none';
-    }, 3000);
-}
-
-/**
- * Escape HTML to prevent XSS
- */
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-// Listen for media detection updates
-chrome.runtime.onMessage.addListener((request) => {
-    if (request.action === 'mediaDetected') {
-        loadDetectedMedia();
+    } catch (error) {
+        console.error('Error loading media:', error);
+        loadingState.textContent = 'Error loading media';
     }
+}
+
+// Initialize popup
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('🚀 Popup initialized');
+    loadDetectedMedia();
 });

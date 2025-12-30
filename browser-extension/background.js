@@ -61,13 +61,28 @@ browser.runtime.onInstalled.addListener(() => {
     console.log("🎬 Extension initialization complete - listening for media...");
 });
 
-// Listen for messages from content scripts
+// Listen for messages from content scripts AND popup
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log('📨 Message from content script:', message.type, sender.tab?.id);
+    console.log('📨 Message received:', message.type, sender.tab?.id || 'popup');
 
     if (message.type === 'media_detected') {
         handleMediaDetection(message.metadata, sender.tab);
         sendResponse({ received: true });
+    }
+    else if (message.type === 'get_detected_media') {
+        // Popup requesting detected media list
+        const streams = Array.from(detectedStreams.values());
+        console.log(`📤 Sending ${streams.length} detected media to popup`);
+        sendResponse({ streams: streams });
+    }
+    else if (message.type === 'download_media') {
+        // Popup requesting download
+        const { url, metadata } = message;
+        console.log('📥 Download request from popup:', url);
+
+        // Send to Mergen via native host / HTTP
+        sendToMergen(url, metadata.pageTitle || 'video', metadata.type || 'direct');
+        sendResponse({ success: true });
     }
 
     return true; // Keep channel open for async response

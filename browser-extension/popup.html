@@ -1,164 +1,194 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Mergen Download Manager</title>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mergen - Detected Media</title>
     <style>
-      body {
-        width: 400px;
-        padding: 16px;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        margin: 0;
-      }
-      
-      .header {
-        text-align: center;
-        margin-bottom: 20px;
-      }
-      
-      h1 {
-        font-size: 24px;
-        margin: 0 0 8px 0;
-      }
-      
-      .subtitle {
-        opacity: 0.9;
-        font-size: 14px;
-      }
-      
-      .section {
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 8px;
-        padding: 12px;
-        margin-bottom: 12px;
-        backdrop-filter: blur(10px);
-      }
-      
-      .section-title {
-        font-weight: 600;
-        margin-bottom: 8px;
-        font-size: 14px;
-      }
-      
-      button {
-        width: 100%;
-        padding: 12px;
-        background: rgba(255, 255, 255, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        color: white;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 14px;
-        font-weight: 500;
-        transition: all 0.2s;
-      }
-      
-      button:hover {
-        background: rgba(255, 255, 255, 0.3);
-        transform: translateY(-1px);
-      }
-      
-      .media-list {
-        max-height: 300px;
-        overflow-y: auto;
-      }
-      
-      .media-item {
-        background: rgba(255, 255, 255, 0.15);
-        border-radius: 6px;
-        padding: 10px;
-        margin-bottom: 8px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-      
-      .media-icon {
-        font-size: 24px;
-      }
-      
-      .media-info {
-        flex: 1;
-        min-width: 0;
-      }
-      
-      .media-name {
-        font-weight: 500;
-        font-size: 13px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-      
-      .media-type {
-        font-size: 11px;
-        opacity: 0.8;
-        text-transform: uppercase;
-      }
-      
-      .download-btn {
-        padding: 6px 12px;
-        font-size: 12px;
-        width: auto;
-        min-width: 70px;
-      }
-      
-      .empty-state {
-        text-align: center;
-        padding: 30px 20px;
-        opacity: 0.7;
-      }
-      
-      .status {
-        text-align: center;
-        padding: 8px;
-        background: rgba(0, 200, 83, 0.2);
-        border-radius: 6px;
-        font-size: 13px;
-        margin-top: 12px;
-      }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-      .error {
-        background: rgba(244, 67, 54, 0.2);
-      }
+        body {
+            width: 400px;
+            min-height: 200px;
+            max-height: 600px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+        }
+
+        .header {
+            padding: 16px;
+            background: rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .badge {
+            background: #4CAF50;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .media-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .media-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+
+        .media-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .media-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .media-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .media-title {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .media-meta {
+            font-size: 12px;
+            opacity: 0.8;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .platform-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        .download-btn {
+            background: #4CAF50;
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+
+        .download-btn:hover {
+            background: #45a049;
+        }
+
+        .empty-state {
+            padding: 48px 16px;
+            text-align: center;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state-text {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 8px;
+        }
+
+        .empty-state-hint {
+            font-size: 12px;
+            opacity: 0.6;
+        }
+
+        .loading {
+            padding: 32px;
+            text-align: center;
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        /* Scrollbar styling */
+        .media-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .media-list::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .media-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+        }
+
+        .media-list::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
     </style>
-  </head>
-  <body>
+</head>
+<body>
     <div class="header">
-      <h1>🚀 Mergen</h1>
-      <div class="subtitle">Download Manager</div>
+        <h1>🎬 Mergen</h1>
+        <span class="badge" id="mediaCount">0</span>
     </div>
 
-    <!-- Detected Media Section -->
-    <div class="section">
-      <div class="section-title">🎬 Detected Media (<span id="media-count">0</span>)</div>
-      <div class="media-list" id="media-list">
-        <div class="empty-state">
-          <div style="font-size: 48px; margin-bottom: 12px;">🔍</div>
-          <div>No media detected yet</div>
-          <div style="font-size: 12px; margin-top: 8px; opacity: 0.7;">
-            Browse any site with videos
-          </div>
-        </div>
-      </div>
-      <button id="download-all" style="margin-top: 10px; display: none;">
-        📥 Download All Media
-      </button>
-      <button id="clear-media" style="margin-top: 8px; display: none;">
-        🗑️ Clear List
-      </button>
+    <div id="loadingState" class="loading">
+        Loading detected media...
     </div>
 
-    <!-- Manual URL Section -->
-    <div class="section">
-      <div class="section-title">📎 Manual Add</div>
-      <button id="add-current">Add Current Page</button>
+    <div id="emptyState" class="empty-state" style="display: none;">
+        <div class="empty-state-icon">🎥</div>
+        <div class="empty-state-text">No media detected</div>
+        <div class="empty-state-hint">Browse YouTube, Instagram, or other video sites</div>
     </div>
 
-    <div id="status-message" style="display: none;"></div>
+    <div id="mediaList" class="media-list" style="display: none;">
+        <!-- Media items will be inserted here -->
+    </div>
 
     <script src="popup.js"></script>
-  </body>
+</body>
 </html>
