@@ -102,10 +102,15 @@ function createMediaItem(stream) {
 async function downloadMedia(stream) {
     console.log('📥 Downloading:', stream);
 
-    const { metadata, url } = stream;
+    // Safe access to metadata (might be undefined for webRequest streams)
+    const metadata = stream.metadata || {};
+    const url = stream.url;
 
-    // For blob URLs (YouTube/Instagram), use pageUrl for yt-dlp
-    const downloadUrl = metadata.isBlob ? metadata.pageUrl : metadata.url;
+    // For blob URLs or if metadata says isBlob, use pageUrl
+    // Otherwise use the URL from stream
+    const downloadUrl = (metadata.isBlob && metadata.pageUrl) ? metadata.pageUrl : url;
+
+    console.log('📤 Sending to Mergen:', downloadUrl);
 
     // Send to background to forward to Mergen
     try {
