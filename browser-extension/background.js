@@ -219,7 +219,7 @@ if (isFirefox && browser.webRequest && browser.webRequest.onBeforeRequest) {
     // Chrome: Use declarativeNetRequest.onRuleMatched for automatic detection
     console.log("🌐 Chrome detected - using declarativeNetRequest events");
 
-    if (browser.declarativeNetRequest && browser.declarativeNetRequest.onRuleMatched) {
+    if (browser.declarativeNetRequest?.onRuleMatched?.addListener) {
         browser.declarativeNetRequest.onRuleMatched.addListener((details) => {
             const url = details.request.url;
             const streamType = detectStreamType(url);
@@ -250,7 +250,7 @@ if (isFirefox && browser.webRequest && browser.webRequest.onBeforeRequest) {
 
         console.log("✅ Automatic stream detection enabled via declarativeNetRequest");
     } else {
-        console.log("⚠️ declarativeNetRequest events not available - using context menu only");
+        console.log("⚠️ declarativeNetRequest.onRuleMatched not available - using context menu only");
     }
 }
 
