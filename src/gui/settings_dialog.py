@@ -470,7 +470,7 @@ class SettingsDialog(QDialog):
         layout = QVBoxLayout()
 
         # Header
-        header = QLabel(I18n.get("browser_integration_header") or "Browser Extension Integration")
+        header = QLabel("Tarayıcı Uzantısı Entegrasyonu")
         header.setStyleSheet("font-size: 16px; font-weight: bold; margin-bottom: 10px;")
         layout.addWidget(header)
 
@@ -478,7 +478,7 @@ class SettingsDialog(QDialog):
         status_widget = QWidget()
         status_layout = QHBoxLayout()
         self.browser_status_icon = QLabel("⚫")
-        self.browser_status_text = QLabel(I18n.get("browser_status_checking") or "Checking...")
+        self.browser_status_text = QLabel("Kontrol ediliyor...")
         status_layout.addWidget(self.browser_status_icon)
         status_layout.addWidget(self.browser_status_text)
         status_layout.addStretch()
@@ -488,7 +488,7 @@ class SettingsDialog(QDialog):
         layout.addSpacing(10)
 
         # Installation Guide
-        guide_group = QGroupBox(I18n.get("browser_installation_header") or "Installation")
+        guide_group = QGroupBox("📋 Kurulum")
         guide_layout = QVBoxLayout()
 
         # Easy Install Button (New Feature)
@@ -496,17 +496,17 @@ class SettingsDialog(QDialog):
         easy_install_frame.setStyleSheet("background-color: #333; border-radius: 6px; padding: 10px;")
         eil = QVBoxLayout(easy_install_frame)
 
-        ei_label = QLabel("✨ " + (I18n.get("browser_easy_install_title") or "Easy Installation"))
+        ei_label = QLabel("✨ Kolay Kurulum Yardımcısı")
         ei_label.setStyleSheet("font-weight: bold; color: #00f2ff;")
         eil.addWidget(ei_label)
 
         ei_desc = QLabel(
-            I18n.get("browser_easy_install_desc") or "Automatically open extension folder and browser setup page."
+            "Uzantı klasörünü ve tarayıcı uzantılar sayfasını otomatik açar."
         )
         ei_desc.setWordWrap(True)
         eil.addWidget(ei_desc)
 
-        self.easy_install_btn = QPushButton(I18n.get("browser_easy_install_btn") or "Launch Installation Helper")
+        self.easy_install_btn = QPushButton("🚀 Kurulum Yardımcısını Başlat")
         self.easy_install_btn.setStyleSheet("background-color: #007acc; font-weight: bold; padding: 8px;")
         self.easy_install_btn.clicked.connect(self.launch_extension_helper)
         eil.addWidget(self.easy_install_btn)
@@ -515,15 +515,15 @@ class SettingsDialog(QDialog):
 
         # Manual Instructions (Collapsible/Secondary)
         guide_layout.addSpacing(10)
-        manual_lbl = QLabel(I18n.get("browser_manual_install") or "Manual Installation:")
+        manual_lbl = QLabel("Manuel Kurulum:")
         manual_lbl.setStyleSheet("font-weight: bold; color: #aaa;")
         guide_layout.addWidget(manual_lbl)
 
         manual_text = QLabel(
-            f"1. {I18n.get('browser_chrome_step1')}<br>"
-            f"2. {I18n.get('browser_chrome_step2')}<br>"
-            f"3. {I18n.get('browser_chrome_step3')}<br>"
-            f"4. {I18n.get('browser_chrome_step4')}"
+            "1. chrome://extensions sayfasını açın<br>"
+            "2. Geliştirici Modunu etkinleştirin<br>"
+            "3. Paketlenmemiş Uzantı Yükleyin<br>"
+            "4. Uzantı ID'sini Ayarlara kopyalayın"
         )
         manual_text.setWordWrap(True)
         manual_text.setStyleSheet("color: #888; margin-left: 10px;")
@@ -533,20 +533,20 @@ class SettingsDialog(QDialog):
         layout.addWidget(guide_group)
 
         # Registration section
-        reg_group = QGroupBox(I18n.get("browser_register_header") or "Register Extension")
+        reg_group = QGroupBox("🔑 Uzantıyı Kaydet")
         reg_layout = QVBoxLayout()
 
         # Extension ID input
         id_layout = QHBoxLayout()
-        id_layout.addWidget(QLabel(I18n.get("browser_ext_id_label") or "Extension ID:"))
+        id_layout.addWidget(QLabel("Uzantı ID:"))
         self.ext_id_input = QLineEdit()
-        self.ext_id_input.setPlaceholderText(I18n.get("ext_id_placeholder"))
+        self.ext_id_input.setPlaceholderText("Uzantı ID'sini buraya yapıştır...")
         self.ext_id_input.setToolTip(I18n.get("ext_id_help"))
         id_layout.addWidget(self.ext_id_input)
         reg_layout.addLayout(id_layout)
 
         # Register button
-        register_btn = QPushButton(I18n.get("browser_register_btn") or "Register Extension")
+        register_btn = QPushButton("✅ Uzantıyı Kaydet")
         register_btn.clicked.connect(self.register_extension)
         reg_layout.addWidget(register_btn)
 
