@@ -529,7 +529,10 @@ class I18n:
 
     @classmethod
     def get(cls, key):
-        return TRANS.get(cls._lang, {}).get(key, key)
+        result = TRANS.get(cls._lang, {}).get(key, key)
+        if result == key and os.environ.get("MERGEN_VERBOSE") == "1":
+            print(f"⚠️ Missing i18n key: '{key}' (lang={cls._lang})")
+        return result
 
     @classmethod
     def detect_os_lang(cls):
