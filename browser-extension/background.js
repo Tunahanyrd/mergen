@@ -1,5 +1,3 @@
-// Import MV3 utilities
-importScripts("utils/rule-manager.js");
 // Import media detector (MV3 version)
 importScripts("media-detector.js");
 
