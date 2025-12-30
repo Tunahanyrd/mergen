@@ -219,38 +219,43 @@ if (isFirefox && browser.webRequest && browser.webRequest.onBeforeRequest) {
     // Chrome: Use declarativeNetRequest.onRuleMatched for automatic detection
     console.log("🌐 Chrome detected - using declarativeNetRequest events");
 
-    if (browser.declarativeNetRequest?.onRuleMatched?.addListener) {
-        browser.declarativeNetRequest.onRuleMatched.addListener((details) => {
-            const url = details.request.url;
-            const streamType = detectStreamType(url);
+    try {
+        if (browser.declarativeNetRequest?.onRuleMatched?.addListener) {
+            browser.declarativeNetRequest.onRuleMatched.addListener((details) => {
+                const url = details.request.url;
+                const streamType = detectStreamType(url);
 
-            if (streamType !== 'direct') {
-                const streamKey = `${url}_${Date.now()}`;
+                if (streamType !== 'direct') {
+                    const streamKey = `${url}_${Date.now()}`;
 
-                // Store detected stream
-                detectedStreams.set(streamKey, {
-                    url: url,
-                    type: streamType,
-                    timestamp: Date.now(),
-                    tabId: details.request.tabId
-                });
+                    // Store detected stream
+                    detectedStreams.set(streamKey, {
+                        url: url,
+                        type: streamType,
+                        timestamp: Date.now(),
+                        tabId: details.request.tabId
+                    });
 
-                console.log(`🎬 Rule matched - ${streamType.toUpperCase()} stream:`, url.substring(0, 100));
+                    console.log(`🎬 Rule matched - ${streamType.toUpperCase()} stream:`, url.substring(0, 100));
 
-                // Update badge
-                updateBadgeCount();
+                    // Update badge
+                    updateBadgeCount();
 
-                // Clean old detections (keep last 50)
-                if (detectedStreams.size > 50) {
-                    const oldestKey = detectedStreams.keys().next().value;
-                    detectedStreams.delete(oldestKey);
+                    // Clean old detections (keep last 50)
+                    if (detectedStreams.size > 50) {
+                        const oldestKey = detectedStreams.keys().next().value;
+                        detectedStreams.delete(oldestKey);
+                    }
                 }
-            }
-        });
+            });
 
-        console.log("✅ Automatic stream detection enabled via declarativeNetRequest");
-    } else {
-        console.log("⚠️ declarativeNetRequest.onRuleMatched not available - using context menu only");
+            console.log("✅ Automatic stream detection enabled via declarativeNetRequest");
+        } else {
+            throw new Error("onRuleMatched not available");
+        }
+    } catch (err) {
+        console.log("⚠️ declarativeNetRequest.onRuleMatched not supported:", err.message);
+        console.log("📋 Extension will use context menu and download intercept instead");
     }
 }
 
