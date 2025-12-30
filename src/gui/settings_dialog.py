@@ -556,8 +556,8 @@ class SettingsDialog(QDialog):
         layout.addStretch()
         widget.setLayout(layout)
 
-        # Check status
-        self.check_browser_integration_status()
+        # Status check removed - was auto-launching browsers on tab open
+        # User can check status manually via button if needed
 
         return widget
 
