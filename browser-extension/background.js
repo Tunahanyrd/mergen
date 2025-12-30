@@ -63,7 +63,7 @@ async function autoRegisterExtension() {
         const response = await fetch('http://localhost:8765/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.dumps({
+            body: JSON.stringify({
                 extension_id: extensionId,
                 browser: browserType,
                 version: '0.9.3'
@@ -93,32 +93,28 @@ async function autoRegisterExtension() {
             throw new Error(`Registration failed: ${response.status}`);
         }
     } catch (err) {
-        console.error('❌ Auto-registration failed:', err);
-        console.error('Error details:', {
-            message: err.message,
-            name: err.name,
-            stack: err.stack
-        });
+        console.error('❌ Auto-registration failed:', err.message);
         console.log('💡 Make sure Mergen app is running');
-        console.log('💡 Check if localhost:8765 is accessible');
+        console.log('💡 Start Mergen from your applications menu or terminal');
 
         // Test if server is reachable
-        fetch('http://localhost:8765/health')
-            .then(r => {
+        try {
+            const healthCheck = await fetch('http://localhost:8765/health');
+            if (healthCheck.ok) {
                 console.log('✅ Health check passed, server is running');
                 console.log('⚠️ Registration endpoint might have issues');
-            })
-            .catch(e => {
-                console.error('❌ Cannot reach localhost:8765:', e.message);
-                console.error('🔍 Possible causes: App not running, firewall blocking, or wrong port');
-            });
+            }
+        } catch (e) {
+            console.error('❌ Cannot reach localhost:8765');
+            console.error('🔍 Mergen app is not running or port is blocked');
+        }
 
-        // Fallback: Show manual registration instructions
+        // Show helpful notification with instructions
         browser.notifications.create({
             type: 'basic',
             iconUrl: browser.runtime.getURL('icons/icon128.png'),
-            title: '⚠️ Mergen Not Running',
-            message: `Please start Mergen app to complete auto-registration.\n\nExtension ID: ${extensionId}`,
+            title: '⚠️ Mergen App Not Running',
+            message: `Please start Mergen from your applications menu.\n\nExtension ID: ${extensionId}\n\nThe extension will auto-register when Mergen starts.`,
             priority: 1
         });
     }
