@@ -470,7 +470,7 @@ class SettingsDialog(QDialog):
         layout = QVBoxLayout()
 
         # Header
-        header = QLabel(I18n.get("browser_integration_header"))
+        header = QLabel(I18n.get("browser_integration_header") or "Browser Extension Integration")
         header.setStyleSheet("font-size: 16px; font-weight: bold; margin-bottom: 10px;")
         layout.addWidget(header)
 
@@ -478,7 +478,7 @@ class SettingsDialog(QDialog):
         status_widget = QWidget()
         status_layout = QHBoxLayout()
         self.browser_status_icon = QLabel("⚫")
-        self.browser_status_text = QLabel(I18n.get("browser_status_checking"))
+        self.browser_status_text = QLabel(I18n.get("browser_status_checking") or "Checking...")
         status_layout.addWidget(self.browser_status_icon)
         status_layout.addWidget(self.browser_status_text)
         status_layout.addStretch()
@@ -488,7 +488,7 @@ class SettingsDialog(QDialog):
         layout.addSpacing(10)
 
         # Installation Guide
-        guide_group = QGroupBox(I18n.get("browser_installation_header"))
+        guide_group = QGroupBox(I18n.get("browser_installation_header") or "Installation")
         guide_layout = QVBoxLayout()
 
         # Easy Install Button (New Feature)
@@ -533,12 +533,12 @@ class SettingsDialog(QDialog):
         layout.addWidget(guide_group)
 
         # Registration section
-        reg_group = QGroupBox(I18n.get("browser_register_header"))
+        reg_group = QGroupBox(I18n.get("browser_register_header") or "Register Extension")
         reg_layout = QVBoxLayout()
 
         # Extension ID input
         id_layout = QHBoxLayout()
-        id_layout.addWidget(QLabel(I18n.get("browser_ext_id_label")))
+        id_layout.addWidget(QLabel(I18n.get("browser_ext_id_label") or "Extension ID:"))
         self.ext_id_input = QLineEdit()
         self.ext_id_input.setPlaceholderText(I18n.get("ext_id_placeholder"))
         self.ext_id_input.setToolTip(I18n.get("ext_id_help"))
@@ -546,7 +546,7 @@ class SettingsDialog(QDialog):
         reg_layout.addLayout(id_layout)
 
         # Register button
-        register_btn = QPushButton(I18n.get("browser_register_btn"))
+        register_btn = QPushButton(I18n.get("browser_register_btn") or "Register Extension")
         register_btn.clicked.connect(self.register_extension)
         reg_layout.addWidget(register_btn)
 
