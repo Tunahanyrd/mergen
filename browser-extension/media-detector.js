@@ -151,19 +151,29 @@ function updateBadge(tabId, count) {
  * Listen for declarativeNetRequest rule matches
  * This is the MV3 way to detect media requests
  */
-chrome.declarativeNetRequest.onRuleMatched.addListener((details) => {
-    const { request } = details;
-    const { url, tabId, type } = request;
+try {
+    if (chrome.declarativeNetRequest?.onRuleMatched?.addListener) {
+        chrome.declarativeNetRequest.onRuleMatched.addListener((details) => {
+            const { request } = details;
+            const { url, tabId, type } = request;
 
-    // Ignore invalid tab IDs
-    if (tabId < 0) return;
+            // Ignore invalid tab IDs
+            if (tabId < 0) return;
 
-    // Parse media metadata
-    const media = parseMediaUrl(url);
+            // Parse media metadata
+            const media = parseMediaUrl(url);
 
-    // Add to detected media
-    addDetectedMedia(tabId, media);
-});
+            // Add to detected media
+            addDetectedMedia(tabId, media);
+        });
+        console.log('✅ Media detector onRuleMatched listener registered');
+    } else {
+        throw new Error('onRuleMatched API not available');
+    }
+} catch (err) {
+    console.log('⚠️ declarativeNetRequest.onRuleMatched not supported in media-detector:', err.message);
+    console.log('📋 Media detection will rely on background.js download intercept');
+}
 
 /**
  * Clear media when tab is closed
