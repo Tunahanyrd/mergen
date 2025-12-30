@@ -371,45 +371,60 @@ function testNativeConnection() {
             } else {
                 console.log("✅ Native messaging connection SUCCESS!");
                 console.log("   Response:", response);
-                targetUrl.startsWith('chrome-extension://') ||
-                    targetUrl.startsWith('moz-extension://') ||
-                    targetUrl.startsWith('file://')) {
-        console.log("⚠️ Cannot download browser-internal URL:", targetUrl);
-        return;
-    }
-
-    console.log("📥 Context menu download requested:", targetUrl);
-    const streamType = detectStreamType(targetUrl);
-    sendToMergen(targetUrl, targetUrl.split('/').pop() || 'download', streamType);
-} else if (info.menuItemId === "mergen-stream") {
-    // Get most recent detected stream for this tab
-    const recentStream = Array.from(detectedStreams.values())
-        .filter(s => s.tabId === tab.id)
-        .sort((a, b) => b.timestamp - a.timestamp)[0];
-
-    if (recentStream) {
-        console.log("🎬 Downloading detected stream:", recentStream.url);
-
-        // CRITICAL: For YouTube, send page URL instead of HLS manifest
-        // yt-dlp handles YouTube natively and needs the watch URL, not the manifest
-        const isYouTube = tab.url && (
-            tab.url.includes('youtube.com') ||
-            tab.url.includes('youtu.be')
-        );
-
-        if (isYouTube) {
-            console.log("📺 YouTube detected - sending page URL instead of HLS manifest");
-            const filename = 'video'; // yt-dlp will set the real filename
-            sendToMergen(tab.url, filename, 'youtube');
-        } else {
-            const filename = extractFilename(recentStream.url) || 'stream';
-            sendToMergen(recentStream.url, filename, recentStream.type);
+            }
         }
-    } else if (info.linkUrl) {
-        const streamType = detectStreamType(info.linkUrl);
-        sendToMergen(info.linkUrl, info.linkUrl.split('/').pop() || 'stream', streamType);
-    }
+    );
 }
+
+// Handle context menu clicks
+browser.contextMenus.onClicked.addListener((info, tab) => {
+    if (info.menuItemId === "mergen-download") {
+        let targetUrl = info.linkUrl || info.srcUrl || info.pageUrl;
+
+        if (!targetUrl) return;
+
+        // Reject browser-internal URLs
+        if (targetUrl.startsWith('chrome://') ||
+            targetUrl.startsWith('about://') ||
+            targetUrl.startsWith('chrome-extension://') ||
+            targetUrl.startsWith('moz-extension://') ||
+            targetUrl.startsWith('file://')) {
+            console.log("⚠️ Cannot download browser-internal URL:", targetUrl);
+            return;
+        }
+
+        console.log("📥 Context menu download requested:", targetUrl);
+        const streamType = detectStreamType(targetUrl);
+        sendToMergen(targetUrl, targetUrl.split('/').pop() || 'download', streamType);
+    } else if (info.menuItemId === "mergen-stream") {
+        // Get most recent detected stream for this tab
+        const recentStream = Array.from(detectedStreams.values())
+            .filter(s => s.tabId === tab.id)
+            .sort((a, b) => b.timestamp - a.timestamp)[0];
+
+        if (recentStream) {
+            console.log("🎬 Downloading detected stream:", recentStream.url);
+
+            // CRITICAL: For YouTube, send page URL instead of HLS manifest
+            // yt-dlp handles YouTube natively and needs the watch URL, not the manifest
+            const isYouTube = tab.url && (
+                tab.url.includes('youtube.com') ||
+                tab.url.includes('youtu.be')
+            );
+
+            if (isYouTube) {
+                console.log("📺 YouTube detected - sending page URL instead of HLS manifest");
+                const filename = 'video'; // yt-dlp will set the real filename
+                sendToMergen(tab.url, filename, 'youtube');
+            } else {
+                const filename = extractFilename(recentStream.url) || 'stream';
+                sendToMergen(recentStream.url, filename, recentStream.type);
+            }
+        } else if (info.linkUrl) {
+            const streamType = detectStreamType(info.linkUrl);
+            sendToMergen(info.linkUrl, info.linkUrl.split('/').pop() || 'stream', streamType);
+        }
+    }
 });
 
 // Extract filename from URL
