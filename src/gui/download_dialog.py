@@ -235,6 +235,8 @@ class DownloadDialog(QDialog):
     def __init__(self, url, parent=None, save_dir=None, format_info=None):
         super().__init__(parent)
         self.setWindowTitle(I18n.get("downloading"))
+        self.setModal(False)  # Non-modal - don't freeze main window
+        self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
         self.resize(720, 520)
         # Removed frameless flags - now fully resizable with standard controls
         # self.setAttribute(Qt.WA_TranslucentBackground)

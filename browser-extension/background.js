@@ -30,7 +30,9 @@ const MEDIA_PATTERNS = {
 
 // Initialize extension
 browser.runtime.onInstalled.addListener(() => {
-    console.log("✅ Mergen v0.9.3 extension installed!");
+    console.log("✅ Mergen v0.9.5 extension installed!");
+    console.log("🔍 Extension ID:", browser.runtime.id);
+    console.log("🌐 Browser type:", typeof browser.runtime.getBrowserInfo !== 'undefined' ? 'Firefox' : 'Chrome');
 
     // Create context menus
     browser.contextMenus.create({
@@ -45,11 +47,15 @@ browser.runtime.onInstalled.addListener(() => {
         contexts: ["link", "video", "audio"]
     });
 
+    console.log("📋 Context menus created");
+
     // AUTO-REGISTER with Mergen app (zero-config!)
     autoRegisterExtension();
 
     // Setup declarativeNetRequest rules for media detection
     setupMediaDetectionRules();
+
+    console.log("🎬 Extension initialization complete - listening for media...");
 });
 
 // Auto-register extension with Mergen app
