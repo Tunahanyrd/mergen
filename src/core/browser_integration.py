@@ -128,26 +128,23 @@ class MergenHTTPHandler(BaseHTTPRequestHandler):
             body = self.rfile.read(content_length)
             data = json.loads(body.decode("utf-8"))
 
-            request_type = data.get("type", "add_download")  # NEW: support both formats
+            request_type = data.get("type", "add_download")
 
-            # NEW: Handle URL download (simplified approach)
+            # Handle URL download (simplified approach)
             if request_type == "download_url":
                 url = data.get("url", "")
-                filename = data.get("pageTitle", "")  # Use pageTitle as filename for download_url
-                # page_url = data.get("pageUrl", "") # Not used currently
+                filename = data.get("pageTitle", "")
             else:  # Original add_download logic
                 url = data.get("url", "")
                 filename = data.get("filename", "")
+            
             stream_type = data.get("stream_type", "direct")
 
-            # NEW: Support simplified download_url format
-            if request_type == "download_url":
-                # For URL downloads, use page title as suggested name
-                if filename:
-                    # Clean up page title
-                    for suffix in [" - YouTube", " • Instagram", " on Twitter", " / X"]:
-                        filename = filename.replace(suffix, "")
-                    filename = filename.strip()
+            # Clean up page title
+            if request_type == "download_url" and filename:
+                for suffix in [" - YouTube", " • Instagram", " on Twitter", " / X"]:
+                    filename = filename.replace(suffix, "")
+                filename = filename.strip()
 
             if not url:
                 self.send_error(400, "Missing url parameter")
@@ -155,18 +152,19 @@ class MergenHTTPHandler(BaseHTTPRequestHandler):
 
             logger.info(f"{'URL' if request_type == 'download_url' else 'Direct'} download: {url}")
 
-            # Wake main window if minimized
+            # Wake main window and add download
             if self.main_window:
                 from PySide6.QtCore import QMetaObject, Qt
 
+                # Wake window (use correct Qt methods)
                 QMetaObject.invokeMethod(self.main_window, "show", Qt.ConnectionType.QueuedConnection)
-                QMetaObject.invokeMethod(self.main_window, "raise_", Qt.ConnectionType.QueuedConnection)
+                QMetaObject.invokeMethod(self.main_window, "raise", Qt.ConnectionType.QueuedConnection)
                 QMetaObject.invokeMethod(self.main_window, "activateWindow", Qt.ConnectionType.QueuedConnection)
 
-                # Add download (yt-dlp will handle format detection for URLs)
+                # Call handle_browser_download (existing method)
                 QMetaObject.invokeMethod(
-                    self.main_window.download_manager,
-                    "add_download",
+                    self.main_window,
+                    "handle_browser_download",
                     Qt.ConnectionType.QueuedConnection,
                     url,
                     filename or "",
@@ -174,18 +172,25 @@ class MergenHTTPHandler(BaseHTTPRequestHandler):
                 logger.info(f"✅ Download added: {url}")
 
             # Send success response
-            response = {"status": "success", "message": "Download added", "stream_type": stream_type}
+            response = {"success": True, "message": "Download added", "stream_type": stream_type}
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
             self.wfile.write(json.dumps(response).encode())
 
-        except Exception as e:
-            logger.error(f"Browser integration error: {e}")
+        except json.JSONDecodeError:
+            logger.error("Invalid JSON in request")
+            self.send_response(400)
             self.send_header("Content-Type", "application/json")
             self.end_headers()
-            self.wfile.write(json.dumps({"status": "error", "message": str(e)}).encode())
+            self.wfile.write(json.dumps({"success": False, "error": "Invalid JSON"}).encode())
+        except Exception as e:
+            logger.error(f"Browser integration error: {e}")
+            self.send_response(500)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps({"success": False, "error": str(e)}).encode())
 
     def do_GET(self):
         """Handle GET requests (health check)."""
