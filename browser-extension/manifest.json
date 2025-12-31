@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Mergen Browser Integration",
-  "version": "0.9.6",
+  "version": "0.9.7",
   "description": "Send web videos to Mergen download manager",
   "icons": {
     "16": "icons/icon-16.png",
@@ -11,7 +11,8 @@
   "permissions": [
     "contextMenus",
     "activeTab",
-    "nativeMessaging"
+    "nativeMessaging",
+    "notifications"
   ],
   "background": {
     "service_worker": "background.js"
