@@ -130,6 +130,51 @@ def try_start_mergen():
         return False
 
 
+def handle_message(message):
+    """
+    Handle message from browser extension.
+    
+    Expected message format:
+    {
+        "action": "download_url",
+        "url": "https://...",
+        "pageTitle": "...",
+        "pageUrl": "...",
+        "favicon": "..."
+    }
+    """
+    try:
+        action = message.get("action")
+        
+        if action == "download_url":
+            url = message.get("url")
+            page_title = message.get("pageTitle", "")
+            
+            if not url:
+                return {"success": False, "error": "No URL provided"}
+            
+            # Clean filename from page title
+            filename = page_title or "download"
+            # Remove common suffixes
+            for suffix in [" - YouTube", " | Twitter", " | Instagram"]:
+                filename = filename.replace(suffix, "")
+            
+            # Send to Mergen
+            result = send_to_mergen(url, filename)
+            
+            if result.get("status") == "success":
+                return {"success": True}
+            else:
+                return {"success": False, "error": result.get("message", "Unknown error")}
+        
+        else:
+            return {"success": False, "error": f"Unknown action: {action}"}
+            
+    except Exception as e:
+        logging.error(f"Error handling message: {e}")
+        return {"success": False, "error": str(e)}
+
+
 def main():
     """Main loop for native messaging host."""
     logging.info("=" * 60)
