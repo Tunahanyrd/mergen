@@ -21,6 +21,7 @@ import httpx
 
 from src.core.i18n import I18n
 from src.core.logger import get_logger
+from src.core.segment_monitor import SegmentMonitor  # IDM-style dynamic segmentation
 
 logger = get_logger(__name__)
 
@@ -92,6 +93,9 @@ class Downloader:
         # Stats
         self.start_time = 0
         self.running = True
+        
+        # IDM-style dynamic segment monitor
+        self.segment_monitor: Optional[SegmentMonitor] = None
 
         # NEW: Stream detection for v0.8.0
         self.stream_type = self._detect_stream_type(url)
