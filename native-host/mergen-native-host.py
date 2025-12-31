@@ -146,7 +146,56 @@ def handle_message(message):
     try:
         action = message.get("action")
         
-        if action == "download_url":
+        if action == "register_extension":
+            # Auto-register extension ID (IDM-style)
+            extension_id = message.get("extensionId")
+            if not extension_id:
+                return {"success": False, "error": "No extension ID provided"}
+            
+            # Update native host JSON file
+            import os
+            host_file = Path.home() / ".config" / "google-chrome" / "NativeMessagingHosts" / "com.tunahanyrd.mergen.json"
+            
+            # Also check chromium
+            if not host_file.exists():
+                host_file = Path.home() / ".config" / "chromium" / "NativeMessagingHosts" / "com.tunahanyrd.mergen.json"
+            
+            try:
+                # Read current config
+                if host_file.exists():
+                    with open(host_file, 'r') as f:
+                        config = json.load(f)
+                else:
+                    # Create default config
+                    config = {
+                        "name": "com.tunahanyrd.mergen",
+                        "description": "Mergen Native Host",
+                        "path": str(Path.home() / "bin" / "mergen-native-host.py"),
+                        "type": "stdio",
+                        "allowed_origins": []
+                    }
+                
+                # Add extension ID if not already present
+                origin = f"chrome-extension://{extension_id}/"
+                if origin not in config.get("allowed_origins", []):
+                    config.setdefault("allowed_origins", []).append(origin)
+                    
+                    # Write back
+                    host_file.parent.mkdir(parents=True, exist_ok=True)
+                    with open(host_file, 'w') as f:
+                        json.dump(config, f, indent=2)
+                    
+                    logging.info(f"✅ Registered extension ID: {extension_id}")
+                    return {"success": True, "message": "Extension registered"}
+                else:
+                    logging.info(f"Extension ID already registered: {extension_id}")
+                    return {"success": True, "message": "Already registered"}
+                    
+            except Exception as e:
+                logging.error(f"Failed to update host file: {e}")
+                return {"success": False, "error": f"Failed to register: {e}"}
+        
+        elif action == "download_url":
             url = message.get("url")
             page_title = message.get("pageTitle", "")
             
