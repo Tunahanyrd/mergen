@@ -16,6 +16,16 @@ from src.core.version import __version__
 logger = get_logger(__name__)
 
 
+def is_valid_download_url(url):
+    """Check if URL is downloadable (not browser-internal).""" 
+    invalid_schemes = [
+        'chrome://', 'chrome-extension://', 'about:',
+        'blob:', 'data:', 'javascript:', 'file://'
+    ]
+    url_lower = url.lower()
+    return not any(url_lower.startswith(scheme) for scheme in invalid_schemes)
+
+
 class MergenHTTPHandler(BaseHTTPRequestHandler):
     """HTTP request handler for browser extension integration."""
 
@@ -137,7 +147,7 @@ class MergenHTTPHandler(BaseHTTPRequestHandler):
             else:  # Original add_download logic
                 url = data.get("url", "")
                 filename = data.get("filename", "")
-            
+
             stream_type = data.get("stream_type", "direct")
 
             # Clean up page title
@@ -146,17 +156,24 @@ class MergenHTTPHandler(BaseHTTPRequestHandler):
                     filename = filename.replace(suffix, "")
                 filename = filename.strip()
 
+            # Validate URL
             if not url:
                 self.send_error(400, "Missing url parameter")
+                return
+            
+            if not is_valid_download_url(url):
+                logger.warning(f"Rejected browser-internal URL: {url[:100]}")
+                self.send_response(400)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": "Cannot download browser-internal URLs"}).encode())
                 return
 
             logger.info(f"{'URL' if request_type == 'download_url' else 'Direct'} download: {url}")
 
             # Wake main window and add download
             if self.main_window:
-                # Use signal for thread-safe communication (HTTP handler runs in separate thread)
-                if hasattr(self.main_window, 'browser_download_signal'):
-                    # Signal will trigger handle_browser_download in UI thread
+                if hasattr(self.main_window, "browser_download_signal"):
                     self.main_window.browser_download_signal.emit(url, filename or "")
                     logger.info(f"✅ Download request sent: {url}")
                 else:
