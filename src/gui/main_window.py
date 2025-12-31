@@ -634,11 +634,9 @@ class MainWindow(QMainWindow):
             self.row_map[d.id] = row  # Map ID to Row Index
 
             # Populate Columns
-            # Col 0: File Name
-            # Show full path instead of just filename
-        # Col 0: File Name (basename without extension)
-        display_name = Path(d.filename).stem if d.filename else "Unknown"
-        self.table.setItem(row, 0, QTableWidgetItem(display_name))
+            # Col 0: File Name (basename without extension)
+            display_name = Path(d.filename).stem if d.filename else "Unknown"
+            self.table.setItem(row, 0, QTableWidgetItem(display_name))
             # Col 1: Size (Show Known Size)
             size_str = d.size
             if d.total_bytes > 0:
