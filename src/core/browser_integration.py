@@ -157,7 +157,7 @@ class MergenHTTPHandler(BaseHTTPRequestHandler):
 
             # Wake main window if minimized
             if self.main_window:
-                from PyQt6.QtCore import QMetaObject, Qt
+                from PySide6.QtCore import QMetaObject, Qt
 
                 QMetaObject.invokeMethod(self.main_window, "show", Qt.ConnectionType.QueuedConnection)
                 QMetaObject.invokeMethod(self.main_window, "raise_", Qt.ConnectionType.QueuedConnection)
