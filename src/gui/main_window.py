@@ -886,6 +886,27 @@ class MainWindow(QMainWindow):
 
     # NEW v0.9.0: Analysis Flow
     def analyze_and_start(self, url, save_dir, queue_name):
+        """Analyze URL and start download with cold start optimization."""
+        
+        # COLD START OPTIMIZATION: Fast-path for direct downloads
+        from src.core.url_classifier import URLClassifier
+        
+        classifier = URLClassifier()
+        url_type = classifier.classify(url)
+        
+        if url_type == 'direct':
+            # Skip yt-dlp analysis for direct downloads - instant start!
+            import os
+            if os.environ.get("MERGEN_VERBOSE") == "1":
+                print(f"⚡ Fast-path: Direct download detected, skipping analysis")
+            
+            self.statusBar().showMessage("🚀 Starting direct download...", 2000)
+            
+            # Start download immediately without format selection
+            self.start_download_final(url, save_dir, queue_name, format_info=None)
+            return
+        
+        # STREAMING SITES: Continue with yt-dlp analysis
         # Interactive mode check (default True for now)
         interactive = self.config.get("interactive_mode", True)
 
