@@ -154,22 +154,13 @@ class MergenHTTPHandler(BaseHTTPRequestHandler):
 
             # Wake main window and add download
             if self.main_window:
-                from PySide6.QtCore import QMetaObject, Qt
-
-                # Wake window (use correct Qt methods)
-                QMetaObject.invokeMethod(self.main_window, "show", Qt.ConnectionType.QueuedConnection)
-                QMetaObject.invokeMethod(self.main_window, "raise", Qt.ConnectionType.QueuedConnection)
-                QMetaObject.invokeMethod(self.main_window, "activateWindow", Qt.ConnectionType.QueuedConnection)
-
-                # Call handle_browser_download (existing method)
-                QMetaObject.invokeMethod(
-                    self.main_window,
-                    "handle_browser_download",
-                    Qt.ConnectionType.QueuedConnection,
-                    url,
-                    filename or "",
-                )
-                logger.info(f"✅ Download added: {url}")
+                # Use signal for thread-safe communication (HTTP handler runs in separate thread)
+                if hasattr(self.main_window, 'browser_download_signal'):
+                    # Signal will trigger handle_browser_download in UI thread
+                    self.main_window.browser_download_signal.emit(url, filename or "")
+                    logger.info(f"✅ Download request sent: {url}")
+                else:
+                    logger.error("MainWindow missing browser_download_signal")
 
             # Send success response
             response = {"success": True, "message": "Download added", "stream_type": stream_type}
