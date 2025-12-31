@@ -23,6 +23,7 @@ import httpx
 from src.core.i18n import I18n
 from src.core.logger import get_logger
 from src.core.segment_monitor import SegmentMonitor  # IDM-style dynamic segmentation
+from src.core.filename_tracker import DownloadFilenameTracker  # Track yt-dlp filename changes
 
 logger = get_logger(__name__)
 
@@ -389,6 +390,9 @@ class Downloader:
         # Track downloaded files for proper completion callback
         downloaded_files = []
         is_playlist = self.format_info and self.format_info.get("is_playlist")
+        
+        # Initialize filename tracker for resume fix
+        filename_tracker = DownloadFilenameTracker()
 
         # Check network connectivity before starting download
         from src.core.network import get_network_manager
@@ -424,11 +428,17 @@ class Downloader:
                 # Print all yt-dlp output
                 print(f"yt-dlp: {line}")
 
-                # Track downloaded files: [download] Destination: /path/to/file.mp4
-                if "[download] Destination:" in line:
-                    dest_path = line.split("Destination:")[-1].strip()
-                    downloaded_files.append(dest_path)
-                    print(f"📥 File tracked: {dest_path}")
+                # Track downloaded files and filename changes
+                tracked_filename = filename_tracker.parse_output_line(line)
+                if tracked_filename:
+                    downloaded_files.append(tracked_filename)
+                    print(f"📥 File tracked: {tracked_filename}")
+                    
+                    # Update self.filename if changed (prevents resume re-download)
+                    if tracked_filename != self.filename:
+                        old_filename = self.filename
+                        self.filename = tracked_filename
+                        print(f"🔄 Filename updated: {Path(old_filename).name} → {Path(tracked_filename).name}")
 
                 # Handle private video errors gracefully
                 if "ERROR:" in line and "Private video" in line:
