@@ -3,7 +3,7 @@
  * Just sends page URLs to Mergen, let yt-dlp handle detection
  */
 
-const MERGEN_HOST = 'net.mergen.browser';
+const MERGEN_HOST = 'com.tunahanyrd.mergen';
 
 // Initialize context menu on installation
 chrome.runtime.onInstalled.addListener(() => {
