@@ -20,10 +20,10 @@ from typing import Optional
 
 import httpx
 
+from src.core.filename_tracker import DownloadFilenameTracker  # Track yt-dlp filename changes
 from src.core.i18n import I18n
 from src.core.logger import get_logger
 from src.core.segment_monitor import SegmentMonitor  # IDM-style dynamic segmentation
-from src.core.filename_tracker import DownloadFilenameTracker  # Track yt-dlp filename changes
 
 logger = get_logger(__name__)
 

@@ -6,8 +6,8 @@ Classifies URLs to enable optimization:
 - Streaming sites: Use yt-dlp analysis
 """
 
-from urllib.parse import urlparse
 from typing import Literal
+from urllib.parse import urlparse
 
 
 class URLClassifier:

@@ -896,7 +896,7 @@ class MainWindow(QMainWindow):
             # Skip yt-dlp analysis for direct downloads - instant start!
             import os
             if os.environ.get("MERGEN_VERBOSE") == "1":
-                print(f"⚡ Fast-path: Direct download detected, skipping analysis")
+                print("⚡ Fast-path: Direct download detected, skipping analysis")
             
             self.statusBar().showMessage("🚀 Starting direct download...", 2000)
             

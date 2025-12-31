@@ -166,7 +166,8 @@ class MergenHTTPHandler(BaseHTTPRequestHandler):
                 self.send_response(400)
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
-                self.wfile.write(json.dumps({"success": False, "error": "Cannot download browser-internal URLs"}).encode())
+                error_response = {"success": False, "error": "Cannot download browser-internal URLs"}
+                self.wfile.write(json.dumps(error_response).encode())
                 return
 
             logger.info(f"{'URL' if request_type == 'download_url' else 'Direct'} download: {url}")
