@@ -129,17 +129,17 @@ class MergenHTTPHandler(BaseHTTPRequestHandler):
             data = json.loads(body.decode("utf-8"))
 
             request_type = data.get("type", "add_download")  # NEW: support both formats
-            
+
             # NEW: Handle URL download (simplified approach)
             if request_type == "download_url":
                 url = data.get("url", "")
-                filename = data.get("pageTitle", "") # Use pageTitle as filename for download_url
+                filename = data.get("pageTitle", "")  # Use pageTitle as filename for download_url
                 # page_url = data.get("pageUrl", "") # Not used currently
-            else: # Original add_download logic
+            else:  # Original add_download logic
                 url = data.get("url", "")
                 filename = data.get("filename", "")
             stream_type = data.get("stream_type", "direct")
-            
+
             # NEW: Support simplified download_url format
             if request_type == "download_url":
                 # For URL downloads, use page title as suggested name
@@ -159,21 +159,9 @@ class MergenHTTPHandler(BaseHTTPRequestHandler):
             if self.main_window:
                 from PyQt6.QtCore import QMetaObject, Qt
 
-                QMetaObject.invokeMethod(
-                    self.main_window,
-                    "show",
-                    Qt.ConnectionType.QueuedConnection
-                )
-                QMetaObject.invokeMethod(
-                    self.main_window,
-                    "raise_",
-                    Qt.ConnectionType.QueuedConnection
-                )
-                QMetaObject.invokeMethod(
-                    self.main_window,
-                    "activateWindow",
-                    Qt.ConnectionType.QueuedConnection
-                )
+                QMetaObject.invokeMethod(self.main_window, "show", Qt.ConnectionType.QueuedConnection)
+                QMetaObject.invokeMethod(self.main_window, "raise_", Qt.ConnectionType.QueuedConnection)
+                QMetaObject.invokeMethod(self.main_window, "activateWindow", Qt.ConnectionType.QueuedConnection)
 
                 # Add download (yt-dlp will handle format detection for URLs)
                 QMetaObject.invokeMethod(
@@ -181,7 +169,7 @@ class MergenHTTPHandler(BaseHTTPRequestHandler):
                     "add_download",
                     Qt.ConnectionType.QueuedConnection,
                     url,
-                    filename or ""
+                    filename or "",
                 )
                 logger.info(f"✅ Download added: {url}")
 
@@ -255,9 +243,7 @@ async def handle_websocket(websocket, path):
 
                 if action == "ping":
                     # Health check
-                    await websocket.send(
-                        json.dumps({"status": "ok", "app": "Mergen", "version": __version__})
-                    )
+                    await websocket.send(json.dumps({"status": "ok", "app": "Mergen", "version": __version__}))
 
                 elif action == "register":
                     # Extension registration (same as HTTP)

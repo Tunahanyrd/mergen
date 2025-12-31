@@ -16,6 +16,7 @@ import time
 import traceback
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from typing import Optional
 
 import httpx
 
@@ -93,7 +94,7 @@ class Downloader:
         # Stats
         self.start_time = 0
         self.running = True
-        
+
         # IDM-style dynamic segment monitor
         self.segment_monitor: Optional[SegmentMonitor] = None
 

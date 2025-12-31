@@ -73,13 +73,14 @@ def send_to_mergen(url, filename, stream_type="direct"):
 
     except urllib.error.URLError as e:
         # Mergen is not running - try to start it
-        logging.warning(f"Mergen not running, attempting to start it...")
-        
+        logging.warning("Mergen not running, attempting to start it...")
+
         if try_start_mergen():
             # Wait a bit for Mergen to start
             import time
+
             time.sleep(2)
-            
+
             # Retry sending
             try:
                 data = json.dumps(payload).encode("utf-8")
@@ -90,9 +91,9 @@ def send_to_mergen(url, filename, stream_type="direct"):
                         return {"status": "success", "message": "Mergen started, download added"}
             except Exception:
                 pass
-        
+
         logging.error(f"Connection error: {e}")
-        return {"status": "error", "message": f"Mergen not running. Please start Mergen app."}
+        return {"status": "error", "message": "Mergen not running. Please start Mergen app."}
     except Exception as e:
         logging.error(f"Error: {e}")
         return {"status": "error", "message": str(e)}
@@ -100,32 +101,28 @@ def send_to_mergen(url, filename, stream_type="direct"):
 
 def try_start_mergen():
     """Try to start Mergen application."""
-    import subprocess
     import os
-    
+    import subprocess
+
     try:
         # Try different methods to start Mergen
-        if os.name == 'posix':  # Linux/macOS
+        if os.name == "posix":  # Linux/macOS
             # Try desktop file first (most reliable)
             try:
-                subprocess.Popen(['gtk-launch', 'mergen.desktop'], 
-                               stdout=subprocess.DEVNULL, 
-                               stderr=subprocess.DEVNULL)
+                subprocess.Popen(["gtk-launch", "mergen.desktop"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 logging.info("Started Mergen via gtk-launch")
                 return True
             except Exception:
                 pass
-            
+
             # Try direct command
             try:
-                subprocess.Popen(['mergen'], 
-                               stdout=subprocess.DEVNULL, 
-                               stderr=subprocess.DEVNULL)
+                subprocess.Popen(["mergen"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 logging.info("Started Mergen via direct command")
                 return True
             except Exception:
                 pass
-                
+
         logging.warning("Could not start Mergen automatically")
         return False
     except Exception as e:
@@ -147,7 +144,7 @@ def main():
 
             # Handle the message and get response
             response = handle_message(message)
-            
+
             # Send response back to extension
             if response:
                 send_message(response)
